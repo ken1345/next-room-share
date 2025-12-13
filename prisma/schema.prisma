@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?
+  name          String?
+  image         String?
+  
+  listings      Listing[]
+  messages      Message[]
+  guestThreads  Thread[]  @relation("GuestThreads") // Threads where user is a guest
+  hostThreads   Thread[]  @relation("HostThreads")  // Threads where user is a host
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Listing {
+  id               String    @id @default(uuid())
+  title            String
+  description      String
+  rent             Int
+  
+  // Location
+  prefecture       String
+  city             String
+  stationLine      String
+  stationName      String
+  minutesToStation Int
+  
+  // Details
+  type             String    // private, semi, shared
+  genderRestriction String   // any, female, male
+  
+  // JSON fields for flexibility
+  amenities        String    // Stored as JSON string
+  images           String    // Stored as JSON string
+  
+  // Relations
+  hostId           String
+  host             User      @relation(fields: [hostId], references: [id])
+  threads          Thread[]
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Thread {
+  id            String    @id @default(uuid())
+  
+  listingId     String
+  listing       Listing   @relation(fields: [listingId], references: [id])
+  
+  guestId       String
+  guest         User      @relation("GuestThreads", fields: [guestId], references: [id])
+  
+  hostId        String
+  host          User      @relation("HostThreads", fields: [hostId], references: [id])
+  
+  messages      Message[]
+  
+  lastMessageAt DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  
+  threadId  String
+  thread    Thread   @relation(fields: [threadId], references: [id])
+  
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  
+  content   String
+  read      Boolean  @default(false)
+  
+  sentAt    DateTime @default(now())
+}

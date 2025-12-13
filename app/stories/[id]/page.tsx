@@ -1,0 +1,141 @@
+"use client";
+
+import Link from 'next/link';
+import { MdArrowBack, MdArrowForward, MdCalendarToday, MdPerson, MdTag } from 'react-icons/md';
+import { notFound } from 'next/navigation';
+import { use, useEffect, useState } from 'react';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
+interface Story {
+    id: string;
+    title: string;
+    body: string; // HTML content
+    excerpt?: string;
+    image?: string;
+    tags: string[];
+    author: string;
+    date: string;
+    createdAt?: any;
+}
+
+export default function StoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    // Unwrap params using React.use()
+    const { id } = use(params);
+
+    const [story, setStory] = useState<Story | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+        const fetchStory = async () => {
+            try {
+                const docRef = doc(db, 'stories', id);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    // Ensure data matches interface
+                    setStory({
+                        id: docSnap.id,
+                        title: data.title,
+                        body: data.body,
+                        image: data.image || 'bg-gray-200',
+                        tags: data.tags || [],
+                        author: data.author || 'Anonymous',
+                        date: data.date || 'Unknown Date'
+                    } as Story);
+                } else {
+                    setError(true);
+                }
+            } catch (err) {
+                console.error("Error fetching story:", err);
+                setError(true);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchStory();
+        }
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-xl font-bold text-gray-500 animate-pulse">Loading...</div>
+            </div>
+        );
+    }
+
+    if (error || !story) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+                <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-md w-full">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-4">記事が見つかりませんでした</h1>
+                    <p className="text-gray-500 mb-6">お探しの記事は削除されたか、URLが間違っている可能性があります。</p>
+                    <Link href="/stories" className="inline-block bg-[#bf0000] text-white px-6 py-3 rounded-full font-bold hover:bg-black transition">
+                        体験談一覧に戻る
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <article className="min-h-screen bg-white font-sans pb-20">
+            {/* Hero Image */}
+            <div className={`h-[40vh] md:h-[50vh] w-full ${story.image} bg-cover bg-center relative`}>
+                <div className="absolute inset-0 bg-black/30"></div>
+                <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 text-white container mx-auto max-w-4xl">
+                    <Link href="/stories" className="inline-flex items-center gap-1 text-sm font-bold opacity-80 hover:opacity-100 transition mb-4">
+                        <MdArrowBack /> 体験談一覧に戻る
+                    </Link>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                        {story.tags.map(tag => (
+                            <span key={tag} className="text-sm font-bold bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
+                                <MdTag /> {tag}
+                            </span>
+                        ))}
+                    </div>
+                    <h1 className="text-2xl md:text-4xl font-bold leading-tight shadow-sm text-shadow">
+                        {story.title}
+                    </h1>
+                </div>
+            </div>
+
+            {/* Content Body */}
+            <div className="container mx-auto max-w-3xl px-6 py-12">
+                <div className="flex items-center justify-between text-gray-500 text-sm font-bold border-b border-gray-100 pb-8 mb-10">
+                    <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
+                            <MdPerson size={20} />
+                        </div>
+                        <div>
+                            <div className="text-gray-400 text-xs">WRITER</div>
+                            <div>{story.author}</div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <MdCalendarToday /> {story.date}
+                    </div>
+                </div>
+
+                <div
+                    className="prose prose-lg prose-red max-w-none prose-headings:font-bold prose-headings:text-gray-800 prose-p:text-gray-600 prose-p:leading-loose"
+                    dangerouslySetInnerHTML={{ __html: story.body || '' }}
+                >
+                </div>
+
+                {/* Footer Navigation */}
+                <div className="mt-20 border-t border-gray-100 pt-10 text-center">
+                    <h3 className="text-xl font-bold text-gray-800 mb-6">気になったら、まずは物件を探してみよう</h3>
+                    <Link href="/search" className="inline-flex items-center gap-2 bg-[#bf0000] text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-black transition shadow-lg hover:shadow-xl">
+                        物件を探す <MdArrowForward />
+                    </Link>
+                </div>
+            </div>
+        </article>
+    );
+}

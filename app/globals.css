@@ -25,3 +25,11 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Force dark text on inputs to prevent visibility issues in mixed themes */
+input,
+textarea,
+select {
+  color: #111827 !important;
+  /* gray-900 */
+}

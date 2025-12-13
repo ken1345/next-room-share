@@ -1,9 +1,15 @@
 "use client";
+
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { MdArrowBack, MdPerson, MdEmail, MdLock } from 'react-icons/md';
+import { auth, db } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function SignupPage() {
+    const router = useRouter();
     const [form, setForm] = useState({
         displayName: '',
         email: '',
@@ -11,16 +17,76 @@ export default function SignupPage() {
     });
 
     const [isLoading, setIsLoading] = useState(false);
+    const [emailSent, setEmailSent] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        // Mock signup
-        setTimeout(() => {
+
+        try {
+            // 1. Create User in Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+            const user = userCredential.user;
+
+            // 2. Update Profile (Display Name)
+            await updateProfile(user, {
+                displayName: form.displayName
+            });
+
+            // 3. Send Verification Email
+            await sendEmailVerification(user);
+
+            // 4. Create User Document in Firestore
+            await setDoc(doc(db, 'users', user.uid), {
+                uid: user.uid,
+                displayName: form.displayName,
+                email: form.email,
+                role: 'user', // Default unified role
+                createdAt: serverTimestamp()
+            });
+
+            // 5. Show Success UI
+            setEmailSent(true);
+
+        } catch (error: any) {
+            console.error('Signup Error:', error);
+            let message = 'アカウント作成中にエラーが発生しました。';
+            if (error.code === 'auth/email-already-in-use') {
+                message = 'このメールアドレスは既に使用されています。';
+            } else if (error.code === 'auth/weak-password') {
+                message = 'パスワードが弱すぎます。';
+            }
+            alert(message);
+        } finally {
             setIsLoading(false);
-            window.location.href = '/'; // Navigate to home after signup
-        }, 1000);
+        }
     };
+
+    if (emailSent) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-sans">
+                <div className="bg-white p-8 md:p-10 rounded-2xl shadow-xl w-full max-w-md border border-gray-100 text-center">
+                    <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <MdEmail size={32} />
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-800 mb-4">確認メールを送信しました</h1>
+                    <p className="text-gray-600 leading-relaxed mb-8">
+                        ご入力いただいたメールアドレス ({form.email}) 宛に確認メールを送信しました。<br />
+                        メール内のリンクをクリックして、登録を完了させてください。
+                    </p>
+
+                    <div className="space-y-4">
+                        <Link href="/login" className="block w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl hover:bg-black transition shadow-md">
+                            ログインページへ
+                        </Link>
+                        <button onClick={() => window.location.reload()} className="text-gray-400 text-sm font-bold hover:text-gray-600 underline">
+                            メールが届かない場合
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-sans">
@@ -42,7 +108,7 @@ export default function SignupPage() {
                                 required
                                 value={form.displayName}
                                 onChange={e => setForm({ ...form, displayName: e.target.value })}
-                                className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-2 focus:ring-red-100 outline-none font-bold transition"
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-2 focus:ring-red-100 outline-none font-bold transition text-gray-900"
                                 placeholder="RoomUser"
                             />
                         </div>
@@ -59,7 +125,7 @@ export default function SignupPage() {
                                 required
                                 value={form.email}
                                 onChange={e => setForm({ ...form, email: e.target.value })}
-                                className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-2 focus:ring-red-100 outline-none font-bold transition"
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-2 focus:ring-red-100 outline-none font-bold transition text-gray-900"
                                 placeholder="name@example.com"
                             />
                         </div>
@@ -77,7 +143,7 @@ export default function SignupPage() {
                                 minLength={8}
                                 value={form.password}
                                 onChange={e => setForm({ ...form, password: e.target.value })}
-                                className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-2 focus:ring-red-100 outline-none font-bold transition"
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-2 focus:ring-red-100 outline-none font-bold transition text-gray-900"
                                 placeholder="8文字以上"
                             />
                         </div>
@@ -89,7 +155,7 @@ export default function SignupPage() {
                             disabled={isLoading}
                             className="w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            {isLoading ? '登録処理中...' : 'アカウントを作成'}
+                            {isLoading ? '登録処理中...' : 'アカウントを作成して認証メールを送信'}
                         </button>
                     </div>
                 </form>

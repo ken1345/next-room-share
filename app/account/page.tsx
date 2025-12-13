@@ -69,9 +69,9 @@ export default function AccountPage() {
                             <MdEmail /> {user.email}
                         </div>
                         <div className="mt-4">
-                            <button className="text-sm font-bold text-[#bf0000] border border-[#bf0000] px-4 py-2 rounded-full hover:bg-[#bf0000] hover:text-white transition">
+                            <Link href="/account/edit" className="inline-block text-sm font-bold text-[#bf0000] border border-[#bf0000] px-6 py-2 rounded-full hover:bg-[#bf0000] hover:text-white transition">
                                 プロフィールを編集
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </section>
@@ -84,6 +84,15 @@ export default function AccountPage() {
                         <p className="text-sm mt-2">物件に問い合わせるとここにメッセージが表示されます。</p>
                     </div>
                 </section>
+
+                <div className="pt-4 flex justify-center">
+                    <button
+                        onClick={() => auth.signOut()}
+                        className="text-gray-400 hover:text-gray-600 font-bold text-sm underline transition"
+                    >
+                        ログアウト
+                    </button>
+                </div>
             </div>
         </div>
     );

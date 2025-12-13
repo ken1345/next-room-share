@@ -36,6 +36,7 @@ export default function SignupPage() {
                     uid: user.uid,
                     displayName: user.displayName || 'Google User',
                     email: user.email,
+                    photoURL: user.photoURL || null, // Add photoURL from Google profile
                     role: 'user',
                     createdAt: serverTimestamp()
                 });

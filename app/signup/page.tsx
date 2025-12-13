@@ -40,8 +40,8 @@ export default function SignupPage() {
                     createdAt: serverTimestamp()
                 });
             }
-            // Redirect to home
-            router.push('/');
+            // Redirect to account page directly for better UX as requested
+            router.push('/account');
 
         } catch (error: any) {
             console.error(error);
@@ -80,6 +80,11 @@ export default function SignupPage() {
             // 5. Show Success UI
             setEmailSent(true);
 
+            // Auto redirect to account page
+            setTimeout(() => {
+                router.push('/account');
+            }, 3000);
+
         } catch (error: any) {
             console.error('Signup Error:', error);
             let message = 'アカウント作成中にエラーが発生しました。';
@@ -104,16 +109,14 @@ export default function SignupPage() {
                     <h1 className="text-2xl font-bold text-gray-800 mb-4">確認メールを送信しました</h1>
                     <p className="text-gray-600 leading-relaxed mb-8">
                         ご入力いただいたメールアドレス ({form.email}) 宛に確認メールを送信しました。<br />
-                        メール内のリンクをクリックして、登録を完了させてください。
+                        メール内のリンクをクリックして、登録を完了させてください。<br />
+                        <span className="text-sm text-gray-400 mt-2 block">3秒後にアカウントページへ移動します...</span>
                     </p>
 
                     <div className="space-y-4">
-                        <Link href="/login" className="block w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl hover:bg-black transition shadow-md">
-                            ログインページへ
+                        <Link href="/account" className="block w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl hover:bg-black transition shadow-md">
+                            アカウントページへ移動
                         </Link>
-                        <button onClick={() => window.location.reload()} className="text-gray-400 text-sm font-bold hover:text-gray-600 underline">
-                            メールが届かない場合
-                        </button>
                     </div>
                 </div>
             </div>

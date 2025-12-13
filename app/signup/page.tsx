@@ -4,9 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MdArrowBack, MdPerson, MdEmail, MdLock } from 'react-icons/md';
+import { FcGoogle } from 'react-icons/fc';
 import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function SignupPage() {
     const router = useRouter();
@@ -18,6 +19,37 @@ export default function SignupPage() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
+
+    const handleGoogleSignup = async () => {
+        setIsLoading(true);
+        try {
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+
+            // Check if user doc exists (in case they already signed up)
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+
+            if (!userDoc.exists()) {
+                await setDoc(userDocRef, {
+                    uid: user.uid,
+                    displayName: user.displayName || 'Google User',
+                    email: user.email,
+                    role: 'user',
+                    createdAt: serverTimestamp()
+                });
+            }
+            // Redirect to home
+            router.push('/');
+
+        } catch (error: any) {
+            console.error(error);
+            alert("Googleサインアップに失敗しました。" + error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -94,6 +126,23 @@ export default function SignupPage() {
                 <div className="text-center mb-8">
                     <h1 className="text-2xl font-bold text-gray-800 mb-2">アカウント作成</h1>
                     <p className="text-gray-500 text-sm">必要な情報を入力して登録してください</p>
+                </div>
+
+                <div className="space-y-4 mb-6">
+                    <button
+                        onClick={handleGoogleSignup}
+                        type="button"
+                        disabled={isLoading}
+                        className="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3.5 rounded-xl hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                    >
+                        <FcGoogle size={22} /> Googleで登録
+                    </button>
+
+                    <div className="relative flex py-2 items-center">
+                        <div className="flex-grow border-t border-gray-200"></div>
+                        <span className="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold">または</span>
+                        <div className="flex-grow border-t border-gray-200"></div>
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">

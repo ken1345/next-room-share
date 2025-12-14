@@ -4,15 +4,14 @@ import Link from 'next/link';
 import { MdArrowBack, MdArrowForward, MdCalendarToday, MdPerson, MdTag } from 'react-icons/md';
 import { notFound } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 
 interface Story {
     id: string;
     title: string;
     body: string; // HTML content
     excerpt?: string;
-    image?: string;
+    image: string;
     tags: string[];
     author: string;
     date: string;
@@ -30,20 +29,24 @@ export default function StoryDetailPage({ params }: { params: Promise<{ id: stri
     useEffect(() => {
         const fetchStory = async () => {
             try {
-                const docRef = doc(db, 'stories', id);
-                const docSnap = await getDoc(docRef);
+                const { data, error } = await supabase
+                    .from('stories')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    // Ensure data matches interface
+                if (error) throw error;
+
+                if (data) {
                     setStory({
-                        id: docSnap.id,
+                        id: data.id,
                         title: data.title,
-                        body: data.body,
-                        image: data.image || 'bg-gray-200',
+                        body: data.content, // Changed from body to content to match schema (oops, schema check)
+                        // Schema says: title, content, cover_image, excerpt, tags, author_id
+                        image: data.cover_image || 'bg-gray-200',
                         tags: data.tags || [],
-                        author: data.author || 'Anonymous',
-                        date: data.date || 'Unknown Date'
+                        author: 'Resident', // Placeholder or fetch author name
+                        date: new Date(data.created_at).toLocaleDateString('ja-JP').replace(/\//g, '.'),
                     } as Story);
                 } else {
                     setError(true);
@@ -86,7 +89,13 @@ export default function StoryDetailPage({ params }: { params: Promise<{ id: stri
     return (
         <article className="min-h-screen bg-white font-sans pb-20">
             {/* Hero Image */}
-            <div className={`h-[40vh] md:h-[50vh] w-full ${story.image} bg-cover bg-center relative`}>
+            <div className="h-[40vh] md:h-[50vh] w-full bg-gray-900 relative">
+                {story.image.startsWith('bg-') ? (
+                    <div className={`absolute inset-0 ${story.image} bg-cover bg-center`}></div>
+                ) : (
+                    <img src={story.image} alt={story.title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                )}
+
                 <div className="absolute inset-0 bg-black/30"></div>
                 <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 text-white container mx-auto max-w-4xl">
                     <Link href="/stories" className="inline-flex items-center gap-1 text-sm font-bold opacity-80 hover:opacity-100 transition mb-4">

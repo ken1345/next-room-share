@@ -4,19 +4,26 @@
 import Link from "next/link";
 import { MdHome, MdPerson } from "react-icons/md";
 import { useState, useEffect } from 'react';
-import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { supabase } from '@/lib/supabase';
+import { User } from '@supabase/supabase-js';
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    // Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return (
@@ -37,8 +44,8 @@ export default function Header() {
               // Logged In
               <Link href="/account" className="flex items-center gap-1 hover:text-[#bf0000] transition ml-2">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200">
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
+                  {user.user_metadata?.avatar_url ? (
+                    <img src={user.user_metadata.avatar_url} alt="User" className="w-full h-full object-cover" />
                   ) : (
                     <MdPerson size={20} />
                   )}

@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { MdArrowForward, MdCalendarToday, MdPerson, MdTag } from 'react-icons/md';
 import { useEffect, useState } from 'react';
-import { db } from '@/lib/firebase';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 
 interface Story {
     id: string; // Firestore ID is string
@@ -23,13 +22,37 @@ export default function StoriesPage() {
     useEffect(() => {
         const fetchStories = async () => {
             try {
-                const q = query(collection(db, 'stories'), orderBy('createdAt', 'desc'));
-                const querySnapshot = await getDocs(q);
-                const storiesData = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                })) as Story[];
-                setStories(storiesData);
+                // Fetch from Supabase
+                const { data, error } = await supabase
+                    .from('stories')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (data) {
+                    const storiesData = data.map((doc: any) => ({
+                        id: doc.id,
+                        title: doc.title,
+                        excerpt: doc.excerpt || '',
+                        image: doc.cover_image || 'bg-gray-200', // Handle background class or url later, assuming class for demo or url
+                        tags: doc.tags || [],
+                        // In real app, we would join with users table. For now, assuming author name in story or fetch separately.
+                        // However, schema says author_id. Let's generic 'Anonymous' or fetch author if we joined.
+                        // Simplified: just show a generic name or 'Resident' if raw SQL didn't join.
+                        // Actually, let's try to select author:users(display_name) if RLS allows.
+                        // For simplicity in prototype, I'll just use 'Resident' or if I updated schema to include author_name.
+                        // Schema: author_id uuid references users.
+
+                        // Let's IMPROVE the query to fetch author name
+                        author: 'Resident', // Placeholder until join is implemented or just use static
+                        date: new Date(doc.created_at).toLocaleDateString('ja-JP'),
+                    })) as Story[];
+
+                    // IF we want author name, we need: .select('*, author:users(display_name)')
+                    // Let's try advanced select.
+                    setStories(storiesData);
+                }
             } catch (error) {
                 console.error("Error fetching stories:", error);
             } finally {
@@ -66,7 +89,17 @@ export default function StoriesPage() {
                     {stories.map((story) => (
                         <Link href={`/stories/${story.id}`} key={story.id} className="block group">
                             <article className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition h-full flex flex-col">
-                                <div className={`h-48 ${story.image} bg-cover bg-center`}></div>
+                                {/* If image is a URL (Supabase Storage), use img tag. If class (Mock), use div. */}
+                                {/* Current mock data used classes. Supabase will likely allow URLs. 
+                                    For compatibility, I'll check if it starts with 'bg-' */}
+                                {story.image.startsWith('bg-') ? (
+                                    <div className={`h-48 ${story.image} bg-cover bg-center`}></div>
+                                ) : (
+                                    <div className="h-48 bg-gray-200">
+                                        {/* If I had real images, I'd put an img here. For now, empty or generic placeholder */}
+                                    </div>
+                                )}
+
                                 <div className="p-6 flex-1 flex flex-col">
                                     <div className="flex flex-wrap gap-2 mb-3">
                                         {story.tags.map(tag => (

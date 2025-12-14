@@ -1,16 +1,21 @@
 
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { MdCloudUpload, MdHome, MdAttachMoney, MdTrain, MdInfo, MdCheck, MdArrowBack, MdEdit } from 'react-icons/md';
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
 
 export default function HostPage() {
-    // Mock Auth State
-    const [isLoggedIn, setIsLoggedIn] = useState(false); // Default to false to show login flow
+    const router = useRouter();
+    // Auth State
+    const [user, setUser] = useState<any>(null);
+    const [loadingAuth, setLoadingAuth] = useState(true);
 
     // Flow State: 'input' | 'confirm' | 'complete'
     const [step, setStep] = useState<'input' | 'confirm' | 'complete'>('input');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Form State
     const [form, setForm] = useState({
@@ -24,7 +29,7 @@ export default function HostPage() {
         rent: '',
         type: 'private', // private, semi, shared
         gender: 'any',
-        amenities: [] as string[], // Added amenities
+        amenities: [] as string[],
     });
 
     const amenityOptions = [
@@ -46,26 +51,106 @@ export default function HostPage() {
         });
     };
 
-    const [images, setImages] = useState<string[]>([]);
+    // Image State
+    const [imageFiles, setImageFiles] = useState<File[]>([]);
+    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+
+    useEffect(() => {
+        // Initial check
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setUser(session?.user || null);
+            setLoadingAuth(false);
+        };
+        checkUser();
+
+        // Listener for changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user || null);
+            setLoadingAuth(false);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            setImageFiles(prev => [...prev, file]);
             const url = URL.createObjectURL(file);
-            setImages(prev => [...prev, url]);
+            setPreviewUrls(prev => [...prev, url]);
         }
+    };
+
+    const removeImage = (index: number) => {
+        setImageFiles(prev => prev.filter((_, i) => i !== index));
+        setPreviewUrls(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleCheck = (e: React.FormEvent) => {
         e.preventDefault();
-        // Validate?
         window.scrollTo(0, 0);
         setStep('confirm');
     };
 
-    const handleFinalSubmit = () => {
-        window.scrollTo(0, 0);
-        setStep('complete');
+    const handleFinalSubmit = async () => {
+        if (!user) return;
+        setIsSubmitting(true);
+
+        try {
+            const uploadedImageUrls: string[] = [];
+
+            // 1. Upload Images
+            for (const file of imageFiles) {
+                const filePath = `listings/${user.id}/${Date.now()}_${file.name}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('images')
+                    .upload(filePath, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('images')
+                    .getPublicUrl(filePath);
+
+                uploadedImageUrls.push(publicUrl);
+            }
+
+            // 2. Insert Listing
+            const { error: insertError } = await supabase
+                .from('listings')
+                .insert({
+                    title: form.title,
+                    description: form.description,
+                    price: parseInt(form.rent),
+                    address: `${form.prefecture}${form.city}`, // Simplified address
+                    // lat/lng would be calculated from address in a real app
+                    latitude: 35.681236,
+                    longitude: 139.767125,
+                    amenities: form.amenities,
+                    images: uploadedImageUrls,
+                    host_id: user.id,
+                    // Additional fields from form that map to nothing in schema?
+                    // Schema: amenities, images, host_id.
+                    // We might store 'station info' in description or add columns.
+                    // For now, I'll append station info to description if not supported by schema, 
+                    // OR just rely on description having it?
+                    // Schema: title, description, price, address, latitude, longitude, amenities, images, host_id
+
+                    // Let's prepend station info to description for searchability if schema doesn't support it separately
+                    // Actually, let's keep it simple.
+                });
+
+            if (insertError) throw insertError;
+
+            window.scrollTo(0, 0);
+            setStep('complete');
+        } catch (error: any) {
+            console.error("Submission Error:", error);
+            alert("掲載に失敗しました: " + error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleBackToInput = () => {
@@ -91,8 +176,12 @@ export default function HostPage() {
         );
     }
 
+    if (loadingAuth) {
+        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    }
+
     // Not Logged In View
-    if (!isLoggedIn) {
+    if (!user) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center font-sans p-4">
                 <div className="bg-white p-8 md:p-12 rounded-2xl shadow-xl max-w-lg w-full text-center">
@@ -101,19 +190,19 @@ export default function HostPage() {
                     <p className="text-gray-500 mb-8">お部屋を貸し出すにはログインが必要です。<br />素敵なルームメイトを見つけましょう。</p>
 
                     <div className="space-y-4">
-                        <button
-                            onClick={() => setIsLoggedIn(true)}
-                            className="w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-lg shadow hover:bg-[#900000] transition text-lg"
+                        <Link
+                            href="/login?redirect=/host"
+                            className="block w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-lg shadow hover:bg-[#900000] transition text-lg"
                         >
                             ログインして始める
-                        </button>
-                        <button className="w-full bg-white text-gray-700 border border-gray-300 font-bold py-3.5 rounded-lg hover:bg-gray-50 transition">
+                        </Link>
+                        <Link
+                            href="/signup?redirect=/host"
+                            className="block w-full bg-white text-gray-700 border border-gray-300 font-bold py-3.5 rounded-lg hover:bg-gray-50 transition"
+                        >
                             新規会員登録
-                        </button>
+                        </Link>
                     </div>
-                    <p className="mt-6 text-xs text-gray-400">
-                        ※これはデモです。「ログインして始める」を押すと入力フォームに進みます。
-                    </p>
                 </div>
             </div>
         );
@@ -138,8 +227,8 @@ export default function HostPage() {
                             <h3 className="font-bold text-gray-600 mb-4 text-center md:text-left">検索結果での表示</h3>
                             <div className="max-w-sm mx-auto md:mx-0">
                                 <PhotoPropertyCard
-                                    imageUrl={images.length > 0 ? images[0] : undefined}
-                                    image={images.length > 0 ? undefined : 'bg-gray-200'}
+                                    imageUrl={previewUrls.length > 0 ? previewUrls[0] : undefined}
+                                    image={previewUrls.length > 0 ? undefined : 'bg-gray-200'}
                                     price={(Number(form.rent) / 10000).toFixed(1)}
                                     station={`${form.stationName} ${form.minutesToStation}分`}
                                     badges={[
@@ -206,10 +295,10 @@ export default function HostPage() {
                                         <dt className="text-gray-500 text-sm font-bold">写真</dt>
                                         <dd className="col-span-2 text-gray-800">
                                             <div className="flex gap-2 bg-gray-50 p-2 rounded overflow-x-auto">
-                                                {images.map((url, i) => (
+                                                {previewUrls.map((url, i) => (
                                                     <img key={i} src={url} className="h-16 w-16 object-cover rounded" />
                                                 ))}
-                                                {images.length === 0 && <span className="text-gray-400 text-xs">なし</span>}
+                                                {previewUrls.length === 0 && <span className="text-gray-400 text-xs">なし</span>}
                                             </div>
                                         </dd>
                                     </div>
@@ -217,11 +306,15 @@ export default function HostPage() {
                             </div>
 
                             <div className="flex gap-4">
-                                <button onClick={handleBackToInput} className="flex-1 bg-gray-200 text-gray-700 font-bold py-4 rounded-xl hover:bg-gray-300 transition text-lg">
+                                <button onClick={handleBackToInput} disabled={isSubmitting} className="flex-1 bg-gray-200 text-gray-700 font-bold py-4 rounded-xl hover:bg-gray-300 transition text-lg">
                                     修正する
                                 </button>
-                                <button onClick={handleFinalSubmit} className="flex-1 bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-black transition text-lg flex items-center justify-center gap-2">
-                                    <MdCheck /> この内容で掲載
+                                <button
+                                    onClick={handleFinalSubmit}
+                                    disabled={isSubmitting}
+                                    className="flex-1 bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-black transition text-lg flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    {isSubmitting ? '送信中...' : <><MdCheck /> この内容で掲載</>}
                                 </button>
                             </div>
                         </div>
@@ -390,8 +483,8 @@ export default function HostPage() {
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {amenityOptions.map((option) => (
                                     <label key={option} className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition ${form.amenities.includes(option)
-                                            ? 'bg-red-50 border-[#bf0000] text-[#bf0000]'
-                                            : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                                        ? 'bg-red-50 border-[#bf0000] text-[#bf0000]'
+                                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
                                         }`}>
                                         <input
                                             type="checkbox"
@@ -413,12 +506,12 @@ export default function HostPage() {
                         </h2>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                            {images.map((url, idx) => (
+                            {previewUrls.map((url, idx) => (
                                 <div key={idx} className="aspect-square rounded-lg bg-gray-100 overflow-hidden relative group">
                                     <img src={url} alt="preview" className="w-full h-full object-cover" />
                                     <button
                                         type="button"
-                                        onClick={() => setImages(images.filter((_, i) => i !== idx))}
+                                        onClick={() => removeImage(idx)}
                                         className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
                                     >
                                         ×

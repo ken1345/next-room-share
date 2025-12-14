@@ -2,16 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { db, auth } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { onAuthStateChanged, User } from 'firebase/auth'; // Import auth
+import { supabase } from '@/lib/supabase';
 import { MdArrowBack, MdSend } from 'react-icons/md';
 import Link from 'next/link';
 
 export default function NewStoryPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
-    const [user, setUser] = useState<User | null>(null); // Auth state
+    const [user, setUser] = useState<any>(null); // Supabase User
     const [checkingAuth, setCheckingAuth] = useState(true);
 
     const [form, setForm] = useState({
@@ -22,16 +20,17 @@ export default function NewStoryPage() {
     });
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            if (!currentUser) {
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
                 // Redirect if not logged in
                 router.push('/login?redirect=/stories/new');
             } else {
-                setUser(currentUser);
+                setUser(session.user);
             }
             setCheckingAuth(false);
-        });
-        return () => unsubscribe();
+        };
+        checkUser();
     }, [router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -48,18 +47,19 @@ export default function NewStoryPage() {
             // Parse tags
             const tagArray = form.tags.split(',').map(t => t.trim()).filter(t => t.length > 0);
 
-            // Create document in 'stories' collection
-            await addDoc(collection(db, 'stories'), {
-                title: form.title,
-                excerpt: form.excerpt,
-                body: form.body,
-                author: user.displayName || 'Anonymous User', // Use real auth name
-                authorId: user.uid, // Store UID
-                date: new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.'),
-                tags: tagArray,
-                image: randomColor,
-                createdAt: serverTimestamp()
-            });
+            // Create document in 'stories' table
+            const { error } = await supabase
+                .from('stories')
+                .insert({
+                    title: form.title,
+                    excerpt: form.excerpt,
+                    content: form.body,
+                    author_id: user.id,
+                    cover_image: randomColor,
+                    tags: tagArray,
+                });
+
+            if (error) throw error;
 
             // Redirect to stories list
             router.push('/stories');

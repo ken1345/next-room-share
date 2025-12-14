@@ -3,44 +3,63 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MdPerson, MdEmail, MdArrowForwardIos } from 'react-icons/md';
-import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 
 export default function AccountPage() {
     const router = useRouter();
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<any>(null);
     const [userData, setUserData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            if (currentUser) {
-                setUser(currentUser);
-                // Fetch additional user data from Firestore
+        const fetchUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                setUser(session.user);
+                // Fetch additional user data from public.users table (Postgres)
                 try {
-                    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-                    if (userDoc.exists()) {
-                        setUserData(userDoc.data());
+                    const { data: profile, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .single();
+
+                    if (profile) {
+                        setUserData(profile);
                     }
                 } catch (error) {
                     console.error("Error fetching user data:", error);
                 }
             } else {
-                // Redirect to login if not authenticated
                 router.push('/login');
             }
             setLoading(false);
+        };
+
+        fetchUser();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (!session) router.push('/login');
         });
 
-        return () => unsubscribe();
+        return () => subscription.unsubscribe();
     }, [router]);
+
+    const handleSignOut = async () => {
+        await supabase.auth.signOut();
+        router.push('/login');
+    };
 
     if (loading) {
         return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     }
 
     if (!user) return null;
+
+    // Determine values to display (prefer Public Profile table, fallback to Auth metadata)
+    const displayName = userData?.display_name || user.user_metadata?.full_name || user.user_metadata?.display_name || 'Guest User';
+    const email = userData?.email || user.email;
+    const photoURL = userData?.photo_url || user.user_metadata?.avatar_url || user.user_metadata?.picture;
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20 font-sans">
@@ -57,16 +76,16 @@ export default function AccountPage() {
                 {/* Profile Section */}
                 <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center gap-6">
                     <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 shrink-0 overflow-hidden">
-                        {user.photoURL ? (
-                            <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+                        {photoURL ? (
+                            <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
                         ) : (
                             <MdPerson size={40} />
                         )}
                     </div>
                     <div className="flex-1">
-                        <h2 className="text-xl font-bold text-gray-800 mb-1">{user.displayName || userData?.displayName || 'Guest User'}</h2>
+                        <h2 className="text-xl font-bold text-gray-800 mb-1">{displayName}</h2>
                         <div className="flex items-center gap-2 text-gray-500 text-sm font-bold">
-                            <MdEmail /> {user.email}
+                            <MdEmail /> {email}
                         </div>
                         <div className="mt-4">
                             <Link href="/account/edit" className="inline-block text-sm font-bold text-[#bf0000] border border-[#bf0000] px-6 py-2 rounded-full hover:bg-[#bf0000] hover:text-white transition">
@@ -87,7 +106,7 @@ export default function AccountPage() {
 
                 <div className="pt-4 flex justify-center">
                     <button
-                        onClick={() => auth.signOut()}
+                        onClick={handleSignOut}
                         className="text-gray-400 hover:text-gray-600 font-bold text-sm underline transition"
                     >
                         ログアウト

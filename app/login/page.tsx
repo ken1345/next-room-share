@@ -5,9 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MdArrowBack, MdEmail, MdLock } from 'react-icons/md';
 import { FcGoogle } from 'react-icons/fc';
-import { auth, db } from '@/lib/firebase';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, UserCredential } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 
 function LoginForm() {
     const router = useRouter();
@@ -22,25 +20,19 @@ function LoginForm() {
     const [isLoading, setIsLoading] = useState(false);
 
     // Initial Login Logic (common for Google and Email)
-    const handleLoginSuccess = async (userCredential: UserCredential) => {
-        const user = userCredential.user;
-
-        // Check if user doc exists (for Google Login usage mainly)
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (!userDoc.exists()) {
-            // Create it if it's the first time via Google
-            await setDoc(userDocRef, {
-                uid: user.uid,
-                displayName: user.displayName || 'Google User',
-                email: user.email,
-                photoURL: user.photoURL || null, // Capture Google photo
-                role: 'user',
-                createdAt: serverTimestamp()
-            });
+    const handleLoginSuccess = async (user: any) => {
+        // Check if user doc exists (public profile) and create if missing (sync)
+        if (user) {
+            const { data: profile } = await supabase.from('users').select().eq('id', user.id).single();
+            if (!profile) {
+                await supabase.from('users').insert({
+                    id: user.id,
+                    email: user.email,
+                    display_name: user.user_metadata?.full_name || 'User',
+                    photo_url: user.user_metadata?.avatar_url || null,
+                });
+            }
         }
-
         router.push(redirectPath);
     };
 
@@ -48,8 +40,15 @@ function LoginForm() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const result = await signInWithEmailAndPassword(auth, form.email, form.password);
-            await handleLoginSuccess(result);
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: form.email,
+                password: form.password,
+            });
+
+            if (error) throw error;
+            if (data.user) {
+                await handleLoginSuccess(data.user);
+            }
         } catch (error: any) {
             console.error(error);
             alert("ログインに失敗しました。メールアドレスかパスワードが間違っています。");
@@ -61,13 +60,17 @@ function LoginForm() {
     const handleGoogleLogin = async () => {
         setIsLoading(true);
         try {
-            const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-            await handleLoginSuccess(result);
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/account`,
+                }
+            });
+            if (error) throw error;
+            // Redirect handles the rest
         } catch (error: any) {
             console.error(error);
             alert("Googleログインに失敗しました。" + error.message);
-        } finally {
             setIsLoading(false);
         }
     };
@@ -130,6 +133,11 @@ function LoginForm() {
                                 placeholder="パスワード"
                             />
                         </div>
+                    </div>
+                    <div className="flex justify-end pt-1">
+                        <Link href="/forgot-password" className="text-xs font-bold text-gray-500 hover:text-[#bf0000]">
+                            パスワードをお忘れですか？
+                        </Link>
                     </div>
 
                     <div className="pt-2">

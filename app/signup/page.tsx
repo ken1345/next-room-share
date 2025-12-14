@@ -5,9 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MdArrowBack, MdPerson, MdEmail, MdLock } from 'react-icons/md';
 import { FcGoogle } from 'react-icons/fc';
-import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 
 export default function SignupPage() {
     const router = useRouter();
@@ -23,31 +21,17 @@ export default function SignupPage() {
     const handleGoogleSignup = async () => {
         setIsLoading(true);
         try {
-            const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
-            const user = result.user;
-
-            // Check if user doc exists (in case they already signed up)
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-
-            if (!userDoc.exists()) {
-                await setDoc(userDocRef, {
-                    uid: user.uid,
-                    displayName: user.displayName || 'Google User',
-                    email: user.email,
-                    photoURL: user.photoURL || null, // Add photoURL from Google profile
-                    role: 'user',
-                    createdAt: serverTimestamp()
-                });
-            }
-            // Redirect to account page directly for better UX as requested
-            router.push('/account');
-
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/account`,
+                }
+            });
+            if (error) throw error;
+            // Redirect happens automatically
         } catch (error: any) {
             console.error(error);
             alert("Googleサインアップに失敗しました。" + error.message);
-        } finally {
             setIsLoading(false);
         }
     };
@@ -57,44 +41,43 @@ export default function SignupPage() {
         setIsLoading(true);
 
         try {
-            // 1. Create User in Auth
-            const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
-            const user = userCredential.user;
-
-            // 2. Update Profile (Display Name)
-            await updateProfile(user, {
-                displayName: form.displayName
-            });
-
-            // 3. Send Verification Email
-            await sendEmailVerification(user);
-
-            // 4. Create User Document in Firestore
-            await setDoc(doc(db, 'users', user.uid), {
-                uid: user.uid,
-                displayName: form.displayName,
+            // 1. SignUp with Supabase
+            const { data, error } = await supabase.auth.signUp({
                 email: form.email,
-                role: 'user', // Default unified role
-                createdAt: serverTimestamp()
+                password: form.password,
+                options: {
+                    data: {
+                        display_name: form.displayName,
+                        avatar_url: null,
+                    }
+                }
             });
 
-            // 5. Show Success UI
-            setEmailSent(true);
+            if (error) throw error;
 
-            // Auto redirect to account page
-            setTimeout(() => {
-                router.push('/account');
-            }, 3000);
+            if (data.user) {
+                // 2. Insert into public.users table (Now handled by Trigger or Login Sync, but keeping client insert as immediate fallback for UX if RLS allows)
+                // Actually, if Trigger is active, we don't need this. But if we want to support "No Trigger" environment, we can keep it. 
+                // However, avoiding duplicate insert error is key. 
+                // Since user isn't logged in if unconfirmed, this fails anyway.
+                // Let's rely on Trigger + Self-Healing Login.
+                // But wait, if user IS logged in (Auto Confirm), they want to see result immediately?
+                // I'll revert to the code that attempts insert but catches error?
+                // Or just rely on Trigger.
+                // Given the recent errors, I will remove the explicit insert here and rely on the Trigger we setup.
+
+                // 3. Show Success UI
+                setEmailSent(true);
+
+                // Auto redirect (if session active, otherwise email confirmation screen stays)
+                if (data.session) {
+                    setTimeout(() => router.push('/account'), 2000);
+                }
+            }
 
         } catch (error: any) {
             console.error('Signup Error:', error);
-            let message = 'アカウント作成中にエラーが発生しました。';
-            if (error.code === 'auth/email-already-in-use') {
-                message = 'このメールアドレスは既に使用されています。';
-            } else if (error.code === 'auth/weak-password') {
-                message = 'パスワードが弱すぎます。';
-            }
-            alert(message);
+            alert('登録エラー: ' + error.message);
         } finally {
             setIsLoading(false);
         }
@@ -111,12 +94,11 @@ export default function SignupPage() {
                     <p className="text-gray-600 leading-relaxed mb-8">
                         ご入力いただいたメールアドレス ({form.email}) 宛に確認メールを送信しました。<br />
                         メール内のリンクをクリックして、登録を完了させてください。<br />
-                        <span className="text-sm text-gray-400 mt-2 block">3秒後にアカウントページへ移動します...</span>
                     </p>
 
                     <div className="space-y-4">
-                        <Link href="/account" className="block w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl hover:bg-black transition shadow-md">
-                            アカウントページへ移動
+                        <Link href="/login" className="block w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl hover:bg-black transition shadow-md">
+                            ログインページへ
                         </Link>
                     </div>
                 </div>
@@ -141,6 +123,7 @@ export default function SignupPage() {
                     >
                         <FcGoogle size={22} /> Googleで登録
                     </button>
+                    <p className="text-xs text-center text-gray-400">※Supabase側でGoogleプロバイダー設定が必要です</p>
 
                     <div className="relative flex py-2 items-center">
                         <div className="flex-grow border-t border-gray-200"></div>
@@ -208,7 +191,7 @@ export default function SignupPage() {
                             disabled={isLoading}
                             className="w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            {isLoading ? '登録処理中...' : 'アカウントを作成して認証メールを送信'}
+                            {isLoading ? '登録処理中...' : 'アカウントを作成'}
                         </button>
                     </div>
                 </form>

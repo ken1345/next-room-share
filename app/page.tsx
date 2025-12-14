@@ -160,85 +160,9 @@ export default function Home() {
 
       {/* ... 前回の「7. コンセプト・趣味別」セクションの閉じタグ </div> </section> の直後に貼り付けてください ... */}
 
-      {/* 8. 【NEW】新着物件ギャラリー（画像メインでずらっと表示） */}
-      <section className="bg-gray-50 py-12 border-t">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-end mb-6">
-            <SectionTitle title="新着のシェアハウス" subtitle="本日公開！写真で選ぶ最新物件" />
-            <button className="text-[#bf0000] font-bold border border-[#bf0000] bg-white px-4 py-1 rounded-full hover:bg-[#bf0000] hover:text-white transition text-sm">
-              もっと見る
-            </button>
-          </div>
+      {/* 8. 【NEW】新着物件ギャラリー（Supabaseから取得） */}
+      <ListingGallery />
 
-          {/* 画像メインのグリッドレイアウト */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {/* 物件 1 */}
-            <PhotoPropertyCard
-              image="bg-orange-100"
-              price="5.4"
-              station="下北沢駅 5分"
-              badges={['個室', '女性専用']}
-              title="カフェのような広いキッチンがある家"
-            />
-            {/* 物件 2 */}
-            <PhotoPropertyCard
-              image="bg-blue-100"
-              price="4.8"
-              station="高円寺駅 8分"
-              badges={['ドミトリー', '国際交流']}
-              title="English Only！週末はパーティー"
-            />
-            {/* 物件 3 */}
-            <PhotoPropertyCard
-              image="bg-green-100"
-              price="6.2"
-              station="渋谷駅 15分"
-              badges={['個室', '新築']}
-              title="屋上テラスでヨガができる新築物件"
-            />
-            {/* 物件 4 */}
-            <PhotoPropertyCard
-              image="bg-purple-100"
-              price="3.9"
-              station="池袋駅 10分"
-              badges={['半個室', '即入居可']}
-              title="初期費用0円キャンペーン中！"
-            />
-            {/* 物件 5 */}
-            <PhotoPropertyCard
-              image="bg-yellow-100"
-              price="7.5"
-              station="恵比寿駅 6分"
-              badges={['個室', 'サウナ付']}
-              title="【レア物件】プライベートサウナ完備"
-            />
-            {/* 物件 6 */}
-            <PhotoPropertyCard
-              image="bg-red-100"
-              price="5.0"
-              station="吉祥寺駅 12分"
-              badges={['個室', 'ペット可']}
-              title="猫と暮らすシェアハウス"
-            />
-            {/* 物件 7 */}
-            <PhotoPropertyCard
-              image="bg-indigo-100"
-              price="4.2"
-              station="中野駅 7分"
-              badges={['個室', '防音']}
-              title="ゲーマー・配信者向け防音室あり"
-            />
-            {/* 物件 8 */}
-            <PhotoPropertyCard
-              image="bg-teal-100"
-              price="5.8"
-              station="三軒茶屋 9分"
-              badges={['個室', 'リノベ']}
-              title="古民家リノベーション。縁側のある暮らし"
-            />
-          </div>
-        </div>
-      </section>
 
       {/* 9. 【NEW】リアル口コミマップ（Leaflet版） */}
       <section className="bg-white py-16 border-t relative">
@@ -338,6 +262,70 @@ function FeatureCard({ color, icon, title }: { color: string, icon: React.ReactN
       <div className="text-2xl mb-1">{icon}</div>
       <span className="font-bold text-sm text-gray-700">{title}</span>
     </div>
+  );
+}
+
+// ================= Listing Gallery with Supabase =================
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+
+function ListingGallery() {
+  const [listings, setListings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      const { data, error } = await supabase
+        .from('listings')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(8);
+
+      if (error) {
+        console.error("Error fetching listings:", error);
+      } else {
+        setListings(data || []);
+      }
+      setLoading(false);
+    };
+    fetchListings();
+  }, []);
+
+  if (loading) return <div className="py-20 text-center text-gray-500">物件情報を読み込み中...</div>;
+
+  return (
+    <section className="bg-gray-50 py-12 border-t">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-end mb-6">
+          <SectionTitle title="新着のシェアハウス" subtitle="本日公開！写真で選ぶ最新物件" />
+          <button className="text-[#bf0000] font-bold border border-[#bf0000] bg-white px-4 py-1 rounded-full hover:bg-[#bf0000] hover:text-white transition text-sm">
+            もっと見る
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          {listings.length === 0 ? (
+            <div className="col-span-4 text-center py-10 text-gray-400">
+              まだ投稿された物件はありません。
+            </div>
+          ) : (
+            listings.map((l) => (
+              <PhotoPropertyCard
+                key={l.id}
+                id={l.id}
+                // Use stored image URL or mock fallback
+                imageUrl={l.images && l.images.length > 0 ? l.images[0] : undefined}
+                image={(!l.images || l.images.length === 0) ? 'bg-gray-200' : undefined}
+                price={String(l.price)}
+                station={l.address ? l.address.split(' ')[0] : '駅指定なし'} // Simple fallback
+                badges={l.amenities ? l.amenities.slice(0, 2) : []}
+                title={l.title}
+              />
+            ))
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 

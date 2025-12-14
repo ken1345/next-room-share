@@ -4,14 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { MdArrowBack, MdSave, MdCloudUpload, MdPerson } from 'react-icons/md';
-import { auth, db, storage } from '@/lib/firebase';
-import { onAuthStateChanged, updateProfile, updatePassword, User } from 'firebase/auth';
-import { doc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { supabase } from '@/lib/supabase';
 
 export default function EditProfilePage() {
     const router = useRouter();
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<any>(null); // Supabase User
     const [isLoading, setIsLoading] = useState(false);
 
     // Form State
@@ -19,20 +16,36 @@ export default function EditProfilePage() {
     const [password, setPassword] = useState('');
     const [newImageFile, setNewImageFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [currentPhotoURL, setCurrentPhotoURL] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            if (currentUser) {
-                setUser(currentUser);
-                setDisplayName(currentUser.displayName || '');
-                setPreviewUrl(currentUser.photoURL);
-            } else {
+        const fetchUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
                 router.push('/login');
+                return;
             }
-        });
-        return () => unsubscribe();
+
+            const currentUser = session.user;
+            setUser(currentUser);
+
+            // Try to fetch from public.users first
+            const { data: profile } = await supabase.from('users').select('*').eq('id', currentUser.id).single();
+
+            if (profile) {
+                setDisplayName(profile.display_name || '');
+                setCurrentPhotoURL(profile.photo_url);
+                setPreviewUrl(profile.photo_url);
+            } else {
+                // Fallback to metadata
+                setDisplayName(currentUser.user_metadata?.display_name || currentUser.user_metadata?.full_name || '');
+                setCurrentPhotoURL(currentUser.user_metadata?.avatar_url);
+                setPreviewUrl(currentUser.user_metadata?.avatar_url);
+            }
+        };
+        fetchUser();
     }, [router]);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,66 +63,54 @@ export default function EditProfilePage() {
         setIsLoading(true);
 
         try {
-            let photoURL = user.photoURL;
+            let photoURL = currentPhotoURL;
 
             // 1. Upload Image if changed
             if (newImageFile) {
-                try {
-                    // Check if storage bucket is configured
-                    // Note: storage.app.options might differ in structure depending on SDK version, 
-                    // but verifying bucket existence is good practice.
-                    if (!storage.app.options.storageBucket) {
-                        throw new Error("Firebase Storage is not configured. (Check NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET)");
-                    }
+                const filePath = `profiles/${user.id}/${Date.now()}_${newImageFile.name}`;
+                const { data, error: uploadError } = await supabase.storage
+                    .from('images') // Ensure 'images' bucket exists in Supabase
+                    .upload(filePath, newImageFile, { upsert: true });
 
-                    const storageRef = ref(storage, `profile_images/${user.uid}/${newImageFile.name}`);
+                if (uploadError) throw uploadError;
 
-                    // Add timeout promise race to prevent indefinite hang
-                    const uploadPromise = uploadBytes(storageRef, newImageFile);
-                    const timeoutPromise = new Promise<never>((_, reject) =>
-                        setTimeout(() => reject(new Error("Timeout: Image upload took too long. Check if Storage is enabled in Firebase Console.")), 15000)
-                    );
+                // Get Public URL
+                const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(filePath);
+                photoURL = publicUrl;
+            }
 
-                    const snapshot = await Promise.race([uploadPromise, timeoutPromise]) as any;
-                    photoURL = await getDownloadURL(snapshot.ref);
-
-                } catch (error: any) {
-                    console.error("Storage Error:", error);
-                    alert(`画像のアップロードに失敗しました: ${error.message}\n\nプロフィール名とパスワードの更新のみ続行します。`);
-                    // Continue without updating image
+            // 2. Update Supabase Auth (Password & Metadata)
+            const authUpdates: any = {
+                data: {
+                    display_name: displayName,
+                    avatar_url: photoURL,
                 }
-            }
-
-            // 2. Update Auth Profile (Display Name & Photo)
-            if (displayName !== user.displayName || photoURL !== user.photoURL) {
-                await updateProfile(user, {
-                    displayName: displayName,
-                    photoURL: photoURL
-                });
-
-                // Update Firestore User Doc as well for consistency
-                const userDocRef = doc(db, 'users', user.uid);
-                await updateDoc(userDocRef, {
-                    displayName: displayName,
-                    photoURL: photoURL
-                });
-            }
-
-            // 3. Update Password if provided
+            };
             if (password) {
-                await updatePassword(user, password);
+                authUpdates.password = password;
             }
+
+            const { error: authError } = await supabase.auth.updateUser(authUpdates);
+            if (authError) throw authError;
+
+            // 3. Update public.users Table
+            const { error: dbError } = await supabase
+                .from('users')
+                .upsert({
+                    id: user.id,
+                    display_name: displayName,
+                    photo_url: photoURL,
+                    email: user.email // Ensure email is in sync or handled by trigger
+                });
+
+            if (dbError) throw dbError;
 
             alert("プロフィールを更新しました！");
             router.push('/account');
 
         } catch (error: any) {
             console.error("Update Error:", error);
-            if (error.code === 'auth/requires-recent-login') {
-                alert("セキュリティのため、パスワード変更には再ログインが必要です。ログアウトして再度お試しください。");
-            } else {
-                alert("更新に失敗しました: " + error.message);
-            }
+            alert("更新に失敗しました: " + error.message);
         } finally {
             setIsLoading(false);
         }

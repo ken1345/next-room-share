@@ -3,7 +3,7 @@ import { MdTrain } from "react-icons/md";
 import Link from "next/link";
 
 interface PhotoPropertyCardProps {
-    id?: number;
+    id?: string | number;
     image?: string;
     imageUrl?: string;
     price: string;

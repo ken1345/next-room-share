@@ -1,13 +1,13 @@
 
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { MdCloudUpload, MdHome, MdAttachMoney, MdTrain, MdInfo, MdCheck, MdArrowBack, MdEdit } from 'react-icons/md';
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
 
-export default function HostPage() {
+function HostPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const editId = searchParams.get('edit');
@@ -703,6 +703,14 @@ export default function HostPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+export default function HostPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <HostPageContent />
+        </Suspense>
     );
 }
 

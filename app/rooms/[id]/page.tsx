@@ -1,7 +1,7 @@
 "use client";
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { MdTrain, MdLocationOn, MdArrowBack, MdCheck, MdPerson, MdEmail, MdShare, MdFavoriteBorder } from 'react-icons/md';
+import { MdTrain, MdLocationOn, MdArrowBack, MdCheck, MdPerson, MdEmail, MdShare, MdFavoriteBorder, MdFavorite } from 'react-icons/md';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import ImageGallery from '@/components/ImageGallery';
@@ -13,6 +13,8 @@ export default function RoomDetailsPage() {
     const [property, setProperty] = useState<any>(null);
     const [host, setHost] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isLiked, setIsLiked] = useState(false);
+    const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -54,6 +56,51 @@ export default function RoomDetailsPage() {
         };
         incrementView();
     }, [id]);
+
+    useEffect(() => {
+        const checkLikeStatus = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user && id) {
+                setUser(session.user);
+                const { data } = await supabase
+                    .from('favorites')
+                    .select('id')
+                    .eq('user_id', session.user.id)
+                    .eq('listing_id', id)
+                    .single();
+                setIsLiked(!!data);
+            }
+        };
+        checkLikeStatus();
+    }, [id]);
+
+    const handleToggleLike = async () => {
+        if (!user) {
+            alert("お気に入り登録にはログインが必要です");
+            return;
+        }
+
+        if (isLiked) {
+            // Unlike
+            const { error } = await supabase
+                .from('favorites')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('listing_id', id);
+
+            if (!error) setIsLiked(false);
+        } else {
+            // Like
+            const { error } = await supabase
+                .from('favorites')
+                .insert({
+                    user_id: user.id,
+                    listing_id: id
+                });
+
+            if (!error) setIsLiked(true);
+        }
+    };
 
     if (loading) {
         return <div className="min-h-screen flex items-center justify-center font-bold text-gray-500">読み込み中...</div>;
@@ -169,6 +216,17 @@ export default function RoomDetailsPage() {
                             <Link href={`/rooms/${id}/contact`} className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition text-lg flex items-center justify-center gap-2 mb-3">
                                 <MdEmail /> 空室確認・問い合わせ
                             </Link>
+
+                            <button
+                                onClick={handleToggleLike}
+                                className={`w-full font-bold py-3 rounded-xl border transition flex items-center justify-center gap-2 ${isLiked
+                                        ? 'bg-red-50 text-[#bf0000] border-red-100'
+                                        : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                    }`}
+                            >
+                                {isLiked ? <MdFavorite size={20} /> : <MdFavoriteBorder size={20} />}
+                                {isLiked ? 'お気に入り登録済み' : 'お気に入りに登録'}
+                            </button>
                         </div>
                     </aside>
                 </div>

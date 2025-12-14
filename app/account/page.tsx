@@ -12,6 +12,7 @@ export default function AccountPage() {
     const [user, setUser] = useState<any>(null);
     const [userData, setUserData] = useState<any>(null);
     const [myListings, setMyListings] = useState<any[]>([]);
+    const [favorites, setFavorites] = useState<any[]>([]);
     const [threads, setThreads] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -75,6 +76,19 @@ export default function AccountPage() {
                         console.error("Error fetching threads:", threadsError);
                     }
 
+                    // Fetch Favorites
+                    const { data: favoritesData } = await supabase
+                        .from('favorites')
+                        .select(`
+                            id,
+                            listing:listings(*)
+                        `)
+                        .eq('user_id', session.user.id)
+                        .order('created_at', { ascending: false });
+
+                    if (favoritesData) {
+                        setFavorites(favoritesData.map(f => f.listing));
+                    }
                 } catch (error) {
                     console.error("Error fetching data:", error);
                 }
@@ -237,6 +251,37 @@ export default function AccountPage() {
                             <Link href="/host" className="inline-block mt-4 text-[#bf0000] font-bold hover:underline">
                                 物件を掲載する
                             </Link>
+                        </div>
+                    )}
+                </section>
+
+                {/* Favorites Section */}
+                <section>
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 px-1">お気に入りした物件</h3>
+                    {favorites.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {favorites.map((l) => (
+                                <div key={l.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                    <div className="h-[260px] relative">
+                                        <PhotoPropertyCard
+                                            id={l.id}
+                                            imageUrl={l.images && l.images.length > 0 ? l.images[0] : undefined}
+                                            image={(!l.images || l.images.length === 0) ? 'bg-gray-200' : undefined}
+                                            price={(Number(l.price) / 10000).toFixed(1)}
+                                            station={l.address ? l.address.split(' ')[0] : '駅指定なし'}
+                                            badges={l.amenities ? l.amenities.slice(0, 2) : []}
+                                            title={l.title}
+                                            viewCount={l.view_count || 0}
+                                            favoritesCount={l.favorites_count || 0}
+                                            inquiryCount={l.inquiry_count || 0}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 text-center text-gray-500">
+                            <p>お気に入りに登録された物件はありません。</p>
                         </div>
                     )}
                 </section>

@@ -278,6 +278,7 @@ function ListingGallery() {
       const { data, error } = await supabase
         .from('listings')
         .select('*')
+        .eq('is_public', true)
         .order('created_at', { ascending: false })
         .limit(8);
 

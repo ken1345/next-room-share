@@ -75,6 +75,7 @@ function SearchContent() {
             const { data, error } = await supabase
                 .from('listings')
                 .select('*')
+                .eq('is_public', true)
                 .order('created_at', { ascending: false });
 
             if (error) {

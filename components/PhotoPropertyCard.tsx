@@ -10,6 +10,7 @@ interface PhotoPropertyCardProps {
     station: string;
     badges: string[];
     title: string;
+    viewCount?: number;
     favoritesCount?: number;
     inquiryCount?: number;
 }

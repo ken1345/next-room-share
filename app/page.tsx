@@ -44,9 +44,7 @@ export default function Home() {
           <Link href="/search?mode=station">
             <SearchButton icon={<MdTrain />} text="沿線・駅から" isOutline />
           </Link>
-          <Link href="/search?mode=map">
-            <SearchButton icon={<MdMap />} text="地図から" isOutline />
-          </Link>
+
         </div>
       </section>
 

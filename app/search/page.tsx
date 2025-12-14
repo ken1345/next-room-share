@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { MdSearch, MdLocationOn, MdTrain, MdMap, MdFilterList, MdCheckBox, MdCheckBoxOutlineBlank, MdSort, MdKeyboardArrowRight, MdCheck, MdArrowBack, MdSave } from 'react-icons/md';
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
 import { supabase } from '@/lib/supabase';
@@ -51,6 +52,7 @@ type StationSelection = {
 function SearchContent() {
     const searchParams = useSearchParams();
     const initialMode = searchParams.get('mode') || 'area'; // area, station, map
+    const featureParam = searchParams.get('feature');
 
     const [activeTab, setActiveTab] = useState(initialMode);
     const [filterType, setFilterType] = useState<string[]>([]);
@@ -227,6 +229,20 @@ function SearchContent() {
         // p.price is raw integer
         if (p.price > rentRange * 10000) return false;
 
+        if (p.price > rentRange * 10000) return false;
+
+        // 6. Feature Filter (New)
+        if (featureParam) {
+            if (featureParam === 'pet' && !p.amenities?.includes('ペット相談可')) return false;
+            if (featureParam === 'wifi' && !p.amenities?.includes('高速インターネット(光回線)')) return false;
+            if (featureParam === 'foreigner' && !p.amenities?.includes('外国人歓迎')) return false;
+            if (featureParam === 'female') {
+                if (p.gender_restriction !== 'female' && !p.amenities?.includes('女性限定')) return false;
+            }
+            if (featureParam === 'cheap' && p.price > 30000) return false;
+            if (featureParam === 'diy' && !p.amenities?.includes('DIY可')) return false;
+        }
+
         return true;
     });
 
@@ -346,6 +362,22 @@ function SearchContent() {
                                 </select>
                             </div>
                         </div>
+
+                        {/* Active Feature Alert */}
+                        {featureParam && (
+                            <div className="bg-red-50 border border-red-100 text-[#bf0000] px-4 py-3 rounded-xl mb-6 flex items-center justify-between">
+                                <span className="font-bold flex items-center gap-2">
+                                    <MdCheck />
+                                    {featureParam === 'pet' && 'ペット相談可の物件'}
+                                    {featureParam === 'wifi' && '高速ネット（光回線）あり'}
+                                    {featureParam === 'foreigner' && '外国人歓迎の物件'}
+                                    {featureParam === 'female' && '女性専用・女性限定'}
+                                    {featureParam === 'cheap' && '家賃3万円以下の格安物件'}
+                                    {featureParam === 'diy' && 'DIY可・改装可能な物件'}
+                                </span>
+                                <Link href="/search" className="text-sm underline hover:no-underline">解除する</Link>
+                            </div>
+                        )}
 
                         {/* Hierarchical Area Selector (Visible only when tab is 'area') */}
                         {activeTab === 'area' && (

@@ -101,12 +101,12 @@ export default function Home() {
       <section className="container mx-auto px-4 mt-10">
         <SectionTitle title="こだわり条件から探す" subtitle="あなたのライフスタイルに合う部屋は？" />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <FeatureCard color="bg-orange-50" icon={<MdPets className="text-orange-500" />} title="ペット可" />
-          <FeatureCard color="bg-blue-50" icon={<MdWifi className="text-blue-500" />} title="ネット高速" />
-          <FeatureCard color="bg-green-50" icon={<MdPublic className="text-green-500" />} title="国際交流" />
-          <FeatureCard color="bg-pink-50" icon={<MdFemale className="text-pink-500" />} title="女性専用" />
-          <FeatureCard color="bg-yellow-50" icon={<MdAttachMoney className="text-yellow-600" />} title="格安3万以下" />
-          <FeatureCard color="bg-purple-50" icon={<MdFiberNew className="text-purple-500" />} title="新築・改装" />
+          <Link href="/search?feature=pet"><FeatureCard color="bg-orange-50" icon={<MdPets className="text-orange-500" />} title="ペット可" /></Link>
+          <Link href="/search?feature=wifi"><FeatureCard color="bg-blue-50" icon={<MdWifi className="text-blue-500" />} title="ネット高速" /></Link>
+          <Link href="/search?feature=foreigner"><FeatureCard color="bg-green-50" icon={<MdPublic className="text-green-500" />} title="国際交流" /></Link>
+          <Link href="/search?feature=female"><FeatureCard color="bg-pink-50" icon={<MdFemale className="text-pink-500" />} title="女性専用" /></Link>
+          <Link href="/search?feature=cheap"><FeatureCard color="bg-yellow-50" icon={<MdAttachMoney className="text-yellow-600" />} title="格安3万以下" /></Link>
+          <Link href="/search?feature=diy"><FeatureCard color="bg-purple-50" icon={<MdFiberNew className="text-purple-500" />} title="新築・改装" /></Link>
         </div>
       </section>
 

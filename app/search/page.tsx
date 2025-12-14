@@ -1,8 +1,9 @@
 "use client";
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MdSearch, MdLocationOn, MdTrain, MdMap, MdFilterList, MdCheckBox, MdCheckBoxOutlineBlank, MdSort, MdKeyboardArrowRight, MdCheck, MdArrowBack } from 'react-icons/md';
+import { MdSearch, MdLocationOn, MdTrain, MdMap, MdFilterList, MdCheckBox, MdCheckBoxOutlineBlank, MdSort, MdKeyboardArrowRight, MdCheck, MdArrowBack, MdSave } from 'react-icons/md';
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
+import { supabase } from '@/lib/supabase';
 
 // Area Data Structure
 import AREA_DATA_JSON from '@/data/generated-area-data.json';
@@ -45,8 +46,7 @@ type StationSelection = {
     station: string | null;
 };
 
-// Mock Data
-import { MOCK_PROPERTIES } from '@/data/mock-properties';
+// Mock Data removed
 
 function SearchContent() {
     const searchParams = useSearchParams();
@@ -54,12 +54,92 @@ function SearchContent() {
 
     const [activeTab, setActiveTab] = useState(initialMode);
     const [filterType, setFilterType] = useState<string[]>([]);
+    const [rentRange, setRentRange] = useState<number>(15);
+    const [keyword, setKeyword] = useState('');
+
+    // Data State
+    const [listings, setListings] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<any>(null);
 
     // Area Selection State
     const [areaSelection, setAreaSelection] = useState<AreaSelection>({ region: null, prefecture: null, city: null });
 
     // Station Selection State
     const [stationSelection, setStationSelection] = useState<StationSelection>({ prefecture: null, line: null, station: null });
+
+    // Fetch Data
+    useEffect(() => {
+        const fetchListings = async () => {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('listings')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Error fetching listings:", error);
+            } else {
+                setListings(data || []);
+            }
+            setLoading(false);
+        };
+
+        const checkUserAndLoadPrefs = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                setUser(session.user);
+                // Load preferences
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('search_preferences')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (data?.search_preferences) {
+                    const prefs = data.search_preferences as any;
+                    // Only load valid prefs
+                    if (prefs.activeTab) setActiveTab(prefs.activeTab);
+                    if (prefs.areaSelection) setAreaSelection(prefs.areaSelection);
+                    if (prefs.stationSelection) setStationSelection(prefs.stationSelection);
+                    if (prefs.rentRange) setRentRange(prefs.rentRange);
+                    if (prefs.keyword) setKeyword(prefs.keyword);
+                    if (prefs.filterType) setFilterType(prefs.filterType);
+                }
+            }
+        };
+
+        fetchListings();
+        checkUserAndLoadPrefs();
+    }, []);
+
+    const saveConditions = async () => {
+        if (!user) {
+            alert("検索条件を保存するにはログインが必要です。");
+            return;
+        }
+
+        const preferences = {
+            activeTab,
+            areaSelection,
+            stationSelection,
+            rentRange,
+            keyword,
+            filterType
+        };
+
+        const { error } = await supabase
+            .from('users')
+            .update({ search_preferences: preferences })
+            .eq('id', user.id);
+
+        if (error) {
+            console.error("Error saving preferences:", error);
+            alert("保存に失敗しました。");
+        } else {
+            alert("検索条件を保存しました！次回訪問時に自動的に適用されます。");
+        }
+    };
 
     // Area Handlers
     // Area Handlers
@@ -95,23 +175,56 @@ function SearchContent() {
     };
 
     // Filtering logic (simple mock)
-    const filteredProperties = MOCK_PROPERTIES.filter(p => {
-        // Area Filter
+    // Filtering logic
+    const filteredProperties = listings.filter(p => {
+        // 1. Keyword Filter (Title, Description, Address)
+        if (keyword) {
+            const k = keyword.toLowerCase();
+            const text = (p.title + p.description + p.address).toLowerCase();
+            if (!text.includes(k)) return false;
+        }
+
+        // 2. Area Filter
         if (activeTab === 'area') {
-            if (areaSelection.city && p.area !== areaSelection.city) return false;
-            // Note: If only region/pref selected, we'd need more logic, but for now focusing on city match.
-            // If data had pref/region fields we could filter easily.
+            // Region/Prefecture/City
+            // Note: Region is not stored in DB, but derived from Prefecture usually. 
+            // We'll rely on Prefecture/City matching.
+            if (areaSelection.prefecture && p.prefecture !== areaSelection.prefecture) return false;
+            if (areaSelection.city && p.city !== areaSelection.city) return false;
         }
 
-        // Station Filter
+        // 3. Station Filter
         if (activeTab === 'station') {
-            if (stationSelection.station && !p.station.includes(stationSelection.station)) return false;
+            if (stationSelection.prefecture && p.prefecture !== stationSelection.prefecture) return false;
+            // Line filtering might be fuzzy if naming varies, but let's try exact match or includes
+            if (stationSelection.line && p.station_line && !p.station_line.includes(stationSelection.line)) return false;
+            if (stationSelection.station && p.station_name && !p.station_name.includes(stationSelection.station)) return false;
         }
 
-        // Type Filter (placeholder logic)
+        // 4. Room Type Filter
         if (filterType.length > 0) {
-            return true;
+            // p.room_type should match one of the selected types
+            // defined types in host page: private, semi, shared
+            // UI labels: 個室, ドミトリー, 半個室, シェアハウス
+            // Mapping: '個室'->'private', '半個室'->'semi', 'ドミトリー'->'shared'
+            // Let's create a map or just check includes if we store Japanese. 
+            // We stored code 'private', 'semi' etc.
+
+            // Map UI label to Code
+            const typeCodes = [];
+            if (filterType.includes('個室')) typeCodes.push('private');
+            if (filterType.includes('半個室')) typeCodes.push('semi');
+            if (filterType.includes('ドミトリー')) typeCodes.push('shared');
+            if (filterType.includes('シェアハウス')) typeCodes.push('shared'); // Synonym?
+
+            if (!typeCodes.includes(p.room_type)) return false;
         }
+
+        // 5. Rent Filter
+        // rentRange is Max Price in Man-en (e.g. 15 -> 150000)
+        // p.price is raw integer
+        if (p.price > rentRange * 10000) return false;
+
         return true;
     });
 
@@ -123,6 +236,8 @@ function SearchContent() {
                     <div className="relative">
                         <input
                             type="text"
+                            value={keyword}
+                            onChange={(e) => setKeyword(e.target.value)}
                             placeholder="駅名・エリア・キーワードを入力"
                             className="w-full pl-10 pr-4 py-3 rounded-full text-gray-800 focus:outline-none shadow-sm font-bold"
                         />
@@ -133,7 +248,7 @@ function SearchContent() {
 
             {/* Mode Tabs */}
             <div className="bg-white border-b sticky top-[72px] z-40">
-                <div className="container mx-auto px-4 max-w-4xl grid grid-cols-3 text-center text-sm md:text-base font-bold text-gray-500">
+                <div className="container mx-auto px-4 max-w-4xl grid grid-cols-2 text-center text-sm md:text-base font-bold text-gray-500">
                     <button
                         onClick={() => setActiveTab('area')}
                         className={`py-3 border-b-4 transition flex items-center justify-center gap-1 ${activeTab === 'area' ? 'border-[#bf0000] text-[#bf0000]' : 'border-transparent hover:bg-gray-50'}`}
@@ -146,12 +261,7 @@ function SearchContent() {
                     >
                         <MdTrain /> 沿線・駅から
                     </button>
-                    <button
-                        onClick={() => setActiveTab('map')}
-                        className={`py-3 border-b-4 transition flex items-center justify-center gap-1 ${activeTab === 'map' ? 'border-[#bf0000] text-[#bf0000]' : 'border-transparent hover:bg-gray-50'}`}
-                    >
-                        <MdMap /> 地図から
-                    </button>
+
                 </div>
             </div>
 
@@ -165,31 +275,53 @@ function SearchContent() {
                                 <MdFilterList size={20} /> 絞り込み条件
                             </div>
 
-                            {/* 部屋タイプ */}
                             <div className="mb-6">
                                 <h4 className="text-sm font-bold text-gray-600 mb-2">部屋タイプ</h4>
                                 <div className="space-y-2">
-                                    {['個室', 'ドミトリー', '半個室', 'シェアハウス'].map(t => (
+                                    {['個室', 'ドミトリー', '半個室'].map(t => (
                                         <label key={t} className="flex items-center gap-2 cursor-pointer group">
-                                            <span className="text-gray-400 group-hover:text-[#bf0000] transition"><MdCheckBoxOutlineBlank size={20} /></span>
-                                            <span className="text-sm">{t}</span>
+                                            <div className="relative flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={filterType.includes(t)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) setFilterType(prev => [...prev, t]);
+                                                        else setFilterType(prev => prev.filter(x => x !== t));
+                                                    }}
+                                                    className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all checked:border-[#bf0000] checked:bg-[#bf0000]"
+                                                />
+                                                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                                    <MdCheck size={14} />
+                                                </span>
+                                            </div>
+                                            <span className="text-sm text-gray-700">{t}</span>
                                         </label>
                                     ))}
                                 </div>
                             </div>
 
                             {/* 家賃 */}
+                            {/* 家賃 */}
                             <div className="mb-6">
-                                <h4 className="text-sm font-bold text-gray-600 mb-2">家賃範囲</h4>
-                                <input type="range" className="w-full accent-[#bf0000]" />
+                                <h4 className="text-sm font-bold text-gray-600 mb-2">家賃上限: {rentRange}万円</h4>
+                                <input
+                                    type="range"
+                                    min="3" max="20" step="1"
+                                    value={rentRange}
+                                    onChange={(e) => setRentRange(Number(e.target.value))}
+                                    className="w-full accent-[#bf0000]"
+                                />
                                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                                     <span>3万</span>
-                                    <span>15万</span>
+                                    <span>20万</span>
                                 </div>
                             </div>
 
-                            <button className="w-full bg-gray-800 text-white font-bold py-2 rounded-lg hover:bg-black transition">
-                                この条件で検索
+                            <button
+                                onClick={saveConditions}
+                                className="w-full bg-gray-800 text-white font-bold py-2 rounded-lg hover:bg-black transition flex items-center justify-center gap-2"
+                            >
+                                <MdSave /> 条件を保存して検索
                             </button>
                         </div>
                     </aside>
@@ -198,7 +330,7 @@ function SearchContent() {
                     <main className="flex-1">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="font-bold text-xl text-gray-800">
-                                {activeTab === 'area' ? 'エリアから探す' : activeTab === 'station' ? '沿線・駅から探す' : '地図から探す'}
+                                {activeTab === 'area' ? 'エリアから探す' : '沿線・駅から探す'}
                             </h2>
                             <button className="md:hidden text-sm bg-gray-200 px-3 py-1 rounded font-bold flex items-center gap-1">
                                 <MdFilterList /> 絞り込み
@@ -416,7 +548,18 @@ function SearchContent() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredProperties.map(p => (
                                 <div key={p.id} className="h-[320px]">
-                                    <PhotoPropertyCard {...p} />
+                                    <PhotoPropertyCard
+                                        id={p.id}
+                                        title={p.title}
+                                        price={p.price}
+                                        station={p.station_name ? `${p.station_name} ${p.minutes_to_station}分` : p.address}
+                                        badges={[
+                                            p.room_type === 'private' ? '個室' : p.room_type === 'semi' ? '半個室' : 'ドミトリー',
+                                            ...(p.amenities || []).slice(0, 1)
+                                        ]}
+                                        imageUrl={p.images?.[0]}
+                                        image={!p.images?.length ? 'bg-gray-200' : undefined}
+                                    />
                                 </div>
                             ))}
                         </div>

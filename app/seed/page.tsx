@@ -30,11 +30,36 @@ export default function SeedPage() {
         try {
             // 1. Seed Listings
             for (const prop of MOCK_PROPERTIES) {
-                // Transform to match schema roughly
+                // Parse Station: "JR山手線 渋谷駅 徒歩5分"
+                // MOCK data format might vary, let's look at it.
+                // Assuming "Line Station Min"
                 const stationParts = prop.station.split(' ');
-                const stationName = stationParts[0] || 'Unknown';
-                const minutesStr = stationParts[1]?.replace('分', '') || '0';
+                const stationLine = stationParts.length > 2 ? stationParts[0] : null;
+                const stationName = stationParts.length > 2 ? stationParts[1] : stationParts[0];
+                const minutesStr = (stationParts.length > 2 ? stationParts[2] : stationParts[1])?.replace('徒歩', '').replace('分', '') || '0';
                 const minutesToStation = parseInt(minutesStr);
+
+                // Parse Area: "東京都渋谷区..." or "神奈川県横浜市..."
+                let prefecture = '東京都';
+                let city = '';
+                if (prop.area.includes('東京都')) { prefecture = '東京都'; city = prop.area.replace('東京都', ''); }
+                else if (prop.area.includes('神奈川県')) { prefecture = '神奈川県'; city = prop.area.replace('神奈川県', ''); }
+                else if (prop.area.includes('大阪府')) { prefecture = '大阪府'; city = prop.area.replace('大阪府', ''); }
+                else if (prop.area.includes('埼玉県')) { prefecture = '埼玉県'; city = prop.area.replace('埼玉県', ''); }
+                else if (prop.area.includes('千葉県')) { prefecture = '千葉県'; city = prop.area.replace('千葉県', ''); }
+                else if (prop.area.includes('福岡県')) { prefecture = '福岡県'; city = prop.area.replace('福岡県', ''); }
+
+                // Parse Room Type from Badges
+                let room_type = 'private'; // default
+                if (prop.badges.includes('個室')) room_type = 'private';
+                else if (prop.badges.includes('半個室')) room_type = 'semi';
+                else if (prop.badges.includes('ドミトリー')) room_type = 'shared';
+                else if (prop.badges.includes('シェアハウス')) room_type = 'shared';
+
+                // Parse Gender
+                let gender_restriction = 'any';
+                if (prop.badges.includes('女性限定') || prop.badges.includes('女性専用')) gender_restriction = 'female';
+                if (prop.badges.includes('男性限定')) gender_restriction = 'male';
 
                 const amenities = prop.badges.filter(b =>
                     !['個室', 'ドミトリー', '半個室', '女性専用', '女性限定', '男性限定'].includes(b)
@@ -44,11 +69,21 @@ export default function SeedPage() {
                     title: prop.title,
                     description: `【${prop.area}】${prop.title} - ${prop.badges.join(', ')}`,
                     price: Math.floor(parseFloat(prop.price) * 10000),
-                    address: prop.area, // Simplified
-                    latitude: 35.681236 + (Math.random() - 0.5) * 0.1, // Randomize slightly around Tokyo
+                    address: prop.area,
+
+                    // New Columns
+                    prefecture,
+                    city,
+                    station_line: stationLine,
+                    station_name: stationName,
+                    minutes_to_station: minutesToStation,
+                    room_type,
+                    gender_restriction,
+
+                    latitude: 35.681236 + (Math.random() - 0.5) * 0.1,
                     longitude: 139.767125 + (Math.random() - 0.5) * 0.1,
                     amenities: amenities,
-                    images: [prop.image], // Use the mock image URL directly
+                    images: [prop.image],
                     host_id: user.id
                 });
 

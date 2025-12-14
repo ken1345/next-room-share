@@ -123,22 +123,22 @@ export default function HostPage() {
                     title: form.title,
                     description: form.description,
                     price: parseInt(form.rent),
-                    address: `${form.prefecture}${form.city}`, // Simplified address
-                    // lat/lng would be calculated from address in a real app
+                    address: `${form.prefecture}${form.city}`,
+                    // Detailed location info for filtering
+                    prefecture: form.prefecture,
+                    city: form.city,
+                    station_line: form.stationLine,
+                    station_name: form.stationName,
+                    minutes_to_station: form.minutesToStation ? parseInt(form.minutesToStation) : null,
+                    // Type and Gender
+                    room_type: form.type,
+                    gender_restriction: form.gender,
+
                     latitude: 35.681236,
                     longitude: 139.767125,
                     amenities: form.amenities,
                     images: uploadedImageUrls,
                     host_id: user.id,
-                    // Additional fields from form that map to nothing in schema?
-                    // Schema: amenities, images, host_id.
-                    // We might store 'station info' in description or add columns.
-                    // For now, I'll append station info to description if not supported by schema, 
-                    // OR just rely on description having it?
-                    // Schema: title, description, price, address, latitude, longitude, amenities, images, host_id
-
-                    // Let's prepend station info to description for searchability if schema doesn't support it separately
-                    // Actually, let's keep it simple.
                 });
 
             if (insertError) throw insertError;

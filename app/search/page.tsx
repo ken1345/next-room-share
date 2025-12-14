@@ -190,7 +190,8 @@ function SearchContent() {
             // Note: Region is not stored in DB, but derived from Prefecture usually. 
             // We'll rely on Prefecture/City matching.
             if (areaSelection.prefecture && p.prefecture !== areaSelection.prefecture) return false;
-            if (areaSelection.city && p.city !== areaSelection.city) return false;
+            // City filter removed
+            // if (areaSelection.city && p.city !== areaSelection.city) return false;
         }
 
         // 3. Station Filter
@@ -374,15 +375,7 @@ function SearchContent() {
                                     {areaSelection.prefecture && (
                                         <>
                                             <MdKeyboardArrowRight />
-                                            <span className={`cursor-pointer hover:underline ${!areaSelection.city ? 'font-bold text-gray-800' : ''}`} onClick={() => setAreaSelection(prev => ({ ...prev, city: null }))}>
-                                                {areaSelection.prefecture}
-                                            </span>
-                                        </>
-                                    )}
-                                    {areaSelection.city && (
-                                        <>
-                                            <MdKeyboardArrowRight />
-                                            <span className="font-bold text-[#bf0000]">{areaSelection.city}</span>
+                                            <span className="font-bold text-[#bf0000]">{areaSelection.prefecture}</span>
                                         </>
                                     )}
                                 </div>
@@ -402,8 +395,8 @@ function SearchContent() {
                                                 </button>
                                             ))}
                                         </div>
-                                    ) : !areaSelection.prefecture ? (
-                                        // Step 2: Select Prefecture
+                                    ) : (
+                                        // Step 2: Select Prefecture (Final Step)
                                         <div>
                                             <button onClick={() => setAreaSelection({ region: null, prefecture: null, city: null })} className="mb-3 text-xs flex items-center gap-1 text-gray-400 hover:text-gray-600">
                                                 <MdArrowBack /> 地域選択に戻る
@@ -412,29 +405,15 @@ function SearchContent() {
                                                 {Object.keys(AREA_DATA[areaSelection.region!] || {}).map(pref => (
                                                     <button
                                                         key={pref}
-                                                        onClick={() => handlePrefectureSelect(pref)}
-                                                        className="bg-white py-3 px-2 rounded border border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] transition text-sm font-bold shadow-sm text-gray-800"
+                                                        onClick={() => {
+                                                            // Toggle or simply select
+                                                            // If we want to allow re-selecting, just set it.
+                                                            setAreaSelection(prev => ({ ...prev, prefecture: pref, city: null }));
+                                                        }}
+                                                        className={`py-3 px-2 rounded border transition text-sm font-bold shadow-sm flex items-center justify-center gap-2 ${areaSelection.prefecture === pref ? 'bg-[#bf0000] text-white border-[#bf0000]' : 'bg-white border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] text-gray-800'}`}
                                                     >
                                                         {pref}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        // Step 3: Select City
-                                        <div>
-                                            <button onClick={() => setAreaSelection(prev => ({ ...prev, prefecture: null, city: null }))} className="mb-3 text-xs flex items-center gap-1 text-gray-400 hover:text-gray-600">
-                                                <MdArrowBack /> 都道府県選択に戻る
-                                            </button>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                                {(AREA_DATA[areaSelection.region!][areaSelection.prefecture!] || []).map((city: string) => (
-                                                    <button
-                                                        key={city}
-                                                        onClick={() => handleCitySelect(city)}
-                                                        className={`py-3 px-2 rounded border transition text-sm font-bold shadow-sm flex items-center justify-center gap-2 ${areaSelection.city === city ? 'bg-[#bf0000] text-white border-[#bf0000]' : 'bg-white border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] text-gray-800'}`}
-                                                    >
-                                                        {city}
-                                                        {areaSelection.city === city && <MdCheck />}
+                                                        {areaSelection.prefecture === pref && <MdCheck />}
                                                     </button>
                                                 ))}
                                             </div>

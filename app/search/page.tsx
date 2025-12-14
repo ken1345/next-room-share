@@ -8,32 +8,15 @@ import { supabase } from '@/lib/supabase';
 
 // Area Data Structure
 import AREA_DATA_JSON from '@/data/generated-area-data.json';
+// Train Data Structure
+import TRAIN_DATA_JSON from '@/data/pref_line_station_full.json';
 
 // Area Data Structure (Typed)
 
 const AREA_DATA: { [key: string]: { [key: string]: string[] } } = AREA_DATA_JSON;
 
-// Train Data Structure (Mock)
-const TRAIN_DATA: { [key: string]: { [key: string]: string[] } } = {
-    "東京都": {
-        "JR山手線": ["新宿駅", "渋谷駅", "池袋駅", "恵比寿駅", "高田馬場駅"],
-        "JR中央線": ["東京駅", "新宿駅", "中野駅", "高円寺駅", "吉祥寺駅"],
-        "京王井の頭線": ["渋谷駅", "下北沢駅", "明大前駅", "吉祥寺駅"],
-        "東急田園都市線": ["渋谷駅", "三軒茶屋駅", "駒沢大学駅", "二子玉川駅"],
-    },
-    "神奈川県": {
-        "東急東横線": ["横浜駅", "武蔵小杉駅", "日吉駅"],
-        "JR京浜東北線": ["川崎駅", "横浜駅", "桜木町駅"],
-    },
-    "大阪府": {
-        "JR大阪環状線": ["大阪駅", "天王寺駅", "京橋駅"],
-        "御堂筋線": ["梅田駅", "なんば駅", "天王寺駅"],
-    },
-    "福岡県": {
-        "地下鉄空港線": ["博多駅", "天神駅", "姪浜駅"],
-        "西鉄天神大牟田線": ["西鉄福岡(天神)駅", "薬院駅"],
-    }
-};
+// Train Data Structure (Typed)
+const TRAIN_DATA: { [key: string]: { [key: string]: string[] } } = TRAIN_DATA_JSON;
 
 type AreaSelection = {
     region: string | null;

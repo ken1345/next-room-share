@@ -73,18 +73,64 @@ export default function HostPage() {
         return () => subscription.unsubscribe();
     }, []);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // WebP Conversion Utility
+    const convertToWebP = async (file: File): Promise<File> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    reject(new Error('Canvas context not available'));
+                    return;
+                }
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                            type: 'image/webp',
+                            lastModified: Date.now(),
+                        });
+                        resolve(newFile);
+                    } else {
+                        reject(new Error('Conversion failed'));
+                    }
+                }, 'image/webp', 0.8); // Quality 0.8
+            };
+            img.onerror = (err) => reject(err);
+            img.src = URL.createObjectURL(file);
+        });
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setImageFiles(prev => [...prev, file]);
-            const url = URL.createObjectURL(file);
-            setPreviewUrls(prev => [...prev, url]);
+            const originalFile = e.target.files[0];
+            try {
+                // Convert to WebP immediately
+                const webpFile = await convertToWebP(originalFile);
+
+                setImageFiles(prev => [...prev, webpFile]);
+                const url = URL.createObjectURL(webpFile);
+                setPreviewUrls(prev => [...prev, url]);
+            } catch (error) {
+                console.error("WebP conversion failed:", error);
+                // Fallback to original if conversion fails
+                setImageFiles(prev => [...prev, originalFile]);
+                const url = URL.createObjectURL(originalFile);
+                setPreviewUrls(prev => [...prev, url]);
+            }
         }
     };
 
     const removeImage = (index: number) => {
         setImageFiles(prev => prev.filter((_, i) => i !== index));
-        setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+        setPreviewUrls(prev => {
+            const newUrls = [...prev];
+            URL.revokeObjectURL(newUrls[index]); // Cleanup memory
+            return newUrls.filter((_, i) => i !== index);
+        });
     };
 
     const handleCheck = (e: React.FormEvent) => {
@@ -116,7 +162,8 @@ export default function HostPage() {
             // 1. Upload Images
             for (const file of imageFiles) {
                 // Sanitize filename: use timestamp + random string + extension to avoid "Invalid key"
-                const fileExt = file.name.split('.').pop();
+                // Note: file is already converted to .webp in handleImageUpload, but we ensure ext is correct.
+                const fileExt = file.name.split('.').pop() || 'webp';
                 const randomId = Math.random().toString(36).substring(2, 12);
                 const safeFileName = `${Date.now()}_${randomId}.${fileExt}`;
                 const filePath = `listings/${user.id}/${safeFileName}`;

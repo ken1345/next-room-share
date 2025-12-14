@@ -93,7 +93,7 @@ export default function RoomDetailsPage() {
             <div className="container mx-auto max-w-5xl">
                 {/* Hero Section (Photo Gallery Style) */}
                 <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-2 h-[300px] md:h-[400px] mt-4 md:rounded-2xl overflow-hidden mx-4 md:mx-0 shadow-sm">
-                    {/* Main Image */}
+                    {/* Main Image (Left Half) */}
                     <div
                         className={`col-span-2 row-span-2 bg-cover bg-center relative group cursor-pointer ${!mainImage ? 'bg-gray-200' : ''}`}
                         style={mainImage ? { backgroundImage: `url('${mainImage}')` } : undefined}
@@ -101,6 +101,35 @@ export default function RoomDetailsPage() {
                         {!mainImage && <div className="flex w-full h-full items-center justify-center text-gray-400 font-bold">No Image</div>}
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition"></div>
                     </div>
+
+                    {/* Secondary Images (Right Half - 2x2 Grid ideally, but we have 4 slots in the main grid layout) */}
+                    {/* We need to fill columns 3 and 4 rows 1 and 2. 
+                        Let's verify the grid: grid-cols-4. Main is col-span-2 (cols 1-2). 
+                        We can place images[1] at col 3 row 1.
+                        images[2] at col 4 row 1.
+                        images[3] at col 3 row 2.
+                        images[4] at col 4 row 2.
+                    */}
+                    {images.slice(1, 5).map((img: string, i: number) => (
+                        <div
+                            key={i}
+                            className="bg-cover bg-center relative group cursor-pointer hidden md:block"
+                            style={{ backgroundImage: `url('${img}')` }}
+                        >
+                            <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition"></div>
+                        </div>
+                    ))}
+
+                    {/* Placeholder for empty slots if fewer than 5 images */}
+                    {[...Array(Math.max(0, 4 - (images.length - 1)))].map((_, i) => (
+                        // only show placeholders if there is at least one image (mainImage), otherwise empty looks bad?
+                        // actually mainImage logic handles 0 images. 
+                        // Just fill empty space with gray if needed or leave empty? 
+                        // Better to just not render if empty. 
+                        mainImage && (
+                            <div key={`empty-${i}`} className="bg-gray-100 hidden md:block"></div>
+                        )
+                    ))}
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-8 mt-6 px-4 md:px-0">

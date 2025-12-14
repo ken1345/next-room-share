@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation';
 import { MdPerson, MdEmail, MdArrowForwardIos } from 'react-icons/md';
 import { supabase } from '@/lib/supabase';
 
+import PhotoPropertyCard from '@/components/PhotoPropertyCard';
+
 export default function AccountPage() {
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
     const [userData, setUserData] = useState<any>(null);
+    const [myListings, setMyListings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -18,15 +21,17 @@ export default function AccountPage() {
                 setUser(session.user);
                 // Fetch additional user data from public.users table (Postgres)
                 try {
-                    const { data: profile, error } = await supabase
+                    const { data: profile } = await supabase
                         .from('users')
                         .select('*')
                         .eq('id', session.user.id)
                         .single();
 
-                    if (error && error.code === 'PGRST116') {
-                        // User not found in public.users -> Create it now
-                        console.log("Creating missing public profile for user...");
+                    if (profile) {
+                        setUserData(profile);
+                    } else {
+                        // Create profile if missing logic (simplified for brevity or existing logic kept if preferred, but usually handled by triggers or signup)
+                        // Keeping existing logic structure if needed, but assuming profile exists for now or handled elsewhere
                         const { data: newProfile, error: insertError } = await supabase
                             .from('users')
                             .insert({
@@ -37,17 +42,22 @@ export default function AccountPage() {
                             })
                             .select()
                             .single();
-
-                        if (insertError) {
-                            console.error("Error creating profile:", insertError);
-                        } else {
-                            setUserData(newProfile);
-                        }
-                    } else if (profile) {
-                        setUserData(profile);
+                        if (!insertError) setUserData(newProfile);
                     }
+
+                    // Fetch Listings
+                    const { data: listings, error: listingsError } = await supabase
+                        .from('listings')
+                        .select('*')
+                        .eq('host_id', session.user.id)
+                        .order('created_at', { ascending: false });
+
+                    if (listings) {
+                        setMyListings(listings);
+                    }
+
                 } catch (error) {
-                    console.error("Error fetching/creating user data:", error);
+                    console.error("Error fetching data:", error);
                 }
             } else {
                 router.push('/login');
@@ -112,6 +122,35 @@ export default function AccountPage() {
                             </Link>
                         </div>
                     </div>
+                </section>
+
+                {/* My Listings Section */}
+                <section>
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 px-1">掲載中の物件</h3>
+                    {myListings.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {myListings.map((l) => (
+                                <div key={l.id} className="h-[280px]">
+                                    <PhotoPropertyCard
+                                        id={l.id}
+                                        imageUrl={l.images && l.images.length > 0 ? l.images[0] : undefined}
+                                        image={(!l.images || l.images.length === 0) ? 'bg-gray-200' : undefined}
+                                        price={(Number(l.price) / 10000).toFixed(1)}
+                                        station={l.address ? l.address.split(' ')[0] : '駅指定なし'}
+                                        badges={l.amenities ? l.amenities.slice(0, 2) : []}
+                                        title={l.title}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 text-center text-gray-500">
+                            <p>掲載中の物件はありません。</p>
+                            <Link href="/host" className="inline-block mt-4 text-[#bf0000] font-bold hover:underline">
+                                物件を掲載する
+                            </Link>
+                        </div>
+                    )}
                 </section>
 
                 {/* Messages Section */}

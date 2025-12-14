@@ -3,11 +3,9 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { useEffect } from "react"; // useEffectを追加
+import { useEffect, useState, useMemo } from "react";
 import { MdStar, MdEdit } from "react-icons/md";
-
-// Leafletのデフォルトアイコン問題を解決するロジック
-// コンポーネントの外ではなく、中で設定するのが確実です
+import React from 'react';
 
 // サンプルデータ
 const reviews = [
@@ -18,19 +16,28 @@ const reviews = [
   { id: 5, lat: 33.590184, lng: 130.401733, title: "博多グルメハウス", rating: 5, text: "近くに美味しい屋台がたくさん。太ります（笑）" },
 ];
 
-const customIcon = new L.Icon({
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+function ReviewMap() {
+  const [isMounted, setIsMounted] = useState(false);
 
-export default function ReviewMap() {
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-  // useEffectによるグローバル設定削除 (これがエラーの原因になることがあるため)
+  // Leaflet icon fix (memoized)
+  const customIcon = useMemo(() => {
+    if (typeof window === 'undefined') return undefined; // extra guard
+    return new L.Icon({
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+  }, []);
+
+  if (!isMounted) return <div className="h-[500px] w-full bg-gray-100 animate-pulse rounded-xl flex items-center justify-center text-gray-400">Loading Map...</div>;
 
   return (
     <div className="h-[500px] w-full rounded-xl overflow-hidden shadow-lg border border-gray-200 relative z-0">
@@ -69,3 +76,5 @@ export default function ReviewMap() {
     </div>
   );
 }
+
+export default React.memo(ReviewMap);

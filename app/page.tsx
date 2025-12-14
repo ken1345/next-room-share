@@ -316,7 +316,7 @@ function ListingGallery() {
                 // Use stored image URL or mock fallback
                 imageUrl={l.images && l.images.length > 0 ? l.images[0] : undefined}
                 image={(!l.images || l.images.length === 0) ? 'bg-gray-200' : undefined}
-                price={String(l.price)}
+                price={(Number(l.price) / 10000).toFixed(1)}
                 station={l.address ? l.address.split(' ')[0] : '駅指定なし'} // Simple fallback
                 badges={l.amenities ? l.amenities.slice(0, 2) : []}
                 title={l.title}

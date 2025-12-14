@@ -54,6 +54,7 @@ export default function HostPage() {
     // Image State
     const [imageFiles, setImageFiles] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+    const [isDragging, setIsDragging] = useState(false);
 
     useEffect(() => {
         // Initial check
@@ -104,9 +105,11 @@ export default function HostPage() {
         });
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const originalFile = e.target.files[0];
+    const processFiles = async (files: FileList | File[]) => {
+        const fileArray = Array.from(files);
+        for (const originalFile of fileArray) {
+            if (!originalFile.type.startsWith('image/')) continue;
+
             try {
                 // Convert to WebP immediately
                 const webpFile = await convertToWebP(originalFile);
@@ -116,11 +119,35 @@ export default function HostPage() {
                 setPreviewUrls(prev => [...prev, url]);
             } catch (error) {
                 console.error("WebP conversion failed:", error);
-                // Fallback to original if conversion fails
+                // Fallback
                 setImageFiles(prev => [...prev, originalFile]);
                 const url = URL.createObjectURL(originalFile);
                 setPreviewUrls(prev => [...prev, url]);
             }
+        }
+    };
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            processFiles(e.target.files);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        if (e.dataTransfer.files) {
+            processFiles(e.dataTransfer.files);
         }
     };
 
@@ -584,10 +611,18 @@ export default function HostPage() {
                                 </div>
                             ))}
 
-                            <label className="aspect-square rounded-lg bg-gray-50 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 hover:border-[#bf0000] transition group">
-                                <MdCloudUpload className="text-3xl text-gray-400 group-hover:text-[#bf0000] mb-2 transition" />
-                                <span className="text-xs text-gray-500 font-bold group-hover:text-[#bf0000]">写真を追加</span>
-                                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                            <label
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                                className={`aspect-square rounded-lg bg-gray-50 border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition group ${isDragging ? 'border-[#bf0000] bg-red-50' : 'border-gray-300 hover:bg-gray-100 hover:border-[#bf0000]'
+                                    }`}
+                            >
+                                <MdCloudUpload className={`text-3xl mb-2 transition ${isDragging ? 'text-[#bf0000]' : 'text-gray-400 group-hover:text-[#bf0000]'}`} />
+                                <span className={`text-xs font-bold ${isDragging ? 'text-[#bf0000]' : 'text-gray-500 group-hover:text-[#bf0000]'}`}>
+                                    {isDragging ? 'ドロップして追加' : '写真を追加'}
+                                </span>
+                                <input type="file" className="hidden" accept="image/*" multiple onChange={handleImageUpload} />
                             </label>
                         </div>
                     </div>

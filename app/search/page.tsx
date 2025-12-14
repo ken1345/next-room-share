@@ -539,6 +539,9 @@ function SearchContent() {
                                         ]}
                                         imageUrl={p.images?.[0]}
                                         image={!p.images?.length ? 'bg-gray-200' : undefined}
+                                        viewCount={p.view_count || 0}
+                                        favoritesCount={p.favorites_count || 0}
+                                        inquiryCount={p.inquiry_count || 0}
                                     />
                                 </div>
                             ))}

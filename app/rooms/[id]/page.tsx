@@ -46,6 +46,13 @@ export default function RoomDetailsPage() {
         };
 
         fetchDetails();
+
+        // Increment View Count
+        const incrementView = async () => {
+            if (!id) return;
+            await supabase.rpc('increment_view_count', { listing_id: id });
+        };
+        incrementView();
     }, [id]);
 
     if (loading) {

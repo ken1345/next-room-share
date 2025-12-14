@@ -1,5 +1,5 @@
 "use client";
-import { MdTrain } from "react-icons/md";
+import { MdTrain, MdVisibility, MdEmail } from "react-icons/md";
 import Link from "next/link";
 
 interface PhotoPropertyCardProps {
@@ -10,9 +10,11 @@ interface PhotoPropertyCardProps {
     station: string;
     badges: string[];
     title: string;
+    favoritesCount?: number;
+    inquiryCount?: number;
 }
 
-export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title }: PhotoPropertyCardProps) {
+export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, viewCount, favoritesCount, inquiryCount }: PhotoPropertyCardProps) {
     const CardContent = (
         <div className="group cursor-pointer bg-white rounded-xl shadow-sm hover:shadow-xl transition overflow-hidden border border-gray-100 flex flex-col h-full">
             {/* 写真エリア（大きく確保） */}
@@ -50,8 +52,18 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
                 </h3>
 
                 {/* 最寄り駅 */}
-                <div className="mt-auto pt-2 border-t border-gray-100 flex items-center text-xs font-bold text-gray-500">
-                    <MdTrain className="mr-1 text-gray-400" /> {station}
+                {/* 最寄り駅 & Stats */}
+                <div className="mt-auto pt-2 border-t border-gray-100 flex flex-col gap-1 text-xs font-bold text-gray-500">
+                    <div className="flex items-center">
+                        <MdTrain className="mr-1 text-gray-400" /> {station}
+                    </div>
+                    {(viewCount !== undefined || favoritesCount !== undefined || inquiryCount !== undefined) && (
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-400">
+                            <span>閲覧：{viewCount || 0}</span>
+                            <span>♡：{favoritesCount || 0}</span>
+                            <span>問い合わせ：{inquiryCount || 0}</span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

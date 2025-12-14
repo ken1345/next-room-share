@@ -46,15 +46,15 @@ export default function AccountPage() {
                         if (!insertError) setUserData(newProfile);
                     }
 
-                    // Fetch Listings
-                    const { data: listings, error: listingsError } = await supabase
+                    // Fetch My Listings with Thread Count
+                    const { data: listingsData, error: listingsError } = await supabase
                         .from('listings')
                         .select('*')
                         .eq('host_id', session.user.id)
                         .order('created_at', { ascending: false });
 
-                    if (listings) {
-                        setMyListings(listings);
+                    if (listingsData) {
+                        setMyListings(listingsData);
                     }
 
                     // Fetch Threads
@@ -199,6 +199,9 @@ export default function AccountPage() {
                                             station={l.address ? l.address.split(' ')[0] : '駅指定なし'}
                                             badges={l.amenities ? l.amenities.slice(0, 2) : []}
                                             title={l.title}
+                                            viewCount={l.view_count || 0}
+                                            favoritesCount={l.favorites_count || 0}
+                                            inquiryCount={l.inquiry_count || 0}
                                         />
                                     </div>
                                     <div className="p-2 flex gap-2 bg-gray-50 border-t border-gray-100">
@@ -214,8 +217,8 @@ export default function AccountPage() {
                                         <button
                                             onClick={() => handleToggleVisibility(l.id, l.is_public ?? true)}
                                             className={`w-full py-2 rounded text-xs font-bold flex items-center justify-center gap-1 border transition ${(l.is_public ?? true)
-                                                    ? 'bg-yellow-50 text-yellow-600 border-yellow-200 hover:bg-yellow-100'
-                                                    : 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100'
+                                                ? 'bg-yellow-50 text-yellow-600 border-yellow-200 hover:bg-yellow-100'
+                                                : 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100'
                                                 }`}
                                         >
                                             {(l.is_public ?? true) ? (

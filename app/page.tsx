@@ -26,11 +26,9 @@ export default function Home() {
       {/* 1. メインナビ (前回と同じ) */}
       <section className="bg-white py-8 border-b">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <div className="flex justify-center gap-8 md:gap-80 text-center">
             <NavCard icon={<MdHome size={40} />} title="部屋を探す" sub="Rent a Room" />
-            <NavCard icon={<MdGroup size={40} />} title="メイト募集" sub="Find a Roommate" />
             <NavCard icon={<MdVpnKey size={40} />} title="貸したい" sub="Host a Room" />
-            <NavCard icon={<MdForum size={40} />} title="掲示板" sub="Community" />
           </div>
         </div>
       </section>

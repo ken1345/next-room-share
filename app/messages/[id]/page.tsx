@@ -1,41 +1,21 @@
 "use client";
-import { useState, useRef, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { MdArrowBack, MdSend, MdPerson } from 'react-icons/md';
-
-type Message = {
-    id: number;
-    sender: 'user' | 'host';
-    name: string;
-    text: string;
-    timestamp: string;
-};
-
-// Initial mock data simulating an existing conversation or just the first inquiry
-const INITIAL_MESSAGES: Message[] = [
-    {
-        id: 1,
-        sender: 'user',
-        name: 'You',
-        text: 'はじめまして。この物件に興味があり、内覧を希望します。来週の土日は空いていますでしょうか？よろしくお願いします。',
-        timestamp: '2023/12/12 10:00'
-    },
-    {
-        id: 2,
-        sender: 'host',
-        name: 'Room Share Host',
-        text: 'お問い合わせありがとうございます！管理人の田中です。\n土日ですと、12/16(土)の14:00〜16:00の間でしたらご案内可能です。いかがでしょうか？',
-        timestamp: '2023/12/12 13:30'
-    }
-];
+import { supabase } from '@/lib/supabase';
+import { MdArrowBack, MdSend, MdPerson, MdImage } from 'react-icons/md';
 
 export default function MessageThreadPage() {
     const params = useParams();
-    // const threadId = params.id; // Not used in mock but available for future
+    const router = useRouter();
+    const threadId = params.id as string;
 
-    const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
-    const [inputText, setInputText] = useState('');
+    const [user, setUser] = useState<any>(null);
+    const [thread, setThread] = useState<any>(null);
+    const [messages, setMessages] = useState<any[]>([]);
+    const [newMessage, setNewMessage] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [sending, setSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -46,71 +26,144 @@ export default function MessageThreadPage() {
         scrollToBottom();
     }, [messages]);
 
-    const handleSend = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!inputText.trim()) return;
+    useEffect(() => {
+        const init = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                router.push(`/login?redirect=/messages/${threadId}`);
+                return;
+            }
+            setUser(session.user);
 
-        const newMessage: Message = {
-            id: messages.length + 1,
-            sender: 'user',
-            name: 'You',
-            text: inputText,
-            timestamp: new Date().toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+            // Fetch Thread Details
+            const { data: threadData, error: threadError } = await supabase
+                .from('threads')
+                .select(`
+                    *,
+                    listing:listings(id, title, price, images),
+                    host:host_id(id, display_name, photo_url),
+                    seeker:seeker_id(id, display_name, photo_url)
+                `)
+                .eq('id', threadId)
+                .single();
+
+            if (threadError || !threadData) {
+                console.error("Error fetching thread:", threadError);
+                // Handle error (access denied or not found)
+                return;
+            }
+            setThread(threadData);
+
+            // Fetch Messages
+            const { data: msgs, error: msgsError } = await supabase
+                .from('messages')
+                .select('*')
+                .eq('thread_id', threadId)
+                .order('created_at', { ascending: true });
+
+            if (msgs) setMessages(msgs);
+
+            setLoading(false);
+
+            // Subscribe to new messages
+            const channel = supabase
+                .channel(`thread:${threadId}`)
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'messages',
+                    filter: `thread_id=eq.${threadId}`
+                }, (payload) => {
+                    setMessages(prev => [...prev, payload.new]);
+                })
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
         };
 
-        setMessages([...messages, newMessage]);
-        setInputText('');
+        init();
+    }, [threadId, router]);
 
-        // Mock Host Reply
-        setTimeout(() => {
-            const hostReply: Message = {
-                id: messages.length + 2,
-                sender: 'host',
-                name: 'Room Share Host',
-                text: '承知いたしました。では12/16(土) 14:00に現地でお待ちしております。',
-                timestamp: new Date().toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
-            };
-            setMessages(prev => [...prev, hostReply]);
-        }, 1500);
+    const handleSendMessage = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newMessage.trim() || !user) return;
+        setSending(true);
+
+        const content = newMessage.trim();
+        setNewMessage(''); // Optimistic clear
+
+        const { error } = await supabase
+            .from('messages')
+            .insert({
+                thread_id: threadId,
+                sender_id: user.id,
+                content: content
+            });
+
+        if (error) {
+            alert("送信に失敗しました");
+            setNewMessage(content); // Revert
+        } else {
+            // Update thread updated_at
+            await supabase
+                .from('threads')
+                .update({ updated_at: new Date() })
+                .eq('id', threadId);
+        }
+        setSending(false);
     };
 
+    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!thread) return <div className="min-h-screen flex items-center justify-center">スレッドが見つかりません</div>;
+
+    const isHost = user.id === thread.host_id;
+    const counterpart = isHost ? thread.seeker : thread.host;
+
     return (
-        <div className="flex flex-col h-screen bg-gray-50 font-sans">
+        <div className="flex flex-col h-[100dvh] bg-gray-100 font-sans">
             {/* Header */}
-            <div className="bg-white border-b shadow-sm shrink-0 h-16 flex items-center px-4 sticky top-0 z-10">
-                <Link href="/search" className="text-gray-500 hover:text-gray-800 p-2 -ml-2 rounded-full hover:bg-gray-100 transition mr-2">
+            <header className="bg-white border-b px-4 py-3 flex items-center gap-4 shadow-sm z-10 shrink-0">
+                <Link href="/account" className="text-gray-500 hover:text-gray-800">
                     <MdArrowBack size={24} />
                 </Link>
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
-                        <MdPerson size={20} />
-                    </div>
-                    <div>
-                        <h1 className="font-bold text-gray-800 text-sm md:text-base leading-tight">Room Share Host</h1>
-                        <p className="text-xs text-gray-400 font-bold">カフェのような広いキッチンがある家</p>
-                    </div>
+                <div className="flex-1 min-w-0">
+                    <h1 className="font-bold text-gray-800 truncate">{counterpart?.display_name || 'Unknown'}</h1>
+                    <p className="text-xs text-gray-500 truncate font-bold">{thread.listing?.title}</p>
                 </div>
-            </div>
+                {thread.listing && (
+                    <Link href={`/rooms/${thread.listing.id}`} className="shrink-0 w-10 h-10 rounded overflow-hidden border border-gray-200">
+                        {thread.listing.images && thread.listing.images[0] ? (
+                            <img src={thread.listing.images[0]} className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-400"><MdImage /></div>
+                        )}
+                    </Link>
+                )}
+            </header>
 
-            {/* Message List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                {messages.map((msg) => {
-                    const isMe = msg.sender === 'user';
+            {/* Messages List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {messages.map((msg, i) => {
+                    const isMe = msg.sender_id === user.id;
+                    const showDate = i === 0 || new Date(messages[i - 1].created_at).toDateString() !== new Date(msg.created_at).toDateString();
+
                     return (
-                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`flex flex-col max-w-[80%] md:max-w-[70%] ${isMe ? 'items-end' : 'items-start'}`}>
-                                <div
-                                    className={`px-4 py-3 rounded-2xl shadow-sm text-sm md:text-base leading-relaxed whitespace-pre-wrap ${isMe
-                                            ? 'bg-[#bf0000] text-white rounded-tr-none'
-                                            : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none'
-                                        }`}
-                                >
-                                    {msg.text}
+                        <div key={msg.id}>
+                            {showDate && (
+                                <div className="text-center text-xs text-gray-400 font-bold my-4">
+                                    {new Date(msg.created_at).toLocaleDateString()}
                                 </div>
-                                <div className="flex items-center gap-2 mt-1 px-1">
-                                    <span className="text-[10px] text-gray-400 font-bold">{msg.name}</span>
-                                    <span className="text-[10px] text-gray-300">{msg.timestamp}</span>
+                            )}
+                            <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[80%] rounded-2xl p-3 text-sm whitespace-pre-wrap leading-relaxed shadow-sm ${isMe ? 'bg-[#bf0000] text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none'
+                                    }`}>
+                                    {msg.content}
                                 </div>
+                            </div>
+                            <div className={`text-[10px] text-gray-400 mt-1 ${isMe ? 'text-right' : 'text-left'}`}>
+                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                         </div>
                     );
@@ -119,25 +172,25 @@ export default function MessageThreadPage() {
             </div>
 
             {/* Input Area */}
-            <div className="bg-white border-t p-4 shrink-0">
-                <form onSubmit={handleSend} className="container mx-auto max-w-4xl flex gap-2 items-end">
+            <div className="bg-white border-t p-3 shrink-0">
+                <form onSubmit={handleSendMessage} className="flex items-end gap-2 max-w-4xl mx-auto">
                     <textarea
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
+                        value={newMessage}
+                        onChange={e => setNewMessage(e.target.value)}
                         placeholder="メッセージを入力..."
-                        className="flex-1 bg-gray-100 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-[#bf0000]/20 focus:bg-white transition resize-none min-h-[50px] max-h-[150px]"
                         rows={1}
-                        onKeyDown={(e) => {
+                        className="flex-1 bg-gray-100 rounded-xl p-3 max-h-32 focus:bg-white focus:ring-2 focus:ring-[#bf0000] outline-none resize-none font-bold text-gray-800"
+                        onKeyDown={e => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
-                                handleSend(e);
+                                handleSendMessage(e);
                             }
                         }}
                     />
                     <button
                         type="submit"
-                        disabled={!inputText.trim()}
-                        className="bg-[#bf0000] text-white p-3 rounded-full shadow-md hover:bg-black transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!newMessage.trim() || sending}
+                        className="bg-[#bf0000] text-white p-3 rounded-xl disabled:opacity-50 hover:bg-black transition shrink-0"
                     >
                         <MdSend size={20} />
                     </button>

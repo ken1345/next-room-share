@@ -1,14 +1,19 @@
 "use client";
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { MOCK_PROPERTIES } from '@/data/mock-properties';
+import { supabase } from '@/lib/supabase';
 import { MdArrowBack, MdCheck, MdEmail, MdPerson } from 'react-icons/md';
 
 export default function ContactPage() {
     const params = useParams();
-    const id = Number(params.id);
-    const property = MOCK_PROPERTIES.find(p => p.id === id);
+    const router = useRouter();
+    const id = params.id as string;
+
+    const [property, setProperty] = useState<any>(null);
+    const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
     const [form, setForm] = useState({
         name: '',
@@ -23,14 +28,109 @@ export default function ContactPage() {
 
     const [isSubmitted, setIsSubmitted] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    useEffect(() => {
+        const fetchData = async () => {
+            // 1. Get User
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                // Save current path to redirect back after login
+                // router.push(`/login?redirect=/rooms/${id}/contact`);
+                // For now just set null
+            }
+            setUser(session?.user || null);
+
+            // 2. Get Property
+            const { data, error } = await supabase
+                .from('listings')
+                .select('*, host_id') // Ensure we get host_id
+                .eq('id', id)
+                .single();
+
+            if (error) {
+                console.error(error);
+            } else {
+                setProperty(data);
+            }
+            setLoading(false);
+        };
+        fetchData();
+    }, [id]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Mock submission & redirect to thread
-        // In real app, we would get the threadId from the API response
-        setTimeout(() => {
-            window.location.href = '/messages/1';
-        }, 500);
+        if (!user) {
+            alert("お問い合わせにはログインが必要です。");
+            router.push(`/login?redirect=/rooms/${id}/contact`);
+            return;
+        }
+        if (!property) return;
+
+        setSubmitting(true);
+
+        try {
+            // 1. Check if thread exists or create new
+            // We need to find if a thread exists for this listing + seeker
+            let threadId;
+
+            // Note: RLS might prevent seeing threads, so we might need a stored procedure or just try insert
+            // For now, let's try to find an existing thread.
+            const { data: existingThreads } = await supabase
+                .from('threads')
+                .select('id')
+                .eq('listing_id', id)
+                .eq('seeker_id', user.id)
+                .single();
+
+            if (existingThreads) {
+                threadId = existingThreads.id;
+            } else {
+                // Create Thread
+                const { data: newThread, error: threadError } = await supabase
+                    .from('threads')
+                    .insert({
+                        listing_id: id,
+                        host_id: property.host_id,
+                        seeker_id: user.id
+                    })
+                    .select()
+                    .single();
+
+                if (threadError) throw threadError;
+                threadId = newThread.id;
+            }
+
+            // 2. Send Message
+            const { error: msgError } = await supabase
+                .from('messages')
+                .insert({
+                    thread_id: threadId,
+                    sender_id: user.id,
+                    content: `
+【お問い合わせ内容】
+名前: ${form.name}
+年齢: ${form.age}
+性別: ${form.gender}
+職業: ${form.occupation}
+入居予定: ${form.duration}
+希望日: ${form.moveInDate || '未定'}
+
+${form.message}
+                    `.trim()
+                });
+
+            if (msgError) throw msgError;
+
+            setIsSubmitted(true);
+
+        } catch (error: any) {
+            console.error("Submission error:", error);
+            alert("送信に失敗しました: " + error.message);
+        } finally {
+            setSubmitting(false);
+        }
     };
+
+    if (loading) return <div className="min-h-screen flex items-center justify-center">読み込み中...</div>;
 
     if (!property) {
         return (
@@ -78,11 +178,17 @@ export default function ContactPage() {
             <div className="container mx-auto px-4 max-w-2xl py-8">
                 {/* Property Summary */}
                 <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4 mb-8">
-                    <div className={`w-24 h-24 ${property.image} bg-cover bg-center rounded-lg flex-shrink-0`}></div>
+                    <div className="w-24 h-24 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
+                        {property.images && property.images[0] ? (
+                            <img src={property.images[0]} className="w-full h-full object-cover" alt={property.title} />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                        )}
+                    </div>
                     <div>
                         <h2 className="font-bold text-gray-800 text-sm md:text-base mb-2 line-clamp-2">{property.title}</h2>
-                        <div className="text-xs text-gray-500 font-bold mb-1">{property.station}</div>
-                        <div className="text-xl font-bold text-[#bf0000]">¥{property.price}万 <span className="text-xs text-gray-500 font-normal">/ 月</span></div>
+                        <div className="text-xs text-gray-500 font-bold mb-1">{property.address || property.location}</div>
+                        <div className="text-xl font-bold text-[#bf0000]">¥{(Number(property.price) / 10000).toFixed(1)}万 <span className="text-xs text-gray-500 font-normal">/ 月</span></div>
                     </div>
                 </div>
 
@@ -191,8 +297,8 @@ export default function ContactPage() {
                     </div>
 
                     <div className="pt-4">
-                        <button type="submit" className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition text-lg flex items-center justify-center gap-2">
-                            <MdEmail /> 送信する
+                        <button type="submit" disabled={submitting} className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition text-lg flex items-center justify-center gap-2 disabled:opacity-50">
+                            <MdEmail /> {submitting ? '送信中...' : '送信する'}
                         </button>
                     </div>
                 </form>

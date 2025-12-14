@@ -12,6 +12,7 @@ export default function AccountPage() {
     const [user, setUser] = useState<any>(null);
     const [userData, setUserData] = useState<any>(null);
     const [myListings, setMyListings] = useState<any[]>([]);
+    const [threads, setThreads] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -54,6 +55,24 @@ export default function AccountPage() {
 
                     if (listings) {
                         setMyListings(listings);
+                    }
+
+                    // Fetch Threads
+                    const { data: threadsData, error: threadsError } = await supabase
+                        .from('threads')
+                        .select(`
+                            *,
+                            listing:listings(title),
+                            host:host_id(display_name, photo_url),
+                            seeker:seeker_id(display_name, photo_url)
+                        `)
+                        .or(`host_id.eq.${session.user.id},seeker_id.eq.${session.user.id}`)
+                        .order('updated_at', { ascending: false });
+
+                    if (threadsData) {
+                        setThreads(threadsData);
+                    } else if (threadsError) {
+                        console.error("Error fetching threads:", threadsError);
                     }
 
                 } catch (error) {
@@ -181,10 +200,45 @@ export default function AccountPage() {
                 {/* Messages Section */}
                 <section>
                     <h3 className="text-lg font-bold text-gray-800 mb-4 px-1">メッセージ</h3>
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 text-center text-gray-500">
-                        <p>現在メッセージはありません。</p>
-                        <p className="text-sm mt-2">物件に問い合わせるとここにメッセージが表示されます。</p>
-                    </div>
+                    {threads.length > 0 ? (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-100">
+                            {threads.map(thread => {
+                                const isHost = user.id === thread.host_id;
+                                const counterpart = isHost ? thread.seeker : thread.host;
+                                const listingTitle = thread.listing?.title || "削除された物件";
+
+                                return (
+                                    <Link key={thread.id} href={`/messages/${thread.id}`} className="block p-4 hover:bg-gray-50 transition flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center">
+                                            {counterpart?.photo_url ? (
+                                                <img src={counterpart.photo_url} alt={counterpart.display_name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <MdPerson className="text-gray-400 text-2xl" />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <h4 className="font-bold text-gray-800 truncate">{counterpart?.display_name || 'Unknown User'}</h4>
+                                                <span className="text-xs text-gray-400 font-bold">{new Date(thread.updated_at).toLocaleDateString()}</span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 font-bold truncate mb-1">
+                                                {listingTitle}
+                                            </p>
+                                            <p className="text-sm text-gray-600 truncate">
+                                                メッセージを確認する
+                                            </p>
+                                        </div>
+                                        <MdArrowForwardIos className="text-gray-300 text-sm" />
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 text-center text-gray-500">
+                            <p>現在メッセージはありません。</p>
+                            <p className="text-sm mt-2">物件に問い合わせるとここにメッセージが表示されます。</p>
+                        </div>
+                    )}
                 </section>
 
                 <div className="pt-4 flex justify-center">

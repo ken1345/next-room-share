@@ -55,6 +55,7 @@ export default function HostPage() {
 
     // Image State
     const [existingImages, setExistingImages] = useState<string[]>([]);
+    const [originalHostId, setOriginalHostId] = useState<string | null>(null);
     const [imageFiles, setImageFiles] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [isDragging, setIsDragging] = useState(false);
@@ -103,6 +104,7 @@ export default function HostPage() {
                     amenities: data.amenities || [],
                 });
                 if (data.images) setExistingImages(data.images);
+                setOriginalHostId(data.host_id);
             } else if (error) {
                 console.error("Error fetching listing:", error);
             }
@@ -209,6 +211,13 @@ export default function HostPage() {
 
     const handleFinalSubmit = async () => {
         if (!user) return;
+
+        // Check ownership before submitting if editing
+        if (editId && originalHostId && user.id !== originalHostId) {
+            alert(`エラー: あなたはこの物件の作成者ではありません。`);
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {

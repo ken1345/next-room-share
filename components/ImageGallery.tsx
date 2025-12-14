@@ -96,7 +96,7 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
                             <div
                                 key={i + 1}
                                 onClick={() => openViewer(i + 1)}
-                                className="aspect-[4/3] bg-cover bg-center cursor-pointer relative group hover:opacity-95 transition min-h-[140px]"
+                                className="h-48 w-full bg-cover bg-center cursor-pointer relative group hover:opacity-95 transition"
                                 style={{ backgroundImage: `url('${img}')` }}
                             >
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></div>
@@ -105,7 +105,7 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
 
                         {/* Fill empty slots if very few images to maintain layout structure */}
                         {secondaryImages.length < 4 && [...Array(4 - secondaryImages.length)].map((_, i) => (
-                            <div key={`empty-${i}`} className="bg-gray-50 aspect-[4/3]"></div>
+                            <div key={`empty-${i}`} className="bg-gray-50 h-48 w-full"></div>
                         ))}
                     </div>
 

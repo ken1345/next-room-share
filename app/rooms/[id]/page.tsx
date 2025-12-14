@@ -154,17 +154,14 @@ export default function RoomDetailsPage() {
                     {/* Sidebar (Sticky CTA) */}
                     <aside className="w-full md:w-96 flex-shrink-0">
                         <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 md:sticky md:top-24">
-                            <div className="flex items-end gap-1 mb-6 border-b border-gray-100 pb-4">
+                            <div className="flex items-end justify-center gap-1 mb-6 border-b border-gray-100 pb-4">
                                 <span className="text-3xl font-bold text-[#bf0000]">¥{property.price}</span>
-                                <span className="text-sm font-bold text-gray-500 mb-1">万 / 月</span>
+                                <span className="text-sm font-bold text-gray-500 mb-1"> / 月</span>
                             </div>
 
                             <Link href={`/rooms/${id}/contact`} className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition text-lg flex items-center justify-center gap-2 mb-3">
                                 <MdEmail /> 空室確認・問い合わせ
                             </Link>
-                            <button className="w-full bg-white text-gray-700 border border-gray-300 font-bold py-3 rounded-xl hover:bg-gray-50 transition">
-                                見学をリクエスト
-                            </button>
                         </div>
                     </aside>
                 </div>
@@ -173,7 +170,7 @@ export default function RoomDetailsPage() {
                 <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-4 px-6 flex items-center justify-between shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50">
                     <div>
                         <span className="block text-xs font-bold text-gray-500">家賃</span>
-                        <span className="text-xl font-bold text-[#bf0000]">¥{property.price}万</span>
+                        <span className="text-xl font-bold text-[#bf0000]">¥{property.price}</span>
                     </div>
                     <Link href={`/rooms/${id}/contact`} className="bg-[#bf0000] text-white font-bold py-3 px-8 rounded-full shadow-md">
                         問い合わせ

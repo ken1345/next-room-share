@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MdPerson, MdEmail, MdArrowForwardIos } from 'react-icons/md';
+import { MdPerson, MdEmail, MdArrowForwardIos, MdEdit } from 'react-icons/md';
 import { supabase } from '@/lib/supabase';
 
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
@@ -79,6 +79,21 @@ export default function AccountPage() {
         router.push('/login');
     };
 
+    const handleDelete = async (id: number) => {
+        if (!window.confirm("本当に削除しますか？\n※この操作は取り消せません。")) return;
+
+        const { error } = await supabase
+            .from('listings')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            alert("削除に失敗しました: " + error.message);
+        } else {
+            setMyListings(prev => prev.filter(item => item.id !== id));
+        }
+    };
+
     if (loading) {
         return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     }
@@ -130,16 +145,26 @@ export default function AccountPage() {
                     {myListings.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {myListings.map((l) => (
-                                <div key={l.id} className="h-[280px]">
-                                    <PhotoPropertyCard
-                                        id={l.id}
-                                        imageUrl={l.images && l.images.length > 0 ? l.images[0] : undefined}
-                                        image={(!l.images || l.images.length === 0) ? 'bg-gray-200' : undefined}
-                                        price={(Number(l.price) / 10000).toFixed(1)}
-                                        station={l.address ? l.address.split(' ')[0] : '駅指定なし'}
-                                        badges={l.amenities ? l.amenities.slice(0, 2) : []}
-                                        title={l.title}
-                                    />
+                                <div key={l.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                    <div className="h-[260px]">
+                                        <PhotoPropertyCard
+                                            id={l.id}
+                                            imageUrl={l.images && l.images.length > 0 ? l.images[0] : undefined}
+                                            image={(!l.images || l.images.length === 0) ? 'bg-gray-200' : undefined}
+                                            price={(Number(l.price) / 10000).toFixed(1)}
+                                            station={l.address ? l.address.split(' ')[0] : '駅指定なし'}
+                                            badges={l.amenities ? l.amenities.slice(0, 2) : []}
+                                            title={l.title}
+                                        />
+                                    </div>
+                                    <div className="p-2 flex gap-2 bg-gray-50 border-t border-gray-100">
+                                        <Link href={`/host?edit=${l.id}`} className="flex-1 text-center text-xs font-bold text-gray-600 bg-white py-2 rounded border border-gray-200 hover:text-[#bf0000] hover:border-[#bf0000] transition">
+                                            <span className="flex items-center justify-center gap-1"><MdEdit /> 編集</span>
+                                        </Link>
+                                        <button onClick={() => handleDelete(l.id)} className="flex-1 text-center text-xs font-bold text-red-500 bg-white py-2 rounded border border-red-100 hover:bg-red-50 hover:border-red-500 transition">
+                                            削除
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>

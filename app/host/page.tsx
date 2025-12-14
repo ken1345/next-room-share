@@ -2,13 +2,15 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { MdCloudUpload, MdHome, MdAttachMoney, MdTrain, MdInfo, MdCheck, MdArrowBack, MdEdit } from 'react-icons/md';
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
 
 export default function HostPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const editId = searchParams.get('edit');
     // Auth State
     const [user, setUser] = useState<any>(null);
     const [loadingAuth, setLoadingAuth] = useState(true);
@@ -52,6 +54,7 @@ export default function HostPage() {
     };
 
     // Image State
+    const [existingImages, setExistingImages] = useState<string[]>([]);
     const [imageFiles, setImageFiles] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [isDragging, setIsDragging] = useState(false);
@@ -72,7 +75,40 @@ export default function HostPage() {
         });
 
         return () => subscription.unsubscribe();
+        return () => subscription.unsubscribe();
     }, []);
+
+    // Edit Mode: Fetch Data
+    useEffect(() => {
+        if (!editId) return;
+        const fetchListing = async () => {
+            const { data, error } = await supabase
+                .from('listings')
+                .select('*')
+                .eq('id', editId)
+                .single();
+
+            if (data) {
+                setForm({
+                    title: data.title,
+                    description: data.description,
+                    prefecture: data.prefecture,
+                    city: data.city,
+                    stationLine: data.station_line,
+                    stationName: data.station_name,
+                    minutesToStation: data.minutes_to_station ? String(data.minutes_to_station) : '',
+                    rent: String(data.price),
+                    type: data.room_type,
+                    gender: data.gender_restriction,
+                    amenities: data.amenities || [],
+                });
+                if (data.images) setExistingImages(data.images);
+            } else if (error) {
+                console.error("Error fetching listing:", error);
+            }
+        };
+        fetchListing();
+    }, [editId]);
 
     // WebP Conversion Utility
     const convertToWebP = async (file: File): Promise<File> => {
@@ -152,12 +188,17 @@ export default function HostPage() {
     };
 
     const removeImage = (index: number) => {
-        setImageFiles(prev => prev.filter((_, i) => i !== index));
-        setPreviewUrls(prev => {
-            const newUrls = [...prev];
-            URL.revokeObjectURL(newUrls[index]); // Cleanup memory
-            return newUrls.filter((_, i) => i !== index);
-        });
+        if (index < existingImages.length) {
+            setExistingImages(prev => prev.filter((_, i) => i !== index));
+        } else {
+            const newIndex = index - existingImages.length;
+            setImageFiles(prev => prev.filter((_, i) => i !== newIndex));
+            setPreviewUrls(prev => {
+                const newUrls = [...prev];
+                URL.revokeObjectURL(newUrls[newIndex]); // Cleanup memory
+                return newUrls.filter((_, i) => i !== newIndex);
+            });
+        }
     };
 
     const handleCheck = (e: React.FormEvent) => {
@@ -184,7 +225,7 @@ export default function HostPage() {
                 if (createError) throw createError;
             }
 
-            const uploadedImageUrls: string[] = [];
+            const uploadedImageUrls: string[] = [...existingImages];
 
             // 1. Upload Images
             for (const file of imageFiles) {
@@ -208,32 +249,49 @@ export default function HostPage() {
                 uploadedImageUrls.push(publicUrl);
             }
 
-            // 2. Insert Listing
-            const { error: insertError } = await supabase
-                .from('listings')
-                .insert({
-                    title: form.title,
-                    description: form.description,
-                    price: parseInt(form.rent),
-                    address: `${form.prefecture}${form.city}`,
-                    // Detailed location info for filtering
-                    prefecture: form.prefecture,
-                    city: form.city,
-                    station_line: form.stationLine,
-                    station_name: form.stationName,
-                    minutes_to_station: form.minutesToStation ? parseInt(form.minutesToStation) : null,
-                    // Type and Gender
-                    room_type: form.type,
-                    gender_restriction: form.gender,
+            // 2. Insert or Update Listing
+            const payload = {
+                title: form.title,
+                description: form.description,
+                price: parseInt(form.rent),
+                address: `${form.prefecture}${form.city}`,
+                // Detailed location info for filtering
+                prefecture: form.prefecture,
+                city: form.city,
+                station_line: form.stationLine,
+                station_name: form.stationName,
+                minutes_to_station: form.minutesToStation ? parseInt(form.minutesToStation) : null,
+                // Type and Gender
+                room_type: form.type,
+                gender_restriction: form.gender,
 
-                    latitude: 35.681236,
-                    longitude: 139.767125,
-                    amenities: form.amenities,
-                    images: uploadedImageUrls,
-                    host_id: user.id,
-                });
+                latitude: 35.681236,
+                longitude: 139.767125,
+                amenities: form.amenities,
+                images: uploadedImageUrls,
+                host_id: user.id,
+            };
 
-            if (insertError) throw insertError;
+            let error;
+            if (editId) {
+                const { data: updatedData, error: updateError } = await supabase
+                    .from('listings')
+                    .update(payload)
+                    .eq('id', editId)
+                    .select(); // Return the updated row
+
+                if (updatedData && updatedData.length === 0) {
+                    throw new Error("更新できませんでした。権限がないか、物件が存在しません。");
+                }
+                error = updateError;
+            } else {
+                const { error: insertError } = await supabase
+                    .from('listings')
+                    .insert(payload);
+                error = insertError;
+            }
+
+            if (error) throw error;
 
             window.scrollTo(0, 0);
             setStep('complete');
@@ -258,8 +316,8 @@ export default function HostPage() {
                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <MdCheck className="text-4xl text-green-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">掲載完了しました！</h2>
-                    <p className="text-gray-500 mb-6">あなたの部屋が公開されました。<br />お問い合わせをお待ちください。</p>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">{editId ? '修正完了しました！' : '掲載完了しました！'}</h2>
+                    <p className="text-gray-500 mb-6">{editId ? '物件情報が更新されました。' : 'あなたの部屋が公開されました。'}<br />お問い合わせをお待ちください。</p>
                     <Link href="/" className="bg-[#bf0000] text-white font-bold py-3 px-8 rounded-full shadow-md hover:bg-black transition">
                         トップに戻る
                     </Link>
@@ -319,8 +377,8 @@ export default function HostPage() {
                             <h3 className="font-bold text-gray-600 mb-4 text-center md:text-left">検索結果での表示</h3>
                             <div className="max-w-sm mx-auto md:mx-0">
                                 <PhotoPropertyCard
-                                    imageUrl={previewUrls.length > 0 ? previewUrls[0] : undefined}
-                                    image={previewUrls.length > 0 ? undefined : 'bg-gray-200'}
+                                    imageUrl={[...existingImages, ...previewUrls].length > 0 ? [...existingImages, ...previewUrls][0] : undefined}
+                                    image={[...existingImages, ...previewUrls].length > 0 ? undefined : 'bg-gray-200'}
                                     price={(Number(form.rent) / 10000).toFixed(1)}
                                     station={`${form.stationName} ${form.minutesToStation}分`}
                                     badges={[
@@ -387,10 +445,10 @@ export default function HostPage() {
                                         <dt className="text-gray-500 text-sm font-bold">写真</dt>
                                         <dd className="col-span-2 text-gray-800">
                                             <div className="flex gap-2 bg-gray-50 p-2 rounded overflow-x-auto">
-                                                {previewUrls.map((url, i) => (
+                                                {[...existingImages, ...previewUrls].map((url, i) => (
                                                     <img key={i} src={url} className="h-16 w-16 object-cover rounded" />
                                                 ))}
-                                                {previewUrls.length === 0 && <span className="text-gray-400 text-xs">なし</span>}
+                                                {[...existingImages, ...previewUrls].length === 0 && <span className="text-gray-400 text-xs">なし</span>}
                                             </div>
                                         </dd>
                                     </div>
@@ -428,7 +486,7 @@ export default function HostPage() {
                     {/* 基本情報 */}
                     <div className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100">
                         <h2 className="text-xl font-bold text-gray-700 mb-6 flex items-center gap-2 pb-2 border-b">
-                            <MdHome className="text-gray-400" /> 基本情報
+                            <MdHome className="text-gray-400" /> 基本情報 {editId && <span className="text-sm rounded-full bg-blue-100 text-blue-600 px-2 py-0.5 ml-auto">収集中...</span>}
                         </h2>
 
                         <div className="space-y-6">
@@ -598,7 +656,7 @@ export default function HostPage() {
                         </h2>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                            {previewUrls.map((url, idx) => (
+                            {[...existingImages, ...previewUrls].map((url, idx) => (
                                 <div key={idx} className="aspect-square rounded-lg bg-gray-100 overflow-hidden relative group">
                                     <img src={url} alt="preview" className="w-full h-full object-cover" />
                                     <button

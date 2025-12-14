@@ -396,7 +396,7 @@ function SearchContent() {
                                                 <button
                                                     key={region}
                                                     onClick={() => handleRegionSelect(region)}
-                                                    className="bg-white py-3 px-2 rounded border border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] transition text-sm font-bold shadow-sm"
+                                                    className="bg-white py-3 px-2 rounded border border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] transition text-sm font-bold shadow-sm text-gray-800"
                                                 >
                                                     {region}
                                                 </button>
@@ -413,7 +413,7 @@ function SearchContent() {
                                                     <button
                                                         key={pref}
                                                         onClick={() => handlePrefectureSelect(pref)}
-                                                        className="bg-white py-3 px-2 rounded border border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] transition text-sm font-bold shadow-sm"
+                                                        className="bg-white py-3 px-2 rounded border border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] transition text-sm font-bold shadow-sm text-gray-800"
                                                     >
                                                         {pref}
                                                     </button>
@@ -431,7 +431,7 @@ function SearchContent() {
                                                     <button
                                                         key={city}
                                                         onClick={() => handleCitySelect(city)}
-                                                        className={`py-3 px-2 rounded border transition text-sm font-bold shadow-sm flex items-center justify-center gap-2 ${areaSelection.city === city ? 'bg-[#bf0000] text-white border-[#bf0000]' : 'bg-white border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000]'}`}
+                                                        className={`py-3 px-2 rounded border transition text-sm font-bold shadow-sm flex items-center justify-center gap-2 ${areaSelection.city === city ? 'bg-[#bf0000] text-white border-[#bf0000]' : 'bg-white border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] text-gray-800'}`}
                                                     >
                                                         {city}
                                                         {areaSelection.city === city && <MdCheck />}
@@ -495,7 +495,7 @@ function SearchContent() {
                                                 <button
                                                     key={pref}
                                                     onClick={() => handleStationPrefSelect(pref)}
-                                                    className="bg-white py-3 px-2 rounded border border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] transition text-sm font-bold shadow-sm"
+                                                    className="bg-white py-3 px-2 rounded border border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] transition text-sm font-bold shadow-sm text-gray-800"
                                                 >
                                                     {pref}
                                                 </button>
@@ -512,7 +512,7 @@ function SearchContent() {
                                                     <button
                                                         key={line}
                                                         onClick={() => handleLineSelect(line)}
-                                                        className="bg-white py-3 px-4 rounded border border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] transition text-sm font-bold shadow-sm text-left flex items-center justify-between"
+                                                        className="bg-white py-3 px-4 rounded border border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] transition text-sm font-bold shadow-sm text-left flex items-center justify-between text-gray-800"
                                                     >
                                                         {line}
                                                         <MdKeyboardArrowRight className="text-gray-300" />
@@ -531,7 +531,7 @@ function SearchContent() {
                                                     <button
                                                         key={station}
                                                         onClick={() => handleStationSelect(station)}
-                                                        className={`py-3 px-2 rounded border transition text-sm font-bold shadow-sm flex items-center justify-center gap-2 ${stationSelection.station === station ? 'bg-[#bf0000] text-white border-[#bf0000]' : 'bg-white border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000]'}`}
+                                                        className={`py-3 px-2 rounded border transition text-sm font-bold shadow-sm flex items-center justify-center gap-2 ${stationSelection.station === station ? 'bg-[#bf0000] text-white border-[#bf0000]' : 'bg-white border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] text-gray-800'}`}
                                                     >
                                                         {station}
                                                         {stationSelection.station === station && <MdCheck />}

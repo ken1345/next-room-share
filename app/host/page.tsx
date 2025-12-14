@@ -98,11 +98,29 @@ export default function HostPage() {
         setIsSubmitting(true);
 
         try {
+            // 0. Ensure User Profile Exists (Fix for FK violation)
+            const { data: profile } = await supabase.from('users').select('id').eq('id', user.id).single();
+            if (!profile) {
+                console.log("Creating missing public profile on host page...");
+                const { error: createError } = await supabase.from('users').insert({
+                    id: user.id,
+                    email: user.email,
+                    display_name: user.user_metadata?.full_name || 'User',
+                    photo_url: user.user_metadata?.avatar_url || null,
+                });
+                if (createError) throw createError;
+            }
+
             const uploadedImageUrls: string[] = [];
 
             // 1. Upload Images
             for (const file of imageFiles) {
-                const filePath = `listings/${user.id}/${Date.now()}_${file.name}`;
+                // Sanitize filename: use timestamp + random string + extension to avoid "Invalid key"
+                const fileExt = file.name.split('.').pop();
+                const randomId = Math.random().toString(36).substring(2, 12);
+                const safeFileName = `${Date.now()}_${randomId}.${fileExt}`;
+                const filePath = `listings/${user.id}/${safeFileName}`;
+
                 const { error: uploadError } = await supabase.storage
                     .from('images')
                     .upload(filePath, file);

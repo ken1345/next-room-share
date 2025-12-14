@@ -24,11 +24,30 @@ export default function AccountPage() {
                         .eq('id', session.user.id)
                         .single();
 
-                    if (profile) {
+                    if (error && error.code === 'PGRST116') {
+                        // User not found in public.users -> Create it now
+                        console.log("Creating missing public profile for user...");
+                        const { data: newProfile, error: insertError } = await supabase
+                            .from('users')
+                            .insert({
+                                id: session.user.id,
+                                email: session.user.email,
+                                display_name: session.user.user_metadata?.full_name || 'User',
+                                photo_url: session.user.user_metadata?.avatar_url || null,
+                            })
+                            .select()
+                            .single();
+
+                        if (insertError) {
+                            console.error("Error creating profile:", insertError);
+                        } else {
+                            setUserData(newProfile);
+                        }
+                    } else if (profile) {
                         setUserData(profile);
                     }
                 } catch (error) {
-                    console.error("Error fetching user data:", error);
+                    console.error("Error fetching/creating user data:", error);
                 }
             } else {
                 router.push('/login');

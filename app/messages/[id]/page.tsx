@@ -94,18 +94,24 @@ export default function MessageThreadPage() {
         const content = newMessage.trim();
         setNewMessage(''); // Optimistic clear
 
-        const { error } = await supabase
+        const { data: sentMessage, error } = await supabase
             .from('messages')
             .insert({
                 thread_id: threadId,
                 sender_id: user.id,
                 content: content
-            });
+            })
+            .select()
+            .single();
 
         if (error) {
             alert("送信に失敗しました");
             setNewMessage(content); // Revert
         } else {
+            // Manually add to state immediately
+            if (sentMessage) {
+                setMessages(prev => [...prev, sentMessage]);
+            }
             // Update thread updated_at
             await supabase
                 .from('threads')

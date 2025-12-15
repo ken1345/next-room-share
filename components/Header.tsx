@@ -31,7 +31,7 @@ export default function Header() {
       <div className="container mx-auto px-4 flex justify-between items-center">
         {/* ロゴ部分：クリックでトップへ戻る */}
         <Link href="/" className="text-2xl font-bold text-[#bf0000] flex items-center gap-2 hover:opacity-80 transition">
-          <MdHome /> RoomShare
+          <MdHome /> ルームシェアネクスト
         </Link>
 
         {/* Desktop Navigation */}

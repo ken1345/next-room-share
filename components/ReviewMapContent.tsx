@@ -57,7 +57,12 @@ export default function ReviewMapContent() {
         if (error) {
             console.error("Error fetching reviews for map:", error);
         } else {
-            const validReviews = data?.filter(r =>
+            const validReviews = data?.map((r: any) => {
+                const listing = Array.isArray(r.listing) ? r.listing[0] : r.listing;
+                const user = Array.isArray(r.user) ? r.user[0] : r.user;
+                return { ...r, listing, user };
+            }).filter(r =>
+
                 r.listing &&
                 r.listing.latitude &&
                 r.listing.longitude
@@ -181,7 +186,7 @@ export default function ReviewMapContent() {
             {/* New Pin Form */}
             {newPin && (
                 <Marker position={[newPin.lat, newPin.lng]} icon={customIcon}>
-                    <Popup onClose={() => setNewPin(null)}>
+                    <Popup eventHandlers={{ remove: () => setNewPin(null) }}>
                         <div className="min-w-[250px] p-1">
                             <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-1">
                                 <MdAddLocation className="text-[#bf0000]" /> スポットを追加

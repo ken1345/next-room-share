@@ -14,6 +14,9 @@ export default function EditProfilePage() {
     // Form State
     const [displayName, setDisplayName] = useState('');
     const [password, setPassword] = useState('');
+    const [gender, setGender] = useState('');
+    const [age, setAge] = useState('');
+    const [occupation, setOccupation] = useState('');
     const [newImageFile, setNewImageFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [currentPhotoURL, setCurrentPhotoURL] = useState<string | null>(null);
@@ -36,11 +39,17 @@ export default function EditProfilePage() {
 
             if (profile) {
                 setDisplayName(profile.display_name || '');
+                setGender(profile.gender || '');
+                setAge(profile.age ? String(profile.age) : '');
+                setOccupation(profile.occupation || '');
                 setCurrentPhotoURL(profile.photo_url);
                 setPreviewUrl(profile.photo_url);
             } else {
                 // Fallback to metadata
                 setDisplayName(currentUser.user_metadata?.display_name || currentUser.user_metadata?.full_name || '');
+                setGender(currentUser.user_metadata?.gender || '');
+                setAge(currentUser.user_metadata?.age ? String(currentUser.user_metadata?.age) : '');
+                setOccupation(currentUser.user_metadata?.occupation || '');
                 setCurrentPhotoURL(currentUser.user_metadata?.avatar_url);
                 setPreviewUrl(currentUser.user_metadata?.avatar_url);
             }
@@ -84,6 +93,9 @@ export default function EditProfilePage() {
                 data: {
                     display_name: displayName,
                     avatar_url: photoURL,
+                    gender: gender,
+                    age: age ? Number(age) : null,
+                    occupation: occupation
                 }
             };
             if (password) {
@@ -100,7 +112,10 @@ export default function EditProfilePage() {
                     id: user.id,
                     display_name: displayName,
                     photo_url: photoURL,
-                    email: user.email // Ensure email is in sync or handled by trigger
+                    email: user.email, // Ensure email is in sync or handled by trigger
+                    gender: gender,
+                    age: age ? Number(age) : null,
+                    occupation: occupation
                 });
 
             if (dbError) throw dbError;
@@ -172,6 +187,46 @@ export default function EditProfilePage() {
                             value={displayName}
                             onChange={(e) => setDisplayName(e.target.value)}
                             className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-1 focus:ring-[#bf0000] outline-none transition font-bold text-gray-900"
+                        />
+                    </div>
+
+                    {/* Profile Fields */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">性別</label>
+                            <select
+                                value={gender}
+                                onChange={(e) => setGender(e.target.value)}
+                                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-1 focus:ring-[#bf0000] outline-none transition font-bold text-gray-900 appearance-none bg-white"
+                            >
+                                <option value="">選択</option>
+                                <option value="男性">男性</option>
+                                <option value="女性">女性</option>
+                                <option value="その他">その他</option>
+                                <option value="回答しない">回答しない</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">年齢</label>
+                            <input
+                                type="number"
+                                min={18}
+                                max={100}
+                                value={age}
+                                onChange={(e) => setAge(e.target.value)}
+                                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-1 focus:ring-[#bf0000] outline-none transition font-bold text-gray-900"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">職業</label>
+                        <input
+                            type="text"
+                            value={occupation}
+                            onChange={(e) => setOccupation(e.target.value)}
+                            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-1 focus:ring-[#bf0000] outline-none transition font-bold text-gray-900"
+                            placeholder="例: 会社員、学生"
                         />
                     </div>
 

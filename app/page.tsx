@@ -50,22 +50,24 @@ export default function Home() {
 
       {/* 3. 【NEW】相性診断バナー（一番目立つ場所に配置） */}
       <section className="container mx-auto px-4 mt-8">
-        <div className="bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl p-6 md:p-10 text-white shadow-lg relative overflow-hidden cursor-pointer hover:shadow-xl transition group">
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="text-center md:text-left">
-              <span className="bg-white text-pink-600 font-bold px-3 py-1 rounded-full text-sm mb-2 inline-block">無料・登録不要</span>
-              <h2 className="text-2xl md:text-4xl font-bold mb-2 flex items-center justify-center md:justify-start gap-3">
-                <MdPsychology /> ルームシェア相性診断
-              </h2>
-              <p className="text-pink-100 font-bold text-lg">たった1分で判明！あなたに合うシェアメイトのタイプは？</p>
+        <Link href="/diagnosis">
+          <div className="bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl p-6 md:p-10 text-white shadow-lg relative overflow-hidden cursor-pointer hover:shadow-xl transition group">
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="text-center md:text-left">
+                <span className="bg-white text-pink-600 font-bold px-3 py-1 rounded-full text-sm mb-2 inline-block">無料・登録不要</span>
+                <h2 className="text-2xl md:text-4xl font-bold mb-2 flex items-center justify-center md:justify-start gap-3">
+                  <MdPsychology /> ルームシェア相性診断
+                </h2>
+                <p className="text-pink-100 font-bold text-lg">たった1分で判明！あなたに合うシェアメイトのタイプは？</p>
+              </div>
+              <button className="bg-white text-pink-600 font-bold px-8 py-3 rounded-full shadow-lg hover:bg-gray-100 transition whitespace-nowrap">
+                今すぐ診断する ▶
+              </button>
             </div>
-            <button className="bg-white text-pink-600 font-bold px-8 py-3 rounded-full shadow-lg hover:bg-gray-100 transition whitespace-nowrap">
-              今すぐ診断する ▶
-            </button>
+            {/* 装飾用の巨大アイコン（背景） */}
+            <MdPsychology className="absolute -bottom-10 -right-10 text-white opacity-20 w-64 h-64 group-hover:scale-110 transition duration-700" />
           </div>
-          {/* 装飾用の巨大アイコン（背景） */}
-          <MdPsychology className="absolute -bottom-10 -right-10 text-white opacity-20 w-64 h-64 group-hover:scale-110 transition duration-700" />
-        </div>
+        </Link>
       </section>
 
       {/* 4. 【NEW】意思決定を助ける「暮らしツール」3連ボタン */}

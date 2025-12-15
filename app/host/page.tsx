@@ -6,6 +6,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { MdCloudUpload, MdHome, MdAttachMoney, MdTrain, MdInfo, MdCheck, MdArrowBack, MdEdit } from 'react-icons/md';
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
+import TRAIN_DATA_JSON from '@/data/pref_line_station_full.json';
+
+const TRAIN_DATA: { [key: string]: { [key: string]: string[] } } = TRAIN_DATA_JSON;
 
 function HostPageContent() {
     const router = useRouter();
@@ -562,14 +565,21 @@ function HostPageContent() {
                                 <label className="block text-sm font-bold text-gray-700 mb-2">都道府県</label>
                                 <select
                                     value={form.prefecture}
-                                    onChange={e => setForm({ ...form, prefecture: e.target.value })}
+                                    onChange={e => {
+                                        const newPref = e.target.value;
+                                        setForm({
+                                            ...form,
+                                            prefecture: newPref,
+                                            stationLine: '', // Reset Line
+                                            stationName: ''  // Reset Station
+                                        });
+                                    }}
                                     className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] outline-none font-bold"
                                 >
-                                    <option>東京都</option>
-                                    <option>神奈川県</option>
-                                    <option>埼玉県</option>
-                                    <option>千葉県</option>
-                                    <option>大阪府</option>
+                                    <option value="">都道府県を選択</option>
+                                    {Object.keys(TRAIN_DATA).map(pref => (
+                                        <option key={pref} value={pref}>{pref}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
@@ -586,21 +596,37 @@ function HostPageContent() {
 
                         <div className="space-y-4">
                             <label className="block text-sm font-bold text-gray-700">最寄り駅</label>
-                            <div className="flex gap-4">
-                                <input
-                                    type="text"
-                                    placeholder="路線名 (例: JR山手線)"
+                            <div className="flex flex-col md:flex-row gap-4">
+                                <select
                                     value={form.stationLine}
-                                    onChange={e => setForm({ ...form, stationLine: e.target.value })}
-                                    className="flex-1 p-3 bg-gray-50 rounded-lg border border-gray-200 focus:bg-white focus:border-[#bf0000] outline-none font-bold"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="駅名 (例: 新宿駅)"
+                                    onChange={e => {
+                                        const newLine = e.target.value;
+                                        setForm({
+                                            ...form,
+                                            stationLine: newLine,
+                                            stationName: '' // Reset Station
+                                        });
+                                    }}
+                                    className="flex-1 p-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] outline-none font-bold"
+                                    disabled={!form.prefecture}
+                                >
+                                    <option value="">路線を選択</option>
+                                    {form.prefecture && TRAIN_DATA[form.prefecture] && Object.keys(TRAIN_DATA[form.prefecture]).map(line => (
+                                        <option key={line} value={line}>{line}</option>
+                                    ))}
+                                </select>
+
+                                <select
                                     value={form.stationName}
                                     onChange={e => setForm({ ...form, stationName: e.target.value })}
-                                    className="flex-1 p-3 bg-gray-50 rounded-lg border border-gray-200 focus:bg-white focus:border-[#bf0000] outline-none font-bold"
-                                />
+                                    className="flex-1 p-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] outline-none font-bold"
+                                    disabled={!form.stationLine}
+                                >
+                                    <option value="">駅を選択</option>
+                                    {form.prefecture && form.stationLine && TRAIN_DATA[form.prefecture][form.stationLine]?.map(station => (
+                                        <option key={station} value={station}>{station}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <div className="relative">

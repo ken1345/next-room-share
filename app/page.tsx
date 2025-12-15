@@ -45,6 +45,9 @@ export default function Home() {
 
       {/* ========== ここから新機能エリア ========== */}
 
+      {/* 8. 【NEW】新着物件ギャラリー（Supabaseから取得） */}
+      <ListingGallery />
+
       {/* 3. 【NEW】相性診断バナー（一番目立つ場所に配置） */}
       <section className="container mx-auto px-4 mt-8">
         <Link href="/diagnosis">
@@ -177,8 +180,7 @@ export default function Home() {
 
       {/* ... 前回の「7. コンセプト・趣味別」セクションの閉じタグ </div> </section> の直後に貼り付けてください ... */}
 
-      {/* 8. 【NEW】新着物件ギャラリー（Supabaseから取得） */}
-      <ListingGallery />
+
 
 
 
@@ -319,7 +321,7 @@ function ListingGallery() {
                 // Use stored image URL or mock fallback
                 imageUrl={l.images && l.images.length > 0 ? l.images[0] : undefined}
                 image={(!l.images || l.images.length === 0) ? 'bg-gray-200' : undefined}
-                price={(Number(l.price) / 10000).toFixed(1)}
+                price={l.price}
                 station={l.address ? l.address.split(' ')[0] : '駅指定なし'} // Simple fallback
                 badges={l.amenities ? l.amenities.slice(0, 2) : []}
                 title={l.title}

@@ -6,7 +6,7 @@ interface PhotoPropertyCardProps {
     id?: string | number;
     image?: string;
     imageUrl?: string;
-    price: string;
+    price: string | number;
     station: string;
     badges: string[];
     title: string;
@@ -16,6 +16,20 @@ interface PhotoPropertyCardProps {
 }
 
 export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, viewCount, favoritesCount, inquiryCount }: PhotoPropertyCardProps) {
+    // Format price: If raw value (>100), convert to Man-yen units (e.g. 12000 -> 1.2)
+    // If small value (<100), assume already formatted.
+    let displayPrice = price;
+    const numPrice = Number(price);
+    if (!isNaN(numPrice) && numPrice >= 100) {
+        displayPrice = (numPrice / 10000).toFixed(0);
+        // User asked for "1.2万" (1 decimal), but previous code was `toFixed(1)`.
+        // User example "12000 -> 1.2万". 
+        // I will use toFixed(1) but remove trailing .0 if needed? 
+        // "1.2" is good. "5.0" might be better as "5". 
+        // Let's stick to toFixed(1) as per previous implementation style, or user request "1.2".
+        displayPrice = (numPrice / 10000).toFixed(1).replace(/\.0$/, '');
+    }
+
     const CardContent = (
         <div className="group cursor-pointer bg-white rounded-xl shadow-sm hover:shadow-xl transition overflow-hidden border border-gray-100 flex flex-col h-full">
             {/* 写真エリア（大きく確保） */}
@@ -32,7 +46,7 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
                 {/* 写真の上に価格を乗せる（モダンな手法） */}
                 <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg shadow-sm">
                     <span className="text-xs text-gray-500 font-bold">家賃</span>
-                    <span className="text-lg font-bold text-[#bf0000] ml-1">¥{price}万</span>
+                    <span className="text-lg font-bold text-[#bf0000] ml-1">¥{displayPrice}万</span>
                 </div>
             </div>
 

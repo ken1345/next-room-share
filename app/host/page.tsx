@@ -388,7 +388,7 @@ function HostPageContent() {
                                 <PhotoPropertyCard
                                     imageUrl={[...existingImages, ...previewUrls].length > 0 ? [...existingImages, ...previewUrls][0] : undefined}
                                     image={[...existingImages, ...previewUrls].length > 0 ? undefined : 'bg-gray-200'}
-                                    price={(Number(form.rent) / 10000).toFixed(1)}
+                                    price={form.rent}
                                     station={`${form.stationName} ${form.minutesToStation}分`}
                                     badges={[
                                         form.type === 'private' ? '個室' : form.type === 'semi' ? '半個室' : 'ドミトリー',

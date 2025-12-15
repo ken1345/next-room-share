@@ -1,0 +1,310 @@
+"use client";
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { MdArrowBack, MdNotifications, MdSecurity, MdDeleteForever, MdLogout, MdChevronRight, MdClose } from 'react-icons/md';
+
+export default function SettingsPage() {
+    const router = useRouter();
+    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<any>(null);
+
+    // Notification State
+    const [emailNotif, setEmailNotif] = useState(true);
+    const [pushNotif, setPushNotif] = useState(true);
+
+    // Modals State
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+
+    // Form State
+    const [newEmail, setNewEmail] = useState('');
+    const [currentPassword, setCurrentPassword] = useState(''); // Not strictly needed for Supabase update, but good for UI flow if re-auth needed (omitted for simplicity here)
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [formLoading, setFormLoading] = useState(false);
+
+    useEffect(() => {
+        const init = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                router.push('/login');
+                return;
+            }
+            setUser(session.user);
+
+            // Fetch user settings
+            try {
+                const { data: profile } = await supabase
+                    .from('users')
+                    .select('email_notification, push_notification')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (profile) {
+                    setEmailNotif(profile.email_notification ?? true);
+                    setPushNotif(profile.push_notification ?? true);
+                }
+            } catch (error) {
+                console.error("Error fetching settings:", error);
+            }
+            setLoading(false);
+        };
+        init();
+    }, [router]);
+
+    const handleSignOut = async () => {
+        await supabase.auth.signOut();
+        router.push('/login');
+    };
+
+    const handleDeleteAccount = () => {
+        if (window.confirm("本当にアカウントを削除しますか？\nこの操作は取り消せません。すべてのデータが失われます。")) {
+            alert("アカウント削除機能は現在開発中です。\nお手数ですがお問い合わせよりご連絡ください。");
+        }
+    };
+
+    const handleToggleNotif = async (type: 'email' | 'push') => {
+        // Optimistic update
+        const newVal = type === 'email' ? !emailNotif : !pushNotif;
+        if (type === 'email') setEmailNotif(newVal);
+        else setPushNotif(newVal);
+
+        if (!user) return;
+
+        const updateData = type === 'email'
+            ? { email_notification: newVal }
+            : { push_notification: newVal };
+
+        const { error } = await supabase
+            .from('users')
+            .update(updateData)
+            .eq('id', user.id);
+
+        if (error) {
+            console.error("Failed to update setting", error);
+            // Revert on error (optional, keep simple for now)
+        }
+    };
+
+    const handleUpdateEmail = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setFormLoading(true);
+        const { error } = await supabase.auth.updateUser({ email: newEmail });
+
+        if (error) {
+            alert("メールアドレスの変更に失敗しました: " + error.message);
+        } else {
+            alert("確認メールを送信しました。\n新しいメールアドレスと現在のメールアドレスの両方に届く確認リンクをクリックして完了してください。");
+            setShowEmailModal(false);
+            setNewEmail('');
+        }
+        setFormLoading(false);
+    };
+
+    const handleUpdatePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (newPassword !== confirmPassword) {
+            alert("パスワードが一致しません。");
+            return;
+        }
+        if (newPassword.length < 6) {
+            alert("パスワードは6文字以上で入力してください。");
+            return;
+        }
+
+        setFormLoading(true);
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+        if (error) {
+            alert("パスワードの変更に失敗しました: " + error.message);
+        } else {
+            alert("パスワードを変更しました。");
+            setShowPasswordModal(false);
+            setNewPassword('');
+            setConfirmPassword('');
+        }
+        setFormLoading(false);
+    };
+
+    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+
+    return (
+        <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-700">
+            {/* Header */}
+            <div className="bg-white border-b shadow-sm sticky top-0 z-10">
+                <div className="container mx-auto px-4 h-16 flex items-center gap-4">
+                    <Link href="/account" className="text-gray-500 hover:text-gray-800 transition p-2 -ml-2 rounded-full hover:bg-gray-100">
+                        <MdArrowBack size={24} />
+                    </Link>
+                    <h1 className="text-xl font-bold text-gray-800">設定</h1>
+                </div>
+            </div>
+
+            <div className="container mx-auto px-4 max-w-2xl mt-6 space-y-6">
+
+                {/* Notifications */}
+                <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-4 border-b border-gray-100 flex items-center gap-2">
+                        <MdNotifications className="text-[#bf0000]" />
+                        <h2 className="font-bold text-gray-800">通知設定</h2>
+                    </div>
+                    <div className="p-4 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="font-bold text-sm text-gray-800">メール通知</h3>
+                                <p className="text-xs text-gray-500">新着メッセージや運営からのお知らせを受け取る</p>
+                            </div>
+                            <button
+                                onClick={() => handleToggleNotif('email')}
+                                className={`w-12 h-6 rounded-full p-1 transition duration-300 ease-in-out ${emailNotif ? 'bg-[#bf0000]' : 'bg-gray-300'}`}
+                            >
+                                <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition duration-300 ease-in-out ${emailNotif ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                            </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="font-bold text-sm text-gray-800">プッシュ通知</h3>
+                                <p className="text-xs text-gray-500">ブラウザでの通知を受け取る</p>
+                            </div>
+                            <button
+                                onClick={() => handleToggleNotif('push')}
+                                className={`w-12 h-6 rounded-full p-1 transition duration-300 ease-in-out ${pushNotif ? 'bg-[#bf0000]' : 'bg-gray-300'}`}
+                            >
+                                <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition duration-300 ease-in-out ${pushNotif ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Security */}
+                <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-4 border-b border-gray-100 flex items-center gap-2">
+                        <MdSecurity className="text-blue-500" />
+                        <h2 className="font-bold text-gray-800">セキュリティ</h2>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                        <button
+                            onClick={() => setShowEmailModal(true)}
+                            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition text-left"
+                        >
+                            <div>
+                                <span className="font-bold text-sm text-gray-700 block">メールアドレスの変更</span>
+                                <span className="text-xs text-gray-400">{user?.email}</span>
+                            </div>
+                            <MdChevronRight className="text-gray-400" />
+                        </button>
+                        <button
+                            onClick={() => setShowPasswordModal(true)}
+                            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition text-left"
+                        >
+                            <span className="font-bold text-sm text-gray-700">パスワードの変更</span>
+                            <MdChevronRight className="text-gray-400" />
+                        </button>
+                    </div>
+                </section>
+
+                {/* Danger Zone */}
+                <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-4 border-b border-gray-100 flex items-center gap-2">
+                        <MdDeleteForever className="text-gray-500" />
+                        <h2 className="font-bold text-gray-800">アカウント操作</h2>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                        <button onClick={handleSignOut} className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition text-left text-gray-700">
+                            <span className="font-bold text-sm flex items-center gap-2"><MdLogout /> ログアウト</span>
+                            <MdChevronRight className="text-gray-400" />
+                        </button>
+                        <button onClick={handleDeleteAccount} className="w-full p-4 flex items-center justify-between hover:bg-red-50 transition text-left text-red-600">
+                            <span className="font-bold text-sm">アカウントの削除</span>
+                            <MdChevronRight className="text-red-300" />
+                        </button>
+                    </div>
+                </section>
+
+                <div className="text-center text-xs text-gray-400 py-4">
+                    アプリバージョン 1.1.0
+                </div>
+
+            </div>
+
+            {/* Email Modal */}
+            {showEmailModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden">
+                        <div className="p-4 border-b flex justify-between items-center">
+                            <h3 className="font-bold text-gray-800">メールアドレス変更</h3>
+                            <button onClick={() => setShowEmailModal(false)} className="text-gray-400 hover:text-gray-600"><MdClose size={24} /></button>
+                        </div>
+                        <form onSubmit={handleUpdateEmail} className="p-4">
+                            <div className="mb-4">
+                                <label className="block text-xs font-bold text-gray-500 mb-1">新しいメールアドレス</label>
+                                <input
+                                    type="email"
+                                    required
+                                    className="w-full border border-gray-300 rounded px-3 py-2"
+                                    placeholder="new@example.com"
+                                    value={newEmail}
+                                    onChange={e => setNewEmail(e.target.value)}
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={formLoading}
+                                className="w-full bg-[#bf0000] text-white font-bold py-3 rounded-full hover:bg-[#900000] transition disabled:opacity-50"
+                            >
+                                {formLoading ? '送信中...' : '変更確認メールを送信'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Password Modal */}
+            {showPasswordModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden">
+                        <div className="p-4 border-b flex justify-between items-center">
+                            <h3 className="font-bold text-gray-800">パスワード変更</h3>
+                            <button onClick={() => setShowPasswordModal(false)} className="text-gray-400 hover:text-gray-600"><MdClose size={24} /></button>
+                        </div>
+                        <form onSubmit={handleUpdatePassword} className="p-4">
+                            <div className="mb-4">
+                                <label className="block text-xs font-bold text-gray-500 mb-1">新しいパスワード</label>
+                                <input
+                                    type="password"
+                                    required
+                                    minLength={6}
+                                    className="w-full border border-gray-300 rounded px-3 py-2"
+                                    placeholder="6文字以上"
+                                    value={newPassword}
+                                    onChange={e => setNewPassword(e.target.value)}
+                                />
+                            </div>
+                            <div className="mb-6">
+                                <label className="block text-xs font-bold text-gray-500 mb-1">パスワード確認</label>
+                                <input
+                                    type="password"
+                                    required
+                                    minLength={6}
+                                    className="w-full border border-gray-300 rounded px-3 py-2"
+                                    placeholder="再度入力してください"
+                                    value={confirmPassword}
+                                    onChange={e => setConfirmPassword(e.target.value)}
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={formLoading}
+                                className="w-full bg-[#bf0000] text-white font-bold py-3 rounded-full hover:bg-[#900000] transition disabled:opacity-50"
+                            >
+                                {formLoading ? '更新中...' : 'パスワードを変更'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

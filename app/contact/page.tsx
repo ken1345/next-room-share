@@ -5,13 +5,33 @@ import { MdEmail } from 'react-icons/md';
 export default function ContactPage() {
     const [submitted, setSubmitted] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Simulate API call
-        setTimeout(() => {
-            setSubmitted(true);
-            window.scrollTo(0, 0);
-        }, 500);
+
+        // Form elements access (simple way)
+        const form = e.target as HTMLFormElement;
+        const name = (form.elements.namedItem('name') as HTMLInputElement).value;
+        const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+        const category = (form.elements.namedItem('category') as HTMLSelectElement).value;
+        const message = (form.elements.namedItem('message') as HTMLTextAreaElement).value;
+
+        try {
+            const res = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, category, message }),
+            });
+
+            if (res.ok) {
+                setSubmitted(true);
+                window.scrollTo(0, 0);
+            } else {
+                alert("送信に失敗しました。しばらく経ってから再度お試しください。");
+            }
+        } catch (error) {
+            console.error("Error sending inquiry:", error);
+            alert("エラーが発生しました。");
+        }
     };
 
     if (submitted) {

@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MdPerson, MdSave } from 'react-icons/md';
 import { supabase } from '@/lib/supabase';
 
-export default function AccountSetupPage() {
+function AccountSetupForm() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const searchParams = useSearchParams();
+    const returnUrl = searchParams.get('returnUrl') || '/account';
 
     // Form State
     const [displayName, setDisplayName] = useState('');
@@ -177,4 +179,3 @@ export default function AccountSetupPage() {
         </Suspense>
     );
 }
-```

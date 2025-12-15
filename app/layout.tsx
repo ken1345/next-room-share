@@ -6,6 +6,7 @@ import "./globals.css";
 // 作成したコンポーネントをインポート
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ProfileGuard from "@/components/ProfileGuard";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,16 +24,17 @@ export default function RootLayout({
     <html lang="ja">
       <body className={inter.className}>
         <div className="min-h-screen flex flex-col bg-[#fcfbf7]">
-          {/* ここに書くと全ページで表示されます */}
-          <Header />
-          
-          {/* 各ページの中身（page.tsx）はここに挿入されます */}
-          <main className="flex-grow">
-            {children}
-          </main>
-          
-          {/* ここに書くと全ページで表示されます */}
-          <Footer />
+          {/* ProfileGuard: Checks logic and redirects if needed */}
+          <ProfileGuard>
+            <Header />
+
+            {/* 各ページの中身（page.tsx）はここに挿入されます */}
+            <main className="flex-grow">
+              {children}
+            </main>
+
+            <Footer />
+          </ProfileGuard>
         </div>
       </body>
     </html>

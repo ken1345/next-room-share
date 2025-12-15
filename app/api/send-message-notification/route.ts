@@ -9,7 +9,7 @@ export async function POST(request: Request) {
         const user = process.env.GMAIL_USER;
         const pass = process.env.GMAIL_APP_PASSWORD;
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
         if (!user || !pass) {
             console.error("[Notification] Server configuration error: Missing user or pass");
@@ -18,8 +18,7 @@ export async function POST(request: Request) {
 
         console.log(`[Notification] Processing for recipient: ${recipientId}`);
 
-        // Initialize Supabase Client (Note: using Anon key, relying on public read or specific RLS)
-        // If strict RLS is enabled, you might need SUPABASE_SERVICE_ROLE_KEY
+        // Initialize Supabase Client with Service Role Key to bypass RLS
         const supabase = createClient(supabaseUrl, supabaseKey);
 
         // Fetch Recipient Details

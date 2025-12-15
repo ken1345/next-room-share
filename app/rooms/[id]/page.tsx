@@ -185,19 +185,38 @@ export default function RoomDetailsPage() {
                         {/* Host Info */}
                         <div className="mb-8 pb-6">
                             <h2 className="text-xl font-bold text-gray-800 mb-4">ホストについて</h2>
-                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-start gap-4">
-                                <div className="w-14 h-14 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 overflow-hidden">
-                                    {host?.photo_url ? (
-                                        <img src={host.photo_url} alt="Host" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <MdPerson size={32} />
-                                    )}
+                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-center md:items-start gap-6">
+                                <div className="flex flex-col items-center">
+                                    <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 overflow-hidden mb-2">
+                                        {host?.photo_url ? (
+                                            <img src={host.photo_url} alt="Host" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <MdPerson size={48} />
+                                        )}
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="font-bold text-lg text-gray-800 mb-1">{host?.display_name || 'Host'}</p>
-                                    <Link href={`/messages/new?host=${host?.id}`} className="text-sm text-[#bf0000] font-bold hover:underline">
-                                        メッセージを送る
-                                    </Link>
+                                <div className="flex-1 w-full text-center md:text-left">
+                                    <p className="font-bold text-xl text-gray-800 mb-4">{host?.display_name || 'Host'}</p>
+
+                                    <div className="grid grid-cols-3 gap-2 border-t border-b border-gray-100 py-4 mb-4">
+                                        <div className="text-center md:text-left border-r border-gray-100 last:border-0">
+                                            <p className="text-xs text-gray-400 font-bold mb-1">性別</p>
+                                            <p className="font-bold text-gray-800">{host?.gender || '-'}</p>
+                                        </div>
+                                        <div className="text-center md:text-left border-r border-gray-100 last:border-0">
+                                            <p className="text-xs text-gray-400 font-bold mb-1">年齢</p>
+                                            <p className="font-bold text-gray-800">{host?.age ? `${host.age}歳` : '-'}</p>
+                                        </div>
+                                        <div className="text-center md:text-left">
+                                            <p className="text-xs text-gray-400 font-bold mb-1">職業</p>
+                                            <p className="font-bold text-gray-800">{host?.occupation || '-'}</p>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-gray-500 text-sm leading-relaxed">
+                                        {/* ホストの自己紹介があればここに表示 */}
+                                        親切・丁寧な対応を心がけています。シェアハウスでの生活について、なんでもご相談ください。
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -220,8 +239,8 @@ export default function RoomDetailsPage() {
                             <button
                                 onClick={handleToggleLike}
                                 className={`w-full font-bold py-3 rounded-xl border transition flex items-center justify-center gap-2 ${isLiked
-                                        ? 'bg-red-50 text-[#bf0000] border-red-100'
-                                        : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                    ? 'bg-red-50 text-[#bf0000] border-red-100'
+                                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
                                     }`}
                             >
                                 {isLiked ? <MdFavorite size={20} /> : <MdFavoriteBorder size={20} />}

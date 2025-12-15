@@ -47,7 +47,11 @@ export default function ProfileGuard({ children }: { children: React.ReactNode }
                 if (!profile || !profile.gender || !profile.age || !profile.occupation) {
                     // Check if we are already going there? (Handled by excludedPaths but double check)
                     if (pathname !== '/account/setup') {
-                        router.replace('/account/setup');
+                        if (pathname !== '/account/setup') {
+                            // Encode current path to handle special characters
+                            const returnUrl = encodeURIComponent(pathname || '/');
+                            router.replace(`/account/setup?returnUrl=${returnUrl}`);
+                        }
                     }
                 }
             } catch (error) {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { MdArrowBack, MdPerson, MdEmail, MdLock } from 'react-icons/md';
 import { FcGoogle } from 'react-icons/fc';
 import { supabase } from '@/lib/supabase';
@@ -21,13 +21,16 @@ export default function SignupPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
 
+    const searchParams = useSearchParams();
+    const redirectPath = searchParams.get('redirect') || '/account'; // Default to /account instead of /
+
     const handleGoogleSignup = async () => {
         setIsLoading(true);
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/account`,
+                    redirectTo: `${window.location.origin}${redirectPath}`,
                 }
             });
             if (error) throw error;
@@ -55,29 +58,15 @@ export default function SignupPage() {
                         gender: form.gender,
                         age: form.age,
                         occupation: form.occupation,
-                    }
+                    },
+                    emailRedirectTo: `${window.location.origin}${redirectPath}`
                 }
             });
 
             if (error) throw error;
 
             if (data.user) {
-                // 2. Insert/Update public.users table
-                // Since trigger might already create the row, we use upsert or update.
-                // But RLS "Users can update own profile" requires user to be logged in.
-                // If email confirmation is required, user is NOT logged in yet?
-                // Actually supabase.auth.signUp usually doesn't sign in immediately if email confirmation is on.
-                // So we rely on the metadata above + Trigger to populate public.users.
-                // OR we have to wait until they log in to ask for this info?
-                // 
-                // However, user specifically asked to input these "at account creation".
-                // We've put them in `options.data` (user_metadata). 
-                // We will assume the Trigger logic (which I can't see fully but is standard) 
-                // OR a new Trigger needs to copy metadata to columns.
-                // 
-                // Since I cannot change the Trigger easily without more SQL, 
-                // I will TRY to update the table directly if session exists (Auto Confirm case).
-
+                // 2. Insert/Update public.users table (Best effort for auto-confirm or session)
                 if (data.session) {
                     const { error: profileError } = await supabase
                         .from('users')
@@ -90,8 +79,7 @@ export default function SignupPage() {
                         .eq('id', data.user.id);
 
                     if (profileError) {
-                        console.warn("Profile update failed (likely trigger delay or RLS):", profileError);
-                        // Not blocking signup success
+                        console.warn("Profile update failed:", profileError);
                     }
                 }
 
@@ -99,7 +87,9 @@ export default function SignupPage() {
                 setEmailSent(true);
 
                 if (data.session) {
-                    setTimeout(() => router.push('/account'), 2000);
+                    // Normalize redirect path (ensure it starts with /)
+                    const target = redirectPath.startsWith('/') ? redirectPath : '/' + redirectPath;
+                    setTimeout(() => router.push(target), 2000);
                 }
             }
 

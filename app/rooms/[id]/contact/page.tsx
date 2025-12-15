@@ -33,11 +33,29 @@ export default function ContactPage() {
             // 1. Get User
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
-                // Save current path to redirect back after login
-                // router.push(`/login?redirect=/rooms/${id}/contact`);
-                // For now just set null
+                // Should be redirected by previous page but just in case
+                router.push(`/login?redirect=/rooms/${id}/contact`);
+                return;
             }
-            setUser(session?.user || null);
+            setUser(session.user);
+
+            // Fetch User Profile for pre-fill
+            const { data: profile } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile) {
+                // Update form with profile data
+                setForm(prev => ({
+                    ...prev,
+                    name: profile.display_name || '',
+                    age: profile.age ? String(profile.age) : '',
+                    gender: profile.gender === '男性' ? 'male' : profile.gender === '女性' ? 'female' : 'other',
+                    occupation: profile.occupation || '',
+                }));
+            }
 
             // 2. Get Property
             const { data, error } = await supabase
@@ -54,7 +72,7 @@ export default function ContactPage() {
             setLoading(false);
         };
         fetchData();
-    }, [id]);
+    }, [id, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

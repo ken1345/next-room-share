@@ -232,9 +232,27 @@ export default function RoomDetailsPage() {
                                 <span className="text-sm font-bold text-gray-500 mb-1"> / 月</span>
                             </div>
 
-                            <Link href={`/rooms/${id}/contact`} className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition text-lg flex items-center justify-center gap-2 mb-3">
+                            <button
+                                onClick={() => {
+                                    if (!user) {
+                                        alert("お問い合わせにはログインが必要です");
+                                        // Redirect to Login with return URL
+                                        // Note: window.location.href usage or useRouter would be better but simple link is okay if handled
+                                        // We can use router.push
+                                        // But wait, the component imports useRouter? No, useParams.
+                                        // I need to import useRouter.
+                                        // Actually I can just let them go to /contact and be redirected, 
+                                        // BUT user asked "make it so it can't be done unless logged in".
+                                        // So blocking at button level is good.
+                                        window.location.href = `/login?redirect=/rooms/${id}/contact`;
+                                    } else {
+                                        window.location.href = `/rooms/${id}/contact`;
+                                    }
+                                }}
+                                className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition text-lg flex items-center justify-center gap-2 mb-3"
+                            >
                                 <MdEmail /> 空室確認・問い合わせ
-                            </Link>
+                            </button>
 
                             <button
                                 onClick={handleToggleLike}

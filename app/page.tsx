@@ -115,7 +115,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. 【NEW】体験談・読み物（カルーセル風レイアウト） */}
+
+
+      {/* 7. 【NEW】体験談・読み物（カルーセル風レイアウト） */}
       <section className="bg-white py-10 mt-10 border-t border-b">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-end mb-6">
@@ -164,10 +166,10 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section >
 
       {/* 7. コンセプト・趣味別（前回分） */}
-      <section className="container mx-auto px-4 py-10">
+      < section className="container mx-auto px-4 py-10" >
         <SectionTitle title="趣味・コンセプトで選ぶ" subtitle="同じ趣味の仲間と暮らす楽しさ" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <ConceptCard icon={<MdSportsEsports />} title="ゲーマー専用" desc="高速回線・防音室完備" />
@@ -175,7 +177,7 @@ export default function Home() {
           <ConceptCard icon={<MdMovie />} title="シアタールーム" desc="週末は映画鑑賞会" />
           <ConceptCard icon={<MdSpa />} title="サウナ付き" desc="自宅でととのう生活" />
         </div>
-      </section>
+      </section >
 
       {/* ... 前回の「7. コンセプト・趣味別」セクションの閉じタグ </div> </section> の直後に貼り付けてください ... */}
 
@@ -204,7 +206,7 @@ export default function Home() {
       <BeforeAfterGallery />
 
 
-    </div>
+    </div >
   );
 }
 

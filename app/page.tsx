@@ -2,7 +2,7 @@
 "use client";
 import { useState } from "react";
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
+
 import {
   MdHome, MdGroup, MdVpnKey, MdForum, MdLocationOn, MdTrain, MdMap,
   MdPets, MdWifi, MdPublic, MdFemale, MdAttachMoney, MdFiberNew,
@@ -13,11 +13,7 @@ import {
 } from "react-icons/md";
 import PhotoPropertyCard from "@/components/PhotoPropertyCard";
 import { MOCK_STORIES } from '@/data/mock-stories';
-// ReviewMapコンポーネントを「SSRなし」で動的に読み込む
-const ReviewMap = dynamic(() => import('@/components/ReviewMap'), {
-  ssr: false,
-  loading: () => <div className="h-[500px] bg-gray-100 animate-pulse rounded-xl flex items-center justify-center text-gray-400 font-bold">地図を読み込み中...</div>
-});
+
 // ヘッダー・フッターは layout.tsx にあるため省略
 
 export default function Home() {
@@ -185,22 +181,7 @@ export default function Home() {
       <ListingGallery />
 
 
-      {/* 9. 【NEW】リアル口コミマップ（Leaflet版） */}
-      <section className="bg-white py-16 border-t relative">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
-              日本全国の<span className="text-[#bf0000]">シェアハウス口コミ地図</span>
-            </h2>
-            <p className="text-gray-500 font-bold">ピンをクリックして、周辺環境や住み心地をチェック！</p>
-          </div>
 
-          {/* 地図コンポーネントの表示 */}
-          <div className="max-w-5xl mx-auto">
-            <ReviewMap />
-          </div>
-        </div>
-      </section>
 
       {/* 9.5. 【NEW】何でもビフォーアフター（ギャラリー形式） */}
       <BeforeAfterGallery />

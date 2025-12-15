@@ -74,24 +74,30 @@ export default function Home() {
       <section className="container mx-auto px-4 mt-10">
         <SectionTitle title="暮らしの便利ツール" subtitle="物件がなくても役立つ！失敗しないための準備ツール" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ToolCard
-            color="bg-green-50 border-green-200 text-green-700"
-            icon={<MdCalculate size={32} />}
-            title="生活費シミュレーター"
-            desc="家賃＋光熱費＋消耗品… 月々いくらかかる？"
-          />
-          <ToolCard
-            color="bg-blue-50 border-blue-200 text-blue-700"
-            icon={<MdPlaylistAddCheck size={32} />}
-            title="内見チェックリスト"
-            desc="印刷OK！内見で確認すべき「30の落とし穴」"
-          />
-          <ToolCard
-            color="bg-orange-50 border-orange-200 text-orange-700"
-            icon={<MdTimeline size={32} />}
-            title="引越しタイムライン"
-            desc="いつ何をする？入居までのダンドリを可視化"
-          />
+          <Link href="/simulator">
+            <ToolCard
+              color="bg-green-50 border-green-200 text-green-700"
+              icon={<MdCalculate size={32} />}
+              title="生活費シミュレーター"
+              desc="家賃＋光熱費＋消耗品… 月々いくらかかる？"
+            />
+          </Link>
+          <Link href="/checklist">
+            <ToolCard
+              color="bg-blue-50 border-blue-200 text-blue-700"
+              icon={<MdPlaylistAddCheck size={32} />}
+              title="内見チェックリスト"
+              desc="騒音は？水回りは？見落としがちなポイント30選"
+            />
+          </Link>
+          <Link href="/timeline">
+            <ToolCard
+              color="bg-orange-50 border-orange-200 text-orange-700"
+              icon={<MdTimeline size={32} />}
+              title="引越しタイムライン"
+              desc="物件探しから入居当日まで。やるべきことを時系列で"
+            />
+          </Link>
         </div>
       </section>
 

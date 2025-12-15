@@ -168,7 +168,9 @@ export default function DiagnosisPage() {
 
     return (
         <div className="min-h-screen bg-[#fcfbf7] flex flex-col items-center justify-center p-4">
-            {/* Removed redundant Home link */}
+            <Link href="/" className="absolute top-6 left-6 text-gray-500 hover:text-[#bf0000] flex items-center gap-1 font-bold">
+                <MdHome size={20} /> ホームに戻る
+            </Link>
 
             <div className="max-w-xl w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 min-h-[500px] flex flex-col relative transition-all duration-500">
 

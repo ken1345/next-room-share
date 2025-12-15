@@ -21,7 +21,23 @@ export default function SignupPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
 
-    // ... (handleGoogleSignup remains same)
+    const handleGoogleSignup = async () => {
+        setIsLoading(true);
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/account`,
+                }
+            });
+            if (error) throw error;
+            // Redirect happens automatically
+        } catch (error: any) {
+            console.error(error);
+            alert("Googleサインアップに失敗しました。" + error.message);
+            setIsLoading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

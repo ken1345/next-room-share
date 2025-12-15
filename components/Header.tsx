@@ -27,11 +27,12 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="bg-white border-b py-4">
-      <div className="container mx-auto px-4 flex justify-between items-center">
+    <header className="bg-white border-b py-0">
+      <div className="container mx-auto px-4 flex justify-between items-center h-20 md:h-24">
         {/* ロゴ部分：クリックでトップへ戻る */}
-        <Link href="/" className="hover:opacity-80 transition">
-          <img src="/logo.webp" alt="ルームシェアネクスト" className="h-8 md:h-10 w-auto" />
+        <Link href="/" className="flex items-center gap-1 hover:opacity-80 transition h-full">
+          <MdHome size={52} className="text-[#bf0000] mt-2" />
+          <img src="/logo.webp" alt="ロゴ" className="h-full w-auto object-contain py-1" />
         </Link>
 
         {/* Desktop Navigation */}

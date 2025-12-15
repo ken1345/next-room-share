@@ -2,70 +2,12 @@
 
 import Link from 'next/link';
 import { MdArrowForward, MdCalendarToday, MdPerson, MdTag } from 'react-icons/md';
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-
-interface Story {
-    id: string; // Firestore ID is string
-    title: string;
-    excerpt: string;
-    image: string;
-    tags: string[];
-    author: string;
-    date: string;
-}
+import { MOCK_STORIES } from '@/data/mock-stories';
 
 export default function StoriesPage() {
-    const [stories, setStories] = useState<Story[]>([]);
-    const [loading, setLoading] = useState(true);
+    // For now, serving mock data directly.
+    const stories = MOCK_STORIES;
 
-    useEffect(() => {
-        const fetchStories = async () => {
-            try {
-                // Fetch from Supabase
-                const { data, error } = await supabase
-                    .from('stories')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-
-                if (data) {
-                    const storiesData = data.map((doc: any) => ({
-                        id: doc.id,
-                        title: doc.title,
-                        excerpt: doc.excerpt || '',
-                        image: doc.cover_image || 'bg-gray-200', // Handle background class or url later, assuming class for demo or url
-                        tags: doc.tags || [],
-                        // In real app, we would join with users table. For now, assuming author name in story or fetch separately.
-                        // However, schema says author_id. Let's generic 'Anonymous' or fetch author if we joined.
-                        // Simplified: just show a generic name or 'Resident' if raw SQL didn't join.
-                        // Actually, let's try to select author:users(display_name) if RLS allows.
-                        // For simplicity in prototype, I'll just use 'Resident' or if I updated schema to include author_name.
-                        // Schema: author_id uuid references users.
-
-                        // Let's IMPROVE the query to fetch author name
-                        author: 'Resident', // Placeholder until join is implemented or just use static
-                        date: new Date(doc.created_at).toLocaleDateString('ja-JP'),
-                    })) as Story[];
-
-                    // IF we want author name, we need: .select('*, author:users(display_name)')
-                    // Let's try advanced select.
-                    setStories(storiesData);
-                }
-            } catch (error) {
-                console.error("Error fetching stories:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchStories();
-    }, []);
-
-    if (loading) {
-        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-    }
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20 font-sans">

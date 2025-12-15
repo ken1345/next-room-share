@@ -2,77 +2,17 @@
 
 import Link from 'next/link';
 import { MdArrowBack, MdArrowForward, MdCalendarToday, MdPerson, MdTag } from 'react-icons/md';
-import { notFound } from 'next/navigation';
-import { use, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-
-interface Story {
-    id: string;
-    title: string;
-    body: string; // HTML content
-    excerpt?: string;
-    image: string;
-    tags: string[];
-    author: string;
-    date: string;
-    createdAt?: any;
-}
+import { use } from 'react';
+import { MOCK_STORIES } from '@/data/mock-stories';
 
 export default function StoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    // Unwrap params using React.use()
     const { id } = use(params);
 
-    const [story, setStory] = useState<Story | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    // Find story from MOCK_STORIES
+    // Note: MOCK_STORIES ids are numbers, params.id is string.
+    const story = MOCK_STORIES.find(s => s.id === Number(id));
 
-    useEffect(() => {
-        const fetchStory = async () => {
-            try {
-                const { data, error } = await supabase
-                    .from('stories')
-                    .select('*')
-                    .eq('id', id)
-                    .single();
-
-                if (error) throw error;
-
-                if (data) {
-                    setStory({
-                        id: data.id,
-                        title: data.title,
-                        body: data.content, // Changed from body to content to match schema (oops, schema check)
-                        // Schema says: title, content, cover_image, excerpt, tags, author_id
-                        image: data.cover_image || 'bg-gray-200',
-                        tags: data.tags || [],
-                        author: 'Resident', // Placeholder or fetch author name
-                        date: new Date(data.created_at).toLocaleDateString('ja-JP').replace(/\//g, '.'),
-                    } as Story);
-                } else {
-                    setError(true);
-                }
-            } catch (err) {
-                console.error("Error fetching story:", err);
-                setError(true);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (id) {
-            fetchStory();
-        }
-    }, [id]);
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-xl font-bold text-gray-500 animate-pulse">Loading...</div>
-            </div>
-        );
-    }
-
-    if (error || !story) {
+    if (!story) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
                 <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-md w-full">
@@ -85,6 +25,8 @@ export default function StoryDetailPage({ params }: { params: Promise<{ id: stri
             </div>
         );
     }
+
+
 
     return (
         <article className="min-h-screen bg-white font-sans pb-20">

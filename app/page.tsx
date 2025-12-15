@@ -9,9 +9,10 @@ import {
   MdCampaign, MdTimer, MdSportsEsports, MdFitnessCenter, MdMovie, MdSpa,
   MdSchool, MdComputer, MdChildCare, MdTranslate,
   MdCalculate, MdPlaylistAddCheck, MdTimeline, MdPsychology, MdAutoStories, MdStar, MdPlace, MdFace,
-  MdArrowForward, MdCameraAlt
+  MdArrowForward, MdCameraAlt, MdTag, MdPerson, MdCalendarToday
 } from "react-icons/md";
 import PhotoPropertyCard from "@/components/PhotoPropertyCard";
+import { MOCK_STORIES } from '@/data/mock-stories';
 // ReviewMapコンポーネントを「SSRなし」で動的に読み込む
 const ReviewMap = dynamic(() => import('@/components/ReviewMap'), {
   ssr: false,
@@ -119,34 +120,48 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-end mb-6">
             <SectionTitle title="シェアハウス体験談" subtitle="先輩たちのリアルな暮らし・失敗談" />
-            <a href="#" className="text-[#bf0000] text-sm font-bold hover:underline mb-6">もっと見る ▶</a>
+            <Link href="/stories" className="text-[#bf0000] text-sm font-bold hover:underline mb-6">もっと見る ▶</Link>
           </div>
 
           <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-hide">
-            {/* 記事カード 1 */}
-            <ArticleCard
-              tag="失敗談"
-              title="「掃除当番で揉めた...」解決策はルール化にあり"
-              image="bg-gray-200"
-            />
-            {/* 記事カード 2 */}
-            <ArticleCard
-              tag="お金の話"
-              title="1ヶ月の生活費大公開！一人暮らしより3万円浮いた話"
-              image="bg-gray-300"
-            />
-            {/* 記事カード 3 */}
-            <ArticleCard
-              tag="入居者レビュー"
-              title="30代エンジニアが集まる「ギークハウス」に住んでみた"
-              image="bg-gray-400"
-            />
-            {/* 記事カード 4 */}
-            <ArticleCard
-              tag="内見のコツ"
-              title="写真に騙されない！共有スペースで見るべき3つのポイント"
-              image="bg-gray-500"
-            />
+            {MOCK_STORIES.slice(0, 4).map((story) => (
+              <Link href={`/stories/${story.id}`} key={story.id} className="block group min-w-[300px] md:min-w-[350px]">
+                <article className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition h-full flex flex-col">
+                  {/* If image is a URL (Supabase Storage), use img tag. If class (Mock), use div. */}
+                  {story.image.startsWith('bg-') ? (
+                    <div className={`h-48 ${story.image} bg-cover bg-center`}></div>
+                  ) : (
+                    <div className="h-48 bg-gray-200">
+                      {/* If I had real images, I'd put an img here. For now, empty or generic placeholder */}
+                    </div>
+                  )}
+
+                  <div className="p-6 flex-1 flex flex-col">
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {story.tags.map(tag => (
+                        <span key={tag} className="text-xs font-bold text-[#bf0000] bg-red-50 px-2 py-1 rounded-md flex items-center gap-1">
+                          <MdTag /> {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-[#bf0000] transition line-clamp-2">
+                      {story.title}
+                    </h2>
+                    <p className="text-gray-500 text-sm leading-relaxed mb-4 line-clamp-3">
+                      {story.excerpt}
+                    </p>
+                    <div className="flex items-center justify-between text-xs text-gray-400 font-bold border-t border-gray-50 pt-4 mt-auto">
+                      <div className="flex items-center gap-1">
+                        <MdPerson /> {story.author}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MdCalendarToday /> {story.date}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -257,7 +272,7 @@ function SearchButton({ icon, text, isOutline }: { icon: React.ReactNode, text: 
   const styleClass = isOutline
     ? "bg-[#a00000] text-white border border-[#b00000] hover:bg-[#800000]"
     : "bg-white text-[#bf0000] hover:bg-gray-100";
-  return <button className={`${baseClass} ${styleClass}`}>{icon} {text}</button>;
+  return <button className={`${baseClass} ${styleClass} `}>{icon} {text}</button>;
 }
 
 function FeatureCard({ color, icon, title }: { color: string, icon: React.ReactNode, title: string }) {

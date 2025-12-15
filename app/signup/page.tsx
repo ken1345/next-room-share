@@ -7,7 +7,9 @@ import { MdArrowBack, MdPerson, MdEmail, MdLock } from 'react-icons/md';
 import { FcGoogle } from 'react-icons/fc';
 import { supabase } from '@/lib/supabase';
 
-export default function SignupPage() {
+import { Suspense } from 'react';
+
+function SignupForm() {
     const router = useRouter();
     const [form, setForm] = useState({
         displayName: '',
@@ -272,5 +274,13 @@ export default function SignupPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function SignupPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <SignupForm />
+        </Suspense>
     );
 }

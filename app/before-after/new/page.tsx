@@ -185,8 +185,8 @@ function BeforeAfterPostForm() {
     return (
         <div className="min-h-screen bg-gray-50 py-12 font-sans">
             <div className="container mx-auto px-4 max-w-2xl">
-                <Link href="/" className="inline-flex items-center gap-1 text-gray-500 hover:text-[#bf0000] font-bold mb-6">
-                    <MdArrowBack /> トップに戻る
+                <Link href="/before-after" className="inline-flex items-center gap-1 text-gray-500 hover:text-[#bf0000] font-bold mb-6">
+                    <MdArrowBack /> 一覧に戻る
                 </Link>
 
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
@@ -222,7 +222,7 @@ function BeforeAfterPostForm() {
                                         onDragLeave={e => handleDragLeave(e, 'before')}
                                         onDrop={e => handleDrop(e, 'before')}
                                         className={`aspect-square rounded-lg bg-gray-50 border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition relative overflow-hidden ${isDraggingBefore ? 'border-[#bf0000] bg-red-50' :
-                                                beforePreview ? 'border-gray-200' : 'border-gray-300 hover:border-[#bf0000] hover:bg-red-50'
+                                            beforePreview ? 'border-gray-200' : 'border-gray-300 hover:border-[#bf0000] hover:bg-red-50'
                                             }`}
                                     >
                                         {beforePreview ? (
@@ -245,7 +245,7 @@ function BeforeAfterPostForm() {
                                         onDragLeave={e => handleDragLeave(e, 'after')}
                                         onDrop={e => handleDrop(e, 'after')}
                                         className={`aspect-square rounded-lg bg-gray-50 border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition relative overflow-hidden ${isDraggingAfter ? 'border-[#bf0000] bg-red-50' :
-                                                afterPreview ? 'border-[#bf0000]' : 'border-gray-300 hover:border-[#bf0000] hover:bg-red-50'
+                                            afterPreview ? 'border-[#bf0000]' : 'border-gray-300 hover:border-[#bf0000] hover:bg-red-50'
                                             }`}
                                     >
                                         {afterPreview ? (

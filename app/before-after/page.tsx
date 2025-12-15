@@ -71,7 +71,7 @@ export default function BeforeAfterListPage() {
                 {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {posts.map((post) => (
-                        <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition group flex flex-col">
+                        <Link href={`/before-after/${post.id}`} key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition group flex flex-col cursor-pointer">
                             {/* Images Area */}
                             <div className="flex h-56 relative border-b border-gray-50">
                                 {/* Before */}
@@ -110,7 +110,7 @@ export default function BeforeAfterListPage() {
                                     <span>{new Date(post.created_at).toLocaleDateString()}</span>
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             </div>

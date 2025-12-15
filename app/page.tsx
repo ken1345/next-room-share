@@ -456,7 +456,7 @@ function BeforeAfterGallery() {
         {/* ギャラリーグリッド：スマホ1列、PC2列 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {displayItems.map((item) => (
-            <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition group">
+            <Link href={item.isMock ? '#' : `/before-after/${item.id}`} key={item.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition group block ${item.isMock ? 'cursor-default pointer-events-none' : 'cursor-pointer'}`}>
               <div className="p-4 border-b border-gray-50 flex items-center justify-between">
                 <h3 className="font-bold text-gray-800">{item.title}</h3>
                 <span className="text-xs text-gray-400 font-bold">by {item.user?.display_name || 'User'}</span>
@@ -486,7 +486,7 @@ function BeforeAfterGallery() {
                   <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition z-0"></div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

@@ -8,13 +8,19 @@ import { MdArrowBack, MdArrowForward, MdCalendarToday, MdPerson } from 'react-ic
 export default function BeforeAfterDetailPage() {
     const params = useParams();
     const id = params?.id;
+    const router = useRouter(); // Added router
     const [post, setPost] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [currentUser, setCurrentUser] = useState<any>(null); // Added currentUser state
 
     useEffect(() => {
         if (!id) return;
 
-        const fetchPost = async () => {
+        const fetchData = async () => {
+            // Fetch Session
+            const { data: { session } } = await supabase.auth.getSession();
+            setCurrentUser(session?.user || null);
+
             const { data, error } = await supabase
                 .from('before_after_posts')
                 .select(`
@@ -30,8 +36,24 @@ export default function BeforeAfterDetailPage() {
             if (data) setPost(data);
             setLoading(false);
         };
-        fetchPost();
+        fetchData();
     }, [id]);
+
+    const handleDelete = async () => {
+        if (!confirm('本当に削除しますか？この操作は取り消せません。')) return;
+
+        const { error } = await supabase
+            .from('before_after_posts')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            alert('削除に失敗しました: ' + error.message);
+        } else {
+            alert('削除しました。');
+            router.push('/before-after');
+        }
+    };
 
     if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-500">読み込み中...</div>;
 
@@ -42,14 +64,25 @@ export default function BeforeAfterDetailPage() {
         </div>
     );
 
+    const isAuthor = currentUser && post.user_id === currentUser.id;
+
     return (
         <div className="min-h-screen bg-gray-50 py-12 font-sans">
             <div className="container mx-auto px-4 max-w-4xl">
                 {/* Nav */}
-                <div className="mb-6">
+                <div className="mb-6 flex justify-between items-center">
                     <Link href="/before-after" className="inline-flex items-center gap-1 text-gray-500 hover:text-[#bf0000] font-bold">
                         <MdArrowBack /> 一覧に戻る
                     </Link>
+
+                    {isAuthor && (
+                        <button
+                            onClick={handleDelete}
+                            className="text-red-500 font-bold hover:bg-red-50 px-4 py-2 rounded transition text-sm border border-red-200"
+                        >
+                            削除する
+                        </button>
+                    )}
                 </div>
 
                 {/* Main Content */}

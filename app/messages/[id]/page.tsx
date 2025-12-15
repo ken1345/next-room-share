@@ -117,6 +117,21 @@ export default function MessageThreadPage() {
                 .from('threads')
                 .update({ updated_at: new Date() })
                 .eq('id', threadId);
+
+            // Send Email Notification (Fire and forget)
+            const recipientId = (user.id === thread.host_id) ? thread.seeker_id : thread.host_id;
+            const senderName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'ユーザー';
+
+            fetch('/api/send-message-notification', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    recipientId,
+                    senderName,
+                    messageContent: content,
+                    threadId
+                })
+            }).catch(err => console.error("Notification failed", err));
         }
         setSending(false);
     };

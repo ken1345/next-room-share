@@ -30,8 +30,8 @@ export default function Header() {
     <header className="bg-white border-b py-4">
       <div className="container mx-auto px-4 flex justify-between items-center">
         {/* ロゴ部分：クリックでトップへ戻る */}
-        <Link href="/" className="text-2xl font-bold text-[#bf0000] flex items-center gap-2 hover:opacity-80 transition">
-          <MdHome /> ルームシェアネクスト
+        <Link href="/" className="hover:opacity-80 transition">
+          <img src="/logo.webp" alt="ルームシェアネクスト" className="h-8 md:h-10 w-auto" />
         </Link>
 
         {/* Desktop Navigation */}

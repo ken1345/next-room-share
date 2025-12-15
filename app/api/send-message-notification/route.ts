@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         await transporter.sendMail({
             from: user,
             to: recipient.email,
-            subject: `【ルームシェアネクスト】${senderName}さんからメッセージが届きました`,
+            subject: `【ルームシェアmikke】${senderName}さんからメッセージが届きました`,
             text: `
 ${senderName}さんから新しいメッセージが届きました。
 

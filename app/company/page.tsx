@@ -16,7 +16,7 @@ export default function CompanyPage() {
                         <tbody>
                             <tr className="border-b border-gray-100 hover:bg-gray-50 transition">
                                 <th className="py-4 px-6 bg-gray-50 font-bold w-1/3 text-gray-600">会社名</th>
-                                <td className="py-4 px-6">株式会社ルームシェアネクスト</td>
+                                <td className="py-4 px-6">株式会社ルームシェアmikke</td>
                             </tr>
                             <tr className="border-b border-gray-100 hover:bg-gray-50 transition">
                                 <th className="py-4 px-6 bg-gray-50 font-bold text-gray-600">設立</th>

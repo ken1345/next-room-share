@@ -11,7 +11,7 @@ import ProfileGuard from "@/components/ProfileGuard";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ルームシェアネクスト",
+  title: "ルームシェアmikke",
   description: "ルームシェア募集サイト",
 };
 

@@ -14,7 +14,7 @@ export default function TermsPage() {
                     <section>
                         <h2 className="text-xl font-bold mb-3 text-gray-800">第1条（適用）</h2>
                         <p className="text-sm leading-relaxed text-gray-600">
-                            本規約は、株式会社ルームシェアネクスト（以下「当社」）が提供する「ルームシェアネクスト」（以下「本サービス」）の利用条件を定めるものです。登録ユーザーの皆さまには、本規約に従って本サービスをご利用いただきます。
+                            本規約は、株式会社ルームシェアmikke（以下「当社」）が提供する「ルームシェアmikke」（以下「本サービス」）の利用条件を定めるものです。登録ユーザーの皆さまには、本規約に従って本サービスをご利用いただきます。
                         </p>
                     </section>
 

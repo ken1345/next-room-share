@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect, Suspense } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { MdSearch, MdLocationOn, MdTrain, MdMap, MdFilterList, MdCheckBox, MdCheckBoxOutlineBlank, MdSort, MdKeyboardArrowRight, MdCheck, MdArrowBack, MdSave } from 'react-icons/md';
+import { MdSearch, MdLocationOn, MdTrain, MdMap, MdFilterList, MdCheckBox, MdCheckBoxOutlineBlank, MdSort, MdKeyboardArrowRight, MdCheck, MdArrowBack, MdSave, MdKeyboardArrowUp } from 'react-icons/md';
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
 
 // Area Data Structure
@@ -25,12 +26,12 @@ type StationSelection = {
     station: string | null;
 };
 
-interface SearchClientProps {
-    initialListings: any[];
-    initialCount: number;
-}
+type SearchClientProps = {
+    listings: any[];
+    totalCount: number;
+};
 
-export default function SearchClient({ initialListings, initialCount }: SearchClientProps) {
+export default function SearchClient({ listings, totalCount }: SearchClientProps) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -41,9 +42,9 @@ export default function SearchClient({ initialListings, initialCount }: SearchCl
 
     const [activeTab, setActiveTab] = useState(initialMode);
 
-    // Expanded Filters
+    // Filter States
     const [rentMin, setRentMin] = useState<number>(Number(searchParams.get('min_rent')) || 0);
-    const [rentMax, setRentMax] = useState<number>(searchParams.get('max_rent') ? Number(searchParams.get('max_rent')) : 20);
+    const [rentMax, setRentMax] = useState<number>(searchParams.get('max_rent') ? Number(searchParams.get('max_rent')) : 50); // Default to 50 if logic implies no limit? Or 20? App had 20 but slider might vary.
     const [keyword, setKeyword] = useState(searchParams.get('q') || '');
     const [selectedAmenities, setSelectedAmenities] = useState<string[]>(searchParams.get('amenities')?.split(',').filter(Boolean) || []);
     const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>((searchParams.get('gender') as any) || 'all');
@@ -114,296 +115,577 @@ export default function SearchClient({ initialListings, initialCount }: SearchCl
     ]);
 
     // Handlers
-    const toggleAmenity = (amenity: string) => {
-        setSelectedAmenities(prev =>
-            prev.includes(amenity) ? prev.filter(a => a !== amenity) : [...prev, amenity]
-        );
+    const handleRegionSelect = (region: string) => {
+        setAreaSelection({ region, prefecture: null, city: null });
         setCurrentPage(1);
     };
 
-    const toggleType = (type: string) => {
-        setFilterType(prev =>
-            prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-        );
+    const handlePrefectureSelect = (pref: string) => {
+        setAreaSelection(prev => ({ ...prev, prefecture: pref, city: null }));
         setCurrentPage(1);
     };
 
-    // Region Mapping Constants (Duplicated from old file or imported if possible)
-    const REGION_MAPPING: { [key: string]: string[] } = {
-        "関東": ["東京都", "神奈川県", "千葉県", "埼玉県", "茨城県", "栃木県", "群馬県"],
-        "関西": ["大阪府", "京都府", "兵庫県", "奈良県", "滋賀県", "和歌山県"],
-        // Add more if needed, simpler version for now
+    const handleCitySelect = (city: string) => {
+        setAreaSelection(prev => ({ ...prev, city }));
+        setCurrentPage(1);
     };
-    const REGIONS = Object.keys(REGION_MAPPING);
+
+    const resetAreaSelection = () => {
+        setAreaSelection({ region: null, prefecture: null, city: null });
+        setCurrentPage(1);
+    };
+
+    const handleStationPrefSelect = (prefecture: string) => {
+        setStationSelection({ prefecture, line: null, station: null });
+        setCurrentPage(1);
+    };
+    const handleLineSelect = (line: string) => {
+        setStationSelection(prev => ({ ...prev, line, station: null }));
+        setCurrentPage(1);
+    };
+    const handleStationSelect = (station: string) => {
+        setStationSelection(prev => ({ ...prev, station }));
+        setCurrentPage(1);
+    };
+    const resetStationSelection = () => {
+        setStationSelection({ prefecture: null, line: null, station: null });
+        setCurrentPage(1);
+    };
+
+    // Scroll To Top Logic
+    const [showScrollTop, setShowScrollTop] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 300) {
+                setShowScrollTop(true);
+            } else {
+                setShowScrollTop(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    };
+
+    // Pagination calculations
+    const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+    // Scroll to top when page changes via pagination (detected by props change, or manual effect)
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [currentPage]);
+
+    // Reset page when filters change is handled by the handlers setting currentPage to 1 manually 
+    // OR implicitly if dependencies change. 
+    // In original code: `useEffect(() => setCurrentPage(1), [filters...])`.
+    // I need to enable that here too properly to avoid staying on page 2 with no results.
+    useEffect(() => {
+        // This effect runs on any filter change.
+        // We must be careful not to reset if ONLY page changed.
+        // But currentPage is in deps of the URL syncer.
+        // Here we want to reset page if OTHER filters change.
+        // So exclude currentPage from deps here.
+        setCurrentPage(1);
+    }, [
+        activeTab, keyword, rentMin, rentMax, walkTime, genderFilter,
+        selectedAmenities, filterType, areaSelection, stationSelection, featureParam
+    ]);
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-            {/* Sticky Header Tabs - REMOVED per previous task, using static or normal layout?
-                User said "Remove sticky header/tabs" and passed.
-                The previous file still had them but maybe not sticky?
-                I'll keep the layout structure but ensure it's not sticky if user requested.
-              */}
-            <div className="bg-white border-b shadow-sm">
-                <div className="container mx-auto px-4">
-                    {/* Search Mode Tabs */}
-                    <div className="flex border-b border-gray-200">
-                        <button
-                            onClick={() => setActiveTab('area')}
-                            className={`flex-1 py-4 text-center font-bold text-sm md:text-base transition relative ${activeTab === 'area' ? 'text-[#bf0000]' : 'text-gray-500 hover:text-gray-800'}`}
-                        >
-                            <span className="flex items-center justify-center gap-2"><MdLocationOn /> エリアから探す</span>
-                            {activeTab === 'area' && <span className="absolute bottom-0 left-0 w-full h-1 bg-[#bf0000]"></span>}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('station')}
-                            className={`flex-1 py-4 text-center font-bold text-sm md:text-base transition relative ${activeTab === 'station' ? 'text-[#bf0000]' : 'text-gray-500 hover:text-gray-800'}`}
-                        >
-                            <span className="flex items-center justify-center gap-2"><MdTrain /> 沿線・駅から探す</span>
-                            {activeTab === 'station' && <span className="absolute bottom-0 left-0 w-full h-1 bg-[#bf0000]"></span>}
-                        </button>
-                    </div>
-
-                    {/* Filter UI - Area/Station Selectors */}
-                    <div className="py-4 bg-gray-50/50">
-                        {activeTab === 'area' ? (
-                            <div className="flex flex-wrap gap-2 items-center">
-                                <select
-                                    className="p-2 border rounded"
-                                    value={areaSelection.region || ''}
-                                    onChange={(e) => setAreaSelection({ region: e.target.value, prefecture: null, city: null })}
-                                >
-                                    <option value="">地域を選択</option>
-                                    {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
-                                </select>
-                                {areaSelection.region && (
-                                    <select
-                                        className="p-2 border rounded"
-                                        value={areaSelection.prefecture || ''}
-                                        onChange={(e) => setAreaSelection(prev => ({ ...prev, prefecture: e.target.value, city: null }))}
-                                    >
-                                        <option value="">都道府県</option>
-                                        {REGION_MAPPING[areaSelection.region]?.map(p => <option key={p} value={p}>{p}</option>)}
-                                    </select>
-                                )}
-                                {areaSelection.prefecture && (
-                                    <select
-                                        className="p-2 border rounded"
-                                        value={areaSelection.city || ''}
-                                        onChange={(e) => setAreaSelection(prev => ({ ...prev, city: e.target.value }))}
-                                    >
-                                        <option value="">市区町村</option>
-                                        {AREA_DATA[areaSelection.prefecture] && Object.keys(AREA_DATA[areaSelection.prefecture]).map(c => (
-                                            <option key={c} value={c}>{c}</option>
-                                        ))}
-                                    </select>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="flex flex-wrap gap-2 items-center">
-                                {/* Station Selector Logic */}
-                                <select
-                                    className="p-2 border rounded"
-                                    value={stationSelection.prefecture || ''}
-                                    onChange={(e) => setStationSelection({ prefecture: e.target.value, line: null, station: null })}
-                                >
-                                    <option value="">都道府県</option>
-                                    {Object.keys(TRAIN_DATA).map(p => <option key={p} value={p}>{p}</option>)}
-                                </select>
-                                {stationSelection.prefecture && (
-                                    <select
-                                        className="p-2 border rounded"
-                                        value={stationSelection.line || ''}
-                                        onChange={(e) => setStationSelection(prev => ({ ...prev, line: e.target.value, station: null }))}
-                                    >
-                                        <option value="">路線</option>
-                                        {Object.keys(TRAIN_DATA[stationSelection.prefecture]).map(line => (
-                                            <option key={line} value={line}>{line}</option>
-                                        ))}
-                                    </select>
-                                )}
-                                {stationSelection.line && stationSelection.prefecture && (
-                                    <select
-                                        className="p-2 border rounded"
-                                        value={stationSelection.station || ''}
-                                        onChange={(e) => setStationSelection(prev => ({ ...prev, station: e.target.value }))}
-                                    >
-                                        <option value="">駅</option>
-                                        {TRAIN_DATA[stationSelection.prefecture][stationSelection.line].map(s => (
-                                            <option key={s} value={s}>{s}</option>
-                                        ))}
-                                    </select>
-                                )}
-                            </div>
-                        )}
+        <div className="min-h-screen bg-gray-50 pb-20 font-sans">
+            {/* Header Search Bar (Not Sticky) */}
+            <div className="bg-[#bf0000] p-4 text-white shadow-md">
+                <div className="container mx-auto max-w-lg">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={keyword}
+                            onChange={(e) => setKeyword(e.target.value)}
+                            placeholder="駅名・エリア・キーワードを入力"
+                            className="w-full pl-10 pr-4 py-3 rounded-full bg-white text-gray-800 focus:outline-none shadow-sm font-bold"
+                        />
+                        <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-2xl" />
                     </div>
                 </div>
             </div>
 
-            <div className="flex-1 container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
-                {/* Desktop Sidebar Filters */}
-                <aside className="hidden md:block w-64 flex-shrink-0 space-y-8">
-                    {/* Keyword */}
-                    <div>
-                        <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2"><MdSearch /> キーワード</h3>
-                        <input
-                            type="text"
-                            placeholder="駅名・地名・特徴など"
-                            value={keyword}
-                            onChange={(e) => setKeyword(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#bf0000] focus:outline-none"
-                        />
-                    </div>
+            {/* Mode Tabs (Not Sticky) */}
+            <div className="bg-white border-b">
+                <div className="container mx-auto px-4 max-w-4xl grid grid-cols-2 text-center text-sm md:text-base font-bold text-gray-500">
+                    <button
+                        onClick={() => setActiveTab('area')}
+                        className={`py-3 border-b-4 transition flex items-center justify-center gap-1 ${activeTab === 'area' ? 'border-[#bf0000] text-[#bf0000]' : 'border-transparent hover:bg-gray-50'}`}
+                    >
+                        <MdLocationOn /> エリアから
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('station')}
+                        className={`py-3 border-b-4 transition flex items-center justify-center gap-1 ${activeTab === 'station' ? 'border-[#bf0000] text-[#bf0000]' : 'border-transparent hover:bg-gray-50'}`}
+                    >
+                        <MdTrain /> 沿線・駅から
+                    </button>
+                </div>
+            </div>
 
-                    {/* Rent Range */}
-                    <div>
-                        <h3 className="font-bold text-gray-700 mb-3">家賃</h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <select className="border p-1 rounded" value={rentMin} onChange={e => setRentMin(Number(e.target.value))}>
-                                <option value="0">下限なし</option>
-                                <option value="3">3万円</option>
-                                <option value="5">5万円</option>
-                            </select>
-                            <span>〜</span>
-                            <select className="border p-1 rounded" value={rentMax} onChange={e => setRentMax(Number(e.target.value))}>
-                                <option value="5">5万円</option>
-                                <option value="7">7万円</option>
-                                <option value="10">10万円</option>
-                                <option value="50">上限なし</option>
-                            </select>
-                        </div>
-                    </div>
+            <div className="container mx-auto px-4 max-w-6xl py-6">
+                <div className="flex flex-col md:flex-row gap-6">
 
-                    {/* Walk Time */}
-                    <div>
-                        <h3 className="font-bold text-gray-700 mb-3">駅徒歩</h3>
-                        <div className="space-y-2">
-                            {[5, 10, 15].map(m => (
-                                <label key={m} className="flex items-center gap-2 cursor-pointer">
+                    {/* Sidebar Filters (Desktop) */}
+                    <aside className="hidden md:block w-64 flex-shrink-0">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 sticky top-24">
+                            <div className="flex items-center gap-2 font-bold mb-4 text-gray-800 border-b pb-2">
+                                <MdFilterList size={20} /> 絞り込み条件
+                            </div>
+
+                            {/* 家賃 (Rent) */}
+                            <div className="mb-6">
+                                <h4 className="text-sm font-bold text-gray-600 mb-2">家賃 (万円)</h4>
+                                <div className="flex items-center gap-2 mb-2">
                                     <input
-                                        type="radio"
-                                        name="walk"
-                                        checked={walkTime === m}
-                                        onChange={() => setWalkTime(m)}
-                                        className="accent-[#bf0000]"
+                                        type="number"
+                                        min="0"
+                                        max="50"
+                                        value={rentMin}
+                                        onChange={(e) => setRentMin(Number(e.target.value))}
+                                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                                        placeholder="下限"
                                     />
-                                    <span className="text-sm">{m}分以内</span>
-                                </label>
-                            ))}
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="walk"
-                                    checked={walkTime === null}
-                                    onChange={() => setWalkTime(null)}
-                                    className="accent-[#bf0000]"
-                                />
-                                <span className="text-sm">指定なし</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Gender */}
-                    <div>
-                        <h3 className="font-bold text-gray-700 mb-3">性別</h3>
-                        <div className="flex flex-col gap-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="gender" value="all" checked={genderFilter === 'all'} onChange={() => setGenderFilter('all')} className="accent-[#bf0000]" />
-                                <span className="text-sm">指定なし</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="gender" value="male" checked={genderFilter === 'male'} onChange={() => setGenderFilter('male')} className="accent-[#bf0000]" />
-                                <span className="text-sm">男性限定</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="gender" value="female" checked={genderFilter === 'female'} onChange={() => setGenderFilter('female')} className="accent-[#bf0000]" />
-                                <span className="text-sm">女性限定</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Types */}
-                    <div>
-                        <h3 className="font-bold text-gray-700 mb-3">タイプ</h3>
-                        <div className="space-y-2">
-                            {['個室', 'ドミトリー', 'シェアハウス'].map(t => (
-                                <label key={t} className="flex items-center gap-2 cursor-pointer">
+                                    <span className="text-gray-400">~</span>
                                     <input
-                                        type="checkbox"
-                                        checked={filterType.includes(t)}
-                                        onChange={() => toggleType(t)}
-                                        className="accent-[#bf0000]"
+                                        type="number"
+                                        min="0"
+                                        max="50"
+                                        value={rentMax}
+                                        onChange={(e) => setRentMax(Number(e.target.value))}
+                                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                                        placeholder="上限"
                                     />
-                                    <span className="text-sm">{t}</span>
-                                </label>
-                            ))}
+                                </div>
+                            </div>
+
+                            {/* 最寄り駅徒歩 (Walk Time) */}
+                            <div className="mb-6">
+                                <h4 className="text-sm font-bold text-gray-600 mb-2">駅徒歩</h4>
+                                <div className="space-y-2">
+                                    {[
+                                        { label: '指定なし', value: null },
+                                        { label: '5分以内', value: 5 },
+                                        { label: '10分以内', value: 10 },
+                                        { label: '15分以内', value: 15 },
+                                        { label: '20分以内', value: 20 },
+                                    ].map((opt) => (
+                                        <label key={opt.label} className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="walkTime"
+                                                checked={walkTime === opt.value}
+                                                onChange={() => setWalkTime(opt.value)}
+                                                className="text-[#bf0000] focus:ring-[#bf0000]"
+                                            />
+                                            <span className="text-sm text-gray-700">{opt.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 部屋タイプ (Room Type) */}
+                            <div className="mb-6">
+                                <h4 className="text-sm font-bold text-gray-600 mb-2">部屋タイプ</h4>
+                                <div className="space-y-2">
+                                    {['個室', 'ドミトリー', '半個室'].map(t => (
+                                        <label key={t} className="flex items-center gap-2 cursor-pointer group">
+                                            <div className="relative flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={filterType.includes(t)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) setFilterType(prev => [...prev, t]);
+                                                        else setFilterType(prev => prev.filter(x => x !== t));
+                                                    }}
+                                                    className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all checked:border-[#bf0000] checked:bg-[#bf0000]"
+                                                />
+                                                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                                    <MdCheck size={14} />
+                                                </span>
+                                            </div>
+                                            <span className="text-sm text-gray-700">{t}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 性別 (Gender) */}
+                            <div className="mb-6">
+                                <h4 className="text-sm font-bold text-gray-600 mb-2">入居条件</h4>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="gender"
+                                            checked={genderFilter === 'all'}
+                                            onChange={() => setGenderFilter('all')}
+                                            className="text-[#bf0000] focus:ring-[#bf0000]"
+                                        />
+                                        <span className="text-sm text-gray-700">指定なし</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="gender"
+                                            checked={genderFilter === 'male'}
+                                            onChange={() => setGenderFilter('male')}
+                                            className="text-[#bf0000] focus:ring-[#bf0000]"
+                                        />
+                                        <span className="text-sm text-gray-700">男性限定</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="gender"
+                                            checked={genderFilter === 'female'}
+                                            onChange={() => setGenderFilter('female')}
+                                            className="text-[#bf0000] focus:ring-[#bf0000]"
+                                        />
+                                        <span className="text-sm text-gray-700">女性限定</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* こだわり条件 (Amenities) */}
+                            <div className="mb-6">
+                                <h4 className="text-sm font-bold text-gray-600 mb-2">こだわり条件</h4>
+                                <div className="space-y-2">
+                                    {[
+                                        'Wifi無料', '家具家電付き', 'エアコン',
+                                        'オートロック', 'ペット可', '駐車場あり',
+                                        '駐輪場あり', '即入居可', '外国人可'
+                                    ].map(amenity => (
+                                        <label key={amenity} className="flex items-center gap-2 cursor-pointer">
+                                            <div className="relative flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedAmenities.includes(amenity)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) setSelectedAmenities(prev => [...prev, amenity]);
+                                                        else setSelectedAmenities(prev => prev.filter(x => x !== amenity));
+                                                    }}
+                                                    className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all checked:border-[#bf0000] checked:bg-[#bf0000]"
+                                                />
+                                                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                                    <MdCheck size={12} />
+                                                </span>
+                                            </div>
+                                            <span className="text-xs text-gray-700">{amenity}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </aside>
 
-                    {/* Amenities */}
-                    <div>
-                        <h3 className="font-bold text-gray-700 mb-3">こだわり条件</h3>
-                        <div className="space-y-2">
-                            {['Wifi', '家具付き', 'オートロック', '駐輪場', 'ペット可'].map(a => (
-                                <label key={a} className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedAmenities.includes(a)}
-                                        onChange={() => toggleAmenity(a)}
-                                        className="accent-[#bf0000]"
-                                    />
-                                    <span className="text-sm">{a}</span>
-                                </label>
-                            ))}
+                    {/* Main Results */}
+                    <main className="flex-1">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="font-bold text-xl text-gray-800">
+                                {activeTab === 'area' ? 'エリアから探す' : '沿線・駅から探す'}
+                            </h2>
+                            <button className="md:hidden text-sm bg-gray-200 px-3 py-1 rounded font-bold flex items-center gap-1">
+                                <MdFilterList /> 絞り込み
+                            </button>
+                            <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
+                                <MdSort />
+                                <select className="bg-transparent font-bold focus:outline-none">
+                                    <option>おすすめ順</option>
+                                    <option>新着順</option>
+                                    <option>家賃が安い順</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                </aside>
 
-                {/* Main Results */}
-                <main className="flex-1">
-                    <div className="mb-4 flex items-center justify-between">
-                        <h1 className="text-xl font-bold">
-                            {activeTab === 'area' ? (areaSelection.city || areaSelection.prefecture || '全エリア') : (stationSelection.station || '全エリア')}
-                            の検索結果
-                            <span className="text-sm font-normal text-gray-500 ml-2">({initialCount}件)</span>
-                        </h1>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {initialListings.map((listing: any) => (
-                            <PhotoPropertyCard
-                                key={listing.id}
-                                id={listing.id}
-                                imageUrl={listing.images?.[0] || null} // Handle first image
-                                price={listing.price}
-                                station={listing.station_name || '駅指定なし'}
-                                badges={[listing.room_type, ...(listing.amenities || [])].slice(0, 3)}
-                                title={listing.title}
-                                viewCount={listing.view_count || 0}
-                            />
-                        ))}
-                        {initialListings.length === 0 && (
-                            <div className="col-span-full py-20 text-center text-gray-400">
-                                条件に一致する物件は見つかりませんでした。
+                        {/* Active Feature Alert */}
+                        {featureParam && (
+                            <div className="bg-red-50 border border-red-100 text-[#bf0000] px-4 py-3 rounded-xl mb-6 flex items-center justify-between">
+                                <span className="font-bold flex items-center gap-2">
+                                    <MdCheck />
+                                    {featureParam === 'pet' && 'ペット相談可の物件'}
+                                    {featureParam === 'wifi' && '高速ネット（光回線）あり'}
+                                    {featureParam === 'foreigner' && '外国人歓迎の物件'}
+                                    {featureParam === 'female' && '女性専用・女性限定'}
+                                    {featureParam === 'cheap' && '家賃3万円以下の格安物件'}
+                                    {featureParam === 'diy' && 'DIY可・改装可能な物件'}
+                                    {featureParam === 'gamer' && 'ゲーマー向け（高速回線・防音）'}
+                                    {featureParam === 'gym' && 'ジム・スタジオ付き物件'}
+                                    {featureParam === 'theater' && 'シアタールーム・プロジェクター付き'}
+                                    {featureParam === 'sauna' && 'サウナ付き物件'}
+                                </span>
+                                <Link href="/search" className="text-sm underline hover:no-underline">解除する</Link>
                             </div>
                         )}
-                    </div>
 
-                    {/* Pagination - Simplified */}
-                    {initialCount > ITEMS_PER_PAGE && (
-                        <div className="mt-12 flex justify-center gap-2">
-                            {Array.from({ length: Math.ceil(initialCount / ITEMS_PER_PAGE) }).map((_, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => setCurrentPage(i + 1)}
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition ${currentPage === i + 1 ? 'bg-[#bf0000] text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border'}`}
-                                >
-                                    {i + 1}
-                                </button>
-                            ))}
+                        {/* Hierarchical Area Selector (Visible only when tab is 'area') */}
+                        {activeTab === 'area' && (
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
+                                <div className="flex items-center justify-between mb-4 border-b pb-2">
+                                    <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                                        <MdLocationOn className="text-[#bf0000]" />
+                                        エリアを絞り込む
+                                    </h3>
+                                    {(areaSelection.region || areaSelection.prefecture) && (
+                                        <button onClick={resetAreaSelection} className="text-xs text-gray-400 hover:text-[#bf0000] underline">
+                                            条件をリセット
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Breadcrumbs */}
+                                <div className="flex items-center text-sm gap-2 mb-4 text-gray-500 overflow-x-auto whitespace-nowrap">
+                                    <span className={`cursor-pointer hover:underline ${!areaSelection.region ? 'font-bold text-gray-800' : ''}`} onClick={resetAreaSelection}>全国</span>
+                                    {areaSelection.region && (
+                                        <>
+                                            <MdKeyboardArrowRight />
+                                            <span className={`cursor-pointer hover:underline ${!areaSelection.prefecture ? 'font-bold text-gray-800' : ''}`} onClick={() => setAreaSelection(prev => ({ ...prev, prefecture: null, city: null }))}>
+                                                {areaSelection.region}
+                                            </span>
+                                        </>
+                                    )}
+                                    {areaSelection.prefecture && (
+                                        <>
+                                            <MdKeyboardArrowRight />
+                                            <span className="font-bold text-[#bf0000]">{areaSelection.prefecture}</span>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Selection Area */}
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                    {!areaSelection.region ? (
+                                        // Step 1: Select Region
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {Object.keys(AREA_DATA).map(region => (
+                                                <button
+                                                    key={region}
+                                                    onClick={() => handleRegionSelect(region)}
+                                                    className="bg-white py-3 px-2 rounded border border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] transition text-sm font-bold shadow-sm text-gray-800"
+                                                >
+                                                    {region}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        // Step 2: Select Prefecture (Final Step)
+                                        <div>
+                                            <button onClick={() => setAreaSelection({ region: null, prefecture: null, city: null })} className="mb-3 text-xs flex items-center gap-1 text-gray-400 hover:text-gray-600">
+                                                <MdArrowBack /> 地域選択に戻る
+                                            </button>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                {Object.keys(AREA_DATA[areaSelection.region!] || {}).map(pref => (
+                                                    <button
+                                                        key={pref}
+                                                        onClick={() => {
+                                                            setAreaSelection(prev => ({ ...prev, prefecture: pref, city: null }));
+                                                        }}
+                                                        className={`py-3 px-2 rounded border transition text-sm font-bold shadow-sm flex items-center justify-center gap-2 ${areaSelection.prefecture === pref ? 'bg-[#bf0000] text-white border-[#bf0000]' : 'bg-white border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] text-gray-800'}`}
+                                                    >
+                                                        {pref}
+                                                        {areaSelection.prefecture === pref && <MdCheck />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Hierarchical Station Selector (Visible only when tab is 'station') */}
+                        {activeTab === 'station' && (
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
+                                <div className="flex items-center justify-between mb-4 border-b pb-2">
+                                    <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                                        <MdTrain className="text-[#bf0000]" />
+                                        駅を絞り込む
+                                    </h3>
+                                    {(stationSelection.prefecture || stationSelection.line) && (
+                                        <button onClick={resetStationSelection} className="text-xs text-gray-400 hover:text-[#bf0000] underline">
+                                            条件をリセット
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Breadcrumbs */}
+                                <div className="flex items-center text-sm gap-2 mb-4 text-gray-500 overflow-x-auto whitespace-nowrap">
+                                    <span className={`cursor-pointer hover:underline ${!stationSelection.prefecture ? 'font-bold text-gray-800' : ''}`} onClick={resetStationSelection}>地域選択</span>
+                                    {stationSelection.prefecture && (
+                                        <>
+                                            <MdKeyboardArrowRight />
+                                            <span className={`cursor-pointer hover:underline ${!stationSelection.line ? 'font-bold text-gray-800' : ''}`} onClick={() => setStationSelection(prev => ({ ...prev, line: null, station: null }))}>
+                                                {stationSelection.prefecture}
+                                            </span>
+                                        </>
+                                    )}
+                                    {stationSelection.line && (
+                                        <>
+                                            <MdKeyboardArrowRight />
+                                            <span className={`cursor-pointer hover:underline ${!stationSelection.station ? 'font-bold text-gray-800' : ''}`} onClick={() => setStationSelection(prev => ({ ...prev, station: null }))}>
+                                                {stationSelection.line}
+                                            </span>
+                                        </>
+                                    )}
+                                    {stationSelection.station && (
+                                        <>
+                                            <MdKeyboardArrowRight />
+                                            <span className="font-bold text-[#bf0000]">{stationSelection.station}</span>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Selection Area */}
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                    {!stationSelection.prefecture ? (
+                                        // Step 1: Select Prefecture (from TRAIN_DATA keys)
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {Object.keys(TRAIN_DATA).map(pref => (
+                                                <button
+                                                    key={pref}
+                                                    onClick={() => handleStationPrefSelect(pref)}
+                                                    className="bg-white py-3 px-2 rounded border border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] transition text-sm font-bold shadow-sm text-gray-800"
+                                                >
+                                                    {pref}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : !stationSelection.line ? (
+                                        // Step 2: Select Line
+                                        <div>
+                                            <button onClick={() => setStationSelection({ prefecture: null, line: null, station: null })} className="mb-3 text-xs flex items-center gap-1 text-gray-400 hover:text-gray-600">
+                                                <MdArrowBack /> 地域選択に戻る
+                                            </button>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                {Object.keys(TRAIN_DATA[stationSelection.prefecture] || {}).map(line => (
+                                                    <button
+                                                        key={line}
+                                                        onClick={() => handleLineSelect(line)}
+                                                        className="bg-white py-3 px-4 rounded border border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] transition text-sm font-bold shadow-sm text-left flex items-center justify-between text-gray-800"
+                                                    >
+                                                        {line}
+                                                        <MdKeyboardArrowRight className="text-gray-300" />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        // Step 3: Select Station
+                                        <div>
+                                            <button onClick={() => setStationSelection(prev => ({ ...prev, line: null, station: null }))} className="mb-3 text-xs flex items-center gap-1 text-gray-400 hover:text-gray-600">
+                                                <MdArrowBack /> 路線選択に戻る
+                                            </button>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                {(TRAIN_DATA[stationSelection.prefecture][stationSelection.line] || []).map((station: string) => (
+                                                    <button
+                                                        key={station}
+                                                        onClick={() => handleStationSelect(station)}
+                                                        className={`py-3 px-2 rounded border transition text-sm font-bold shadow-sm flex items-center justify-center gap-2 ${stationSelection.station === station ? 'bg-[#bf0000] text-white border-[#bf0000]' : 'bg-white border-gray-200 hover:border-[#bf0000] hover:text-[#bf0000] text-gray-800'}`}
+                                                    >
+                                                        {station}
+                                                        {stationSelection.station === station && <MdCheck />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Results Grid - using props now */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {listings.length > 0 ? listings.map(p => (
+                                <div key={p.id} className="h-[320px]">
+                                    <PhotoPropertyCard
+                                        id={p.id}
+                                        title={p.title}
+                                        price={p.price}
+                                        station={p.station_name ? `${p.station_name} ${p.minutes_to_station}分` : p.address}
+                                        badges={[
+                                            p.room_type === 'private' ? '個室' : p.room_type === 'semi' ? '半個室' : 'ドミトリー',
+                                            ...(p.amenities || []).slice(0, 1)
+                                        ]}
+                                        imageUrl={p.images?.[0]}
+                                        image={!p.images?.length ? 'bg-gray-200' : undefined}
+                                        viewCount={p.view_count || 0}
+                                        favoritesCount={p.favorites_count || 0}
+                                        inquiryCount={p.inquiry_count || 0}
+                                    />
+                                </div>
+                            )) : (
+                                <div className="col-span-full py-20 text-center text-gray-500">
+                                    <p className="text-xl font-bold mb-2">該当する物件が見つかりませんでした</p>
+                                    <p className="text-sm">条件を変更して再度検索してください。</p>
+                                </div>
+                            )}
                         </div>
-                    )}
-                </main>
+
+                        {/* Real Pagination - Using totalCount passed from server */}
+                        {totalPages > 1 && (
+                            <div className="mt-10 flex justify-center gap-2">
+                                {/* Prev Button */}
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                                >
+                                    &lt;
+                                </button>
+
+                                {/* Page Numbers */}
+                                {Array.from({ length: totalPages }).map((_, i) => {
+                                    const p = i + 1;
+                                    // Simple logic to not show all 100 pages
+                                    if (totalPages > 7 && Math.abs(currentPage - p) > 3 && p !== 1 && p !== totalPages) {
+                                        if (p === 2 || p === totalPages - 1) return <span key={p} className="flex items-center">...</span>;
+                                        return null;
+                                    }
+
+                                    return (
+                                        <button
+                                            key={p}
+                                            onClick={() => setCurrentPage(p)}
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border ${currentPage === p ? 'bg-[#bf0000] text-white border-[#bf0000]' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                                        >
+                                            {p}
+                                        </button>
+                                    );
+                                })}
+
+                                {/* Next Button */}
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                                >
+                                    &gt;
+                                </button>
+                            </div>
+                        )}
+                    </main>
+                </div>
             </div>
+            {/* Scroll To Top Button */}
+            <button
+                onClick={scrollToTop}
+                className={`fixed bottom-6 right-6 bg-[#bf0000] text-white p-4 rounded-full shadow-lg hover:bg-black transition-all duration-300 z-50 ${showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+                aria-label="Scroll to top"
+            >
+                <MdKeyboardArrowUp className="text-2xl" />
+            </button>
         </div>
     );
 }

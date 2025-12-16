@@ -115,12 +115,24 @@ function SearchContent() {
 
         // Construct full URL
         // Using replace to prevent massive history stack
-        router.replace(`${pathname}?${newQuery}`, { scroll: false });
+        if (newQuery !== currentQuery) {
+            // Use replace to prevent history stack buildup for every keystroke unless needed
+            // But usually for search filters we might want push? User said "back to search".
+            // Let's stick with replace for small changes or debounce?
+            // Existing code uses router.replace
+            router.replace(`${pathname}?${newQuery}`, { scroll: false });
+
+            // Save to Session Storage for "Back to Search" functionality
+            sessionStorage.setItem('last_search_url', `${pathname}?${newQuery}`);
+        } else {
+            // Even if query didn't change (initial load), save it so we have a valid back link
+            sessionStorage.setItem('last_search_url', `${pathname}?${newQuery}`);
+        }
 
     }, [
         activeTab, keyword, rentMin, rentMax, walkTime, genderFilter,
         selectedAmenities, filterType, areaSelection, stationSelection,
-        currentPage, pathname, router, featureParam
+        currentPage, pathname, router, featureParam, searchParams
         // searchParams included in dependency might cause loop if we are not careful? 
         // No, searchParams changes when we navigate. 
         // If we navigate, searchParams changes, re-triggering this effect?

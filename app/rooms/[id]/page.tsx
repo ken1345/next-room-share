@@ -15,6 +15,14 @@ export default function RoomDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [isLiked, setIsLiked] = useState(false);
     const [user, setUser] = useState<any>(null);
+    const [backUrl, setBackUrl] = useState('/search');
+
+    useEffect(() => {
+        const lastUrl = sessionStorage.getItem('last_search_url');
+        if (lastUrl) {
+            setBackUrl(lastUrl);
+        }
+    }, []);
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -124,32 +132,10 @@ export default function RoomDetailsPage() {
     return (
         <div className="min-h-screen bg-gray-50 pb-24 font-sans">
             {/* Header (Back & Actions) */}
-            <div className="bg-white sticky top-0 z-40 border-b shadow-sm px-4 h-16 flex items-center justify-between container mx-auto max-w-5xl">
-                <Link href="/" className="text-gray-500 hover:text-gray-800 font-bold flex items-center gap-1 text-sm bg-gray-100 px-3 py-1.5 rounded-full transition">
+            <div className="px-4 mt-6 container mx-auto max-w-5xl">
+                <Link href={backUrl} className="text-gray-500 hover:text-gray-800 font-bold flex items-center gap-1 text-sm w-fit transition">
                     <MdArrowBack /> 検索に戻る
                 </Link>
-                <div className="flex gap-2">
-                    <button className="text-gray-400 hover:text-[#bf0000] p-2 rounded-full hover:bg-red-50 transition">
-                        <MdFavoriteBorder size={24} />
-                    </button>
-                    <button className="text-gray-400 hover:text-blue-600 p-2 rounded-full hover:bg-blue-50 transition">
-                        <MdShare size={24} />
-                    </button>
-                    <button
-                        onClick={() => {
-                            if (!user) {
-                                alert("通報するにはログインが必要です");
-                                window.location.href = `/login?redirect=/rooms/${id}/report`;
-                            } else {
-                                window.location.href = `/rooms/${id}/report`;
-                            }
-                        }}
-                        className="text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition"
-                        title="この物件を通報する"
-                    >
-                        <MdFlag size={24} />
-                    </button>
-                </div>
             </div>
 
             <div className="container mx-auto max-w-5xl">
@@ -268,16 +254,32 @@ export default function RoomDetailsPage() {
                                 <MdEmail /> 空室確認・問い合わせ
                             </button>
 
-                            <button
-                                onClick={handleToggleLike}
-                                className={`w-full font-bold py-3 rounded-xl border transition flex items-center justify-center gap-2 ${isLiked
-                                    ? 'bg-red-50 text-[#bf0000] border-red-100'
-                                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
-                                    }`}
-                            >
-                                {isLiked ? <MdFavorite size={20} /> : <MdFavoriteBorder size={20} />}
-                                {isLiked ? 'お気に入り登録済み' : 'お気に入りに登録'}
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleToggleLike}
+                                    className={`flex-1 font-bold py-3 rounded-xl border transition flex items-center justify-center gap-2 ${isLiked
+                                        ? 'bg-red-50 text-[#bf0000] border-red-100'
+                                        : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    {isLiked ? <MdFavorite size={20} /> : <MdFavoriteBorder size={20} />}
+                                    {isLiked ? '登録済み' : 'お気に入り'}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (!user) {
+                                            alert("通報するにはログインが必要です");
+                                            window.location.href = `/login?redirect=/rooms/${id}/report`;
+                                        } else {
+                                            window.location.href = `/rooms/${id}/report`;
+                                        }
+                                    }}
+                                    className="bg-gray-50 text-gray-400 font-bold py-3 px-4 rounded-xl border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition"
+                                    title="この物件を通報する"
+                                >
+                                    <MdFlag size={20} />
+                                </button>
+                            </div>
                         </div>
                     </aside>
                 </div>

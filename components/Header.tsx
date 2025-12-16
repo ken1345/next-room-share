@@ -38,6 +38,8 @@ export default function Header() {
         {/* Desktop Navigation */}
         {!loading && (
           <div className="flex gap-4 text-sm font-bold text-gray-600 items-center">
+            <Link href="/search" className="hover:text-[#bf0000] transition">部屋を探す</Link>
+            <Link href="/host" className="hover:text-[#bf0000] transition">募集掲載</Link>
 
 
             {user ? (

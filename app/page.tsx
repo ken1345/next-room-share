@@ -49,7 +49,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex justify-center gap-8 md:gap-80 text-center">
             <Link href="/search"><NavCard icon={<MdHome size={40} />} title="部屋を探す" sub="Rent a Room" /></Link>
-            <Link href="/host"><NavCard icon={<MdVpnKey size={40} />} title="貸したい" sub="Host a Room" /></Link>
+            <Link href="/host"><NavCard icon={<MdVpnKey size={40} />} title="部屋を貸したい" sub="Host a Room" /></Link>
           </div>
         </div>
       </section>

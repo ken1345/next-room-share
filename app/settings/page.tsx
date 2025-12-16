@@ -3,16 +3,14 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { MdArrowBack, MdNotifications, MdSecurity, MdDeleteForever, MdLogout, MdChevronRight, MdClose } from 'react-icons/md';
+import { MdArrowBack, MdSecurity, MdDeleteForever, MdLogout, MdChevronRight, MdClose } from 'react-icons/md';
 
 export default function SettingsPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
 
-    // Notification State
-    const [emailNotif, setEmailNotif] = useState(true);
-    const [pushNotif, setPushNotif] = useState(true);
+
 
     // Modals State
     const [showEmailModal, setShowEmailModal] = useState(false);
@@ -34,21 +32,7 @@ export default function SettingsPage() {
             }
             setUser(session.user);
 
-            // Fetch user settings
-            try {
-                const { data: profile } = await supabase
-                    .from('users')
-                    .select('email_notification, push_notification')
-                    .eq('id', session.user.id)
-                    .single();
 
-                if (profile) {
-                    setEmailNotif(profile.email_notification ?? true);
-                    setPushNotif(profile.push_notification ?? true);
-                }
-            } catch (error) {
-                console.error("Error fetching settings:", error);
-            }
             setLoading(false);
         };
         init();
@@ -94,28 +78,7 @@ export default function SettingsPage() {
         }
     };
 
-    const handleToggleNotif = async (type: 'email' | 'push') => {
-        // Optimistic update
-        const newVal = type === 'email' ? !emailNotif : !pushNotif;
-        if (type === 'email') setEmailNotif(newVal);
-        else setPushNotif(newVal);
 
-        if (!user) return;
-
-        const updateData = type === 'email'
-            ? { email_notification: newVal }
-            : { push_notification: newVal };
-
-        const { error } = await supabase
-            .from('users')
-            .update(updateData)
-            .eq('id', user.id);
-
-        if (error) {
-            console.error("Failed to update setting", error);
-            // Revert on error (optional, keep simple for now)
-        }
-    };
 
     const handleUpdateEmail = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -173,39 +136,7 @@ export default function SettingsPage() {
 
             <div className="container mx-auto px-4 max-w-2xl mt-6 space-y-6">
 
-                {/* Notifications */}
-                <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-4 border-b border-gray-100 flex items-center gap-2">
-                        <MdNotifications className="text-[#bf0000]" />
-                        <h2 className="font-bold text-gray-800">通知設定</h2>
-                    </div>
-                    <div className="p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="font-bold text-sm text-gray-800">メール通知</h3>
-                                <p className="text-xs text-gray-500">新着メッセージや運営からのお知らせを受け取る</p>
-                            </div>
-                            <button
-                                onClick={() => handleToggleNotif('email')}
-                                className={`w-12 h-6 rounded-full p-1 transition duration-300 ease-in-out ${emailNotif ? 'bg-[#bf0000]' : 'bg-gray-300'}`}
-                            >
-                                <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition duration-300 ease-in-out ${emailNotif ? 'translate-x-6' : 'translate-x-0'}`}></div>
-                            </button>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="font-bold text-sm text-gray-800">プッシュ通知</h3>
-                                <p className="text-xs text-gray-500">ブラウザでの通知を受け取る</p>
-                            </div>
-                            <button
-                                onClick={() => handleToggleNotif('push')}
-                                className={`w-12 h-6 rounded-full p-1 transition duration-300 ease-in-out ${pushNotif ? 'bg-[#bf0000]' : 'bg-gray-300'}`}
-                            >
-                                <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition duration-300 ease-in-out ${pushNotif ? 'translate-x-6' : 'translate-x-0'}`}></div>
-                            </button>
-                        </div>
-                    </div>
-                </section>
+
 
                 {/* Security */}
                 <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

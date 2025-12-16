@@ -57,10 +57,10 @@ export default function Home() {
       {/* 2. 検索バー (前回と同じ) */}
       <section className="bg-[#bf0000] py-4 shadow-md border-b-4 border-[#900000]">
         <div className="container mx-auto px-4 flex justify-center gap-2 md:gap-6 text-sm md:text-base">
-          <Link href="/search?mode=area">
+          <Link href="/search?tab=area">
             <SearchButton icon={<MdLocationOn />} text="エリアから" isOutline />
           </Link>
-          <Link href="/search?mode=station">
+          <Link href="/search?tab=station">
             <SearchButton icon={<MdTrain />} text="沿線・駅から" isOutline />
           </Link>
 

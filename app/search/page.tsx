@@ -38,7 +38,7 @@ function SearchContent() {
     const searchParams = useSearchParams();
 
     // Initialize State from URL Params
-    const initialMode = searchParams.get('tab') || 'area';
+    const initialMode = searchParams.get('mode') || searchParams.get('tab') || 'area';
     const featureParam = searchParams.get('feature');
 
     const [activeTab, setActiveTab] = useState(initialMode);

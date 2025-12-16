@@ -26,12 +26,12 @@ export default function Footer() {
           </h3>
           <ul className="space-y-3">
             <li>
-              <Link href="/search?mode=area" className="hover:text-white transition flex items-center gap-2">
+              <Link href="/search?tab=area" className="hover:text-white transition flex items-center gap-2">
                 <MdLocationOn className="text-gray-600" /> エリアから探す
               </Link>
             </li>
             <li>
-              <Link href="/search?mode=station" className="hover:text-white transition flex items-center gap-2">
+              <Link href="/search?tab=station" className="hover:text-white transition flex items-center gap-2">
                 <MdTrain className="text-gray-600" /> 沿線・駅から探す
               </Link>
             </li>
@@ -55,7 +55,7 @@ export default function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="/host?guide=true" className="hover:text-white transition flex items-center gap-2">
+              <Link href="/guide/host" className="hover:text-white transition flex items-center gap-2">
                 <MdInfo className="text-gray-600" /> 掲載の流れ（ガイド）
               </Link>
             </li>

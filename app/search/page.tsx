@@ -300,6 +300,17 @@ function SearchContent() {
             }
             if (featureParam === 'cheap' && p.price > 30000) return false;
             if (featureParam === 'diy' && !p.amenities?.includes('DIY可')) return false;
+
+            // New Concepts
+            if (featureParam === 'gamer') {
+                // Must have high speed internet. 防音 is nice to have but maybe too strict? 
+                // Let's require internet + (Soundproof OR just be permissive)
+                // For now, let's require '高速インターネット(光回線)'
+                if (!p.amenities?.includes('高速インターネット(光回線)')) return false;
+            }
+            if (featureParam === 'gym' && !p.amenities?.some((a: string) => a.includes('ジム') || a.includes('フィットネス'))) return false;
+            if (featureParam === 'theater' && !p.amenities?.some((a: string) => a.includes('シアター') || a.includes('プロジェクター') || a.includes('スクリーン'))) return false;
+            if (featureParam === 'sauna' && !p.amenities?.some((a: string) => a.includes('サウナ'))) return false;
         }
 
         return true;
@@ -573,6 +584,10 @@ function SearchContent() {
                                     {featureParam === 'female' && '女性専用・女性限定'}
                                     {featureParam === 'cheap' && '家賃3万円以下の格安物件'}
                                     {featureParam === 'diy' && 'DIY可・改装可能な物件'}
+                                    {featureParam === 'gamer' && 'ゲーマー向け（高速回線・防音）'}
+                                    {featureParam === 'gym' && 'ジム・スタジオ付き物件'}
+                                    {featureParam === 'theater' && 'シアタールーム・プロジェクター付き'}
+                                    {featureParam === 'sauna' && 'サウナ付き物件'}
                                 </span>
                                 <Link href="/search" className="text-sm underline hover:no-underline">解除する</Link>
                             </div>

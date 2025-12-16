@@ -195,10 +195,10 @@ export default function Home() {
       < section className="container mx-auto px-4 py-10" >
         <SectionTitle title="趣味・コンセプトで選ぶ" subtitle="同じ趣味の仲間と暮らす楽しさ" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <ConceptCard icon={<MdSportsEsports />} title="ゲーマー専用" desc="高速回線・防音室完備" />
-          <ConceptCard icon={<MdFitnessCenter />} title="ジム・スタジオ" desc="運動不足解消！" />
-          <ConceptCard icon={<MdMovie />} title="シアタールーム" desc="週末は映画鑑賞会" />
-          <ConceptCard icon={<MdSpa />} title="サウナ付き" desc="自宅でととのう生活" />
+          <Link href="/search?feature=gamer"><ConceptCard icon={<MdSportsEsports />} title="ゲーマー専用" desc="高速回線・防音室完備" /></Link>
+          <Link href="/search?feature=gym"><ConceptCard icon={<MdFitnessCenter />} title="ジム・スタジオ" desc="運動不足解消！" /></Link>
+          <Link href="/search?feature=theater"><ConceptCard icon={<MdMovie />} title="シアタールーム" desc="週末は映画鑑賞会" /></Link>
+          <Link href="/search?feature=sauna"><ConceptCard icon={<MdSpa />} title="サウナ付き" desc="自宅でととのう生活" /></Link>
         </div>
       </section >
 

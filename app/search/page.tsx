@@ -46,6 +46,7 @@ function SearchContent() {
     const [keyword, setKeyword] = useState('');
     const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
     const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
+    const [walkTime, setWalkTime] = useState<number | null>(null);
 
     // Data State
     const [listings, setListings] = useState<any[]>([]);
@@ -147,7 +148,7 @@ function SearchContent() {
             // We stored code 'private', 'semi' etc.
 
             // Map UI label to Code
-            const typeCodes = [];
+            const typeCodes: string[] = [];
             if (filterType.includes('個室')) typeCodes.push('private');
             if (filterType.includes('半個室')) typeCodes.push('semi');
             if (filterType.includes('ドミトリー')) typeCodes.push('shared');
@@ -162,24 +163,18 @@ function SearchContent() {
         if (p.price < rentMin * 10000) return false;
         if (p.price > rentMax * 10000) return false;
 
-        // 6. Gender Filter
+        // 6. Gender Filter (STRICT: Only / Limited)
         if (genderFilter !== 'all') {
-            // Logic depends on DB structure. Assuming p.gender_restriction or amenities tags
-            // If p.gender_restriction is 'female', 'male', 'none'
-            // If user wants 'female' -> show 'female' only or 'none' (any)?
-            // Usually: 
-            // - User Male -> Show 'male' allowed (none, male). Hide 'female'.
-            // - User Female -> Show 'female' allowed (none, female). Hide 'male'.
-            // - BUT this filter says "Gender: Male OK / Female OK".
-            // If "Male OK" selected -> Show properties where men can live.
-
             if (genderFilter === 'male') {
-                // Exclude female-only
-                if (p.gender_restriction === 'female' || p.amenities?.includes('女性限定') || p.amenities?.includes('女性専用')) return false;
+                // Must be Male Only
+                // Check gender_restriction OR strict amenity tag
+                const isMaleOnly = p.gender_restriction === 'male' || p.amenities?.includes('男性限定') || p.amenities?.includes('男性専用');
+                if (!isMaleOnly) return false;
             }
             if (genderFilter === 'female') {
-                // Exclude male-only (if exists)
-                if (p.gender_restriction === 'male' || p.amenities?.includes('男性限定') || p.amenities?.includes('男性専用')) return false;
+                // Must be Female Only
+                const isFemaleOnly = p.gender_restriction === 'female' || p.amenities?.includes('女性限定') || p.amenities?.includes('女性専用');
+                if (!isFemaleOnly) return false;
             }
         }
 
@@ -196,12 +191,21 @@ function SearchContent() {
             if (!hasAll) return false;
         }
 
-        // 6. Feature Filter (New)
+        // 8. Walk Time Filter (New)
+        if (walkTime !== null) {
+            // p.minutes_to_station must be <= walkTime
+            if (p.minutes_to_station === null || p.minutes_to_station === undefined) return false; // Exclude if unknown? Or include? usually exclude.
+            if (p.minutes_to_station > walkTime) return false;
+        }
+
+        // 9. Feature Filter (New)
         if (featureParam) {
             if (featureParam === 'pet' && !p.amenities?.includes('ペット相談可')) return false;
             if (featureParam === 'wifi' && !p.amenities?.includes('高速インターネット(光回線)')) return false;
             if (featureParam === 'foreigner' && !p.amenities?.includes('外国人歓迎')) return false;
             if (featureParam === 'female') {
+                // For feature param, we act as "Female Friendly" or "Female Only"? 
+                // Usually feature=female means "Female Only".
                 if (p.gender_restriction !== 'female' && !p.amenities?.includes('女性限定')) return false;
             }
             if (featureParam === 'cheap' && p.price > 30000) return false;
@@ -284,6 +288,31 @@ function SearchContent() {
                                 </div>
                             </div>
 
+                            {/* 最寄り駅徒歩 (Walk Time) */}
+                            <div className="mb-6">
+                                <h4 className="text-sm font-bold text-gray-600 mb-2">駅徒歩</h4>
+                                <div className="space-y-2">
+                                    {[
+                                        { label: '指定なし', value: null },
+                                        { label: '5分以内', value: 5 },
+                                        { label: '10分以内', value: 10 },
+                                        { label: '15分以内', value: 15 },
+                                        { label: '20分以内', value: 20 },
+                                    ].map((opt) => (
+                                        <label key={opt.label} className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="walkTime"
+                                                checked={walkTime === opt.value}
+                                                onChange={() => setWalkTime(opt.value)}
+                                                className="text-[#bf0000] focus:ring-[#bf0000]"
+                                            />
+                                            <span className="text-sm text-gray-700">{opt.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* 部屋タイプ (Room Type) */}
                             <div className="mb-6">
                                 <h4 className="text-sm font-bold text-gray-600 mb-2">部屋タイプ</h4>
@@ -332,7 +361,7 @@ function SearchContent() {
                                             onChange={() => setGenderFilter('male')}
                                             className="text-[#bf0000] focus:ring-[#bf0000]"
                                         />
-                                        <span className="text-sm text-gray-700">男性OK</span>
+                                        <span className="text-sm text-gray-700">男性限定</span>
                                     </label>
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input
@@ -342,7 +371,7 @@ function SearchContent() {
                                             onChange={() => setGenderFilter('female')}
                                             className="text-[#bf0000] focus:ring-[#bf0000]"
                                         />
-                                        <span className="text-sm text-gray-700">女性OK</span>
+                                        <span className="text-sm text-gray-700">女性限定</span>
                                     </label>
                                 </div>
                             </div>

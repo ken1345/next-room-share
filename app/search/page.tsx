@@ -66,8 +66,8 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     }
 
     return {
-        title: `${pageTitle} | NextRoomShare`,
-        description: `${titleParts.join(' ')}のシェアハウス、ルームシェア、ゲストハウスをお探しならNextRoomShare。初期費用を抑えて、気の合う仲間と新しい生活を始めよう。`,
+        title: `${pageTitle} | ルームシェアmikke`,
+        description: `${titleParts.join(' ')}のシェアハウス、ルームシェア、ゲストハウスをお探しならルームシェアmikke。初期費用を抑えて、気の合う仲間と新しい生活を始めよう。`,
     };
 }
 

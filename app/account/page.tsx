@@ -199,6 +199,8 @@ export default function AccountPage() {
                                             viewCount={l.view_count || 0}
                                             favoritesCount={l.favorites_count || 0}
                                             inquiryCount={l.inquiry_count || 0}
+                                            prefecture={l.prefecture}
+                                            city={l.city}
                                         />
                                     </div>
                                     <div className="p-2 flex gap-2 bg-gray-50 border-t border-gray-100">
@@ -257,6 +259,8 @@ export default function AccountPage() {
                                             viewCount={l.view_count || 0}
                                             favoritesCount={l.favorites_count || 0}
                                             inquiryCount={l.inquiry_count || 0}
+                                            prefecture={l.prefecture}
+                                            city={l.city}
                                         />
                                     </div>
                                 </div>

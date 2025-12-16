@@ -2,6 +2,8 @@
 import { MdTrain, MdVisibility, MdEmail } from "react-icons/md";
 import Link from "next/link";
 
+import { getRoomUrl } from "@/lib/url-utils";
+
 interface PhotoPropertyCardProps {
     id?: string | number;
     image?: string;
@@ -13,9 +15,14 @@ interface PhotoPropertyCardProps {
     viewCount?: number;
     favoritesCount?: number;
     inquiryCount?: number;
+
+    // Location for SEO URL
+    prefecture?: string;
+    city?: string;
+    slug?: string;
 }
 
-export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, viewCount, favoritesCount, inquiryCount }: PhotoPropertyCardProps) {
+export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, viewCount, favoritesCount, inquiryCount, prefecture, city, slug }: PhotoPropertyCardProps) {
     // Format price: If raw value (>100), convert to Man-yen units (e.g. 12000 -> 1.2)
     // If small value (<100), assume already formatted.
     let displayPrice = price;
@@ -88,8 +95,24 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
     );
 
     if (id) {
+        // If slug is provided, use it directly appended to ID
+        // E.g. slug="tokyo-shibuya-ku" -> /rooms/tokyo-shibuya-ku-<ID>
+        /*
+           However, getRoomUrl logic was:
+           if (cleanSlug) return `/rooms/${cleanSlug}-${id}`;
+           So if we pass `slug` directly to a new `getRoomUrlFromSlug` OR modify `getRoomUrl`.
+           Let's modify `getRoomUrl` signature or logic in `lib/url-utils.ts` shortly.
+           For now, let's assume getRoomUrl checks for slug usage or we handle it here.
+        */
+        let url = `/rooms/${id}`;
+        if (slug) {
+            url = `/rooms/${slug}-${id}`;
+        } else {
+            url = getRoomUrl(String(id), prefecture, city);
+        }
+
         return (
-            <Link href={`/rooms/${id}`} className="block h-full">
+            <Link href={url} className="block h-full">
                 {CardContent}
             </Link>
         );

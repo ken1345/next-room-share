@@ -668,6 +668,9 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                         viewCount={p.view_count || 0}
                                         favoritesCount={p.favorites_count || 0}
                                         inquiryCount={p.inquiry_count || 0}
+                                        prefecture={p.prefecture}
+                                        city={p.city}
+                                        slug={p.slug}
                                     />
                                 </div>
                             )) : (

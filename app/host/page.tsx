@@ -282,9 +282,12 @@ function HostPageContent() {
                 description: form.description,
                 price: parseInt(form.rent),
                 address: `${form.prefecture}${form.city}`,
-                // Detailed location info for filtering
+                // Detalied location info for filtering
                 prefecture: form.prefecture,
                 city: form.city,
+                // Generate Slug
+                slug: '', // Placeholder (English)
+                slug_jp: '', // Placeholder (Japanese)
                 station_line: form.stationLine,
                 station_name: form.stationName,
                 minutes_to_station: form.minutesToStation ? parseInt(form.minutesToStation) : null,
@@ -298,6 +301,32 @@ function HostPageContent() {
                 images: uploadedImageUrls,
                 host_id: user.id,
             };
+
+            // Generate Slug via API
+            try {
+                const locationString = `${form.prefecture} ${form.city}`;
+
+                // 1. Generate English Slug
+                const slugRes = await fetch('/api/generate-slug', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: locationString }),
+                });
+                if (slugRes.ok) {
+                    const { slug } = await slugRes.json();
+                    if (slug) {
+                        (payload as any).slug = slug;
+                    }
+                }
+
+                // 2. Generate Japanese Slug (simple concat with hyphens)
+                // "東京都 渋谷区" -> "東京都-渋谷区"
+                const slugJp = `${form.prefecture}-${form.city}`.replace(/\s+/g, '-');
+                (payload as any).slug_jp = slugJp;
+
+            } catch (e) {
+                console.error("Failed to generate slug:", e);
+            }
 
             let error;
             if (editId) {
@@ -413,6 +442,8 @@ function HostPageContent() {
                                         form.gender === 'female' ? '女性限定' : form.gender === 'male' ? '男性限定' : '性別不問'
                                     ]}
                                     title={form.title}
+                                    prefecture={form.prefecture}
+                                    city={form.city}
                                 />
                             </div>
                             <p className="text-xs text-gray-400 mt-2 text-center md:text-left">※実際の表示イメージです</p>

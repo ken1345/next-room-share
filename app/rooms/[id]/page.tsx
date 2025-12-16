@@ -4,11 +4,14 @@ import { MdArrowBack } from 'react-icons/md';
 import { supabase } from '@/lib/supabase';
 import RoomDetailClient from '@/components/rooms/RoomDetailClient';
 
+import { extractIdFromSlug } from '@/lib/url-utils';
+
 type PageProps = {
     params: Promise<{ id: string }>;
 };
 
-async function getListing(id: string) {
+async function getListing(idSlug: string) {
+    const id = extractIdFromSlug(idSlug);
     const { data: listing, error } = await supabase
         .from('listings')
         .select('*')
@@ -36,12 +39,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!listing) {
         return {
-            title: '物件が見つかりません | NextRoomShare',
+            title: '物件が見つかりません | ルームシェアmikke',
         };
     }
 
     return {
-        title: `${listing.title} | NextRoomShare`,
+        title: `${listing.title} | ルームシェアmikke`,
         description: listing.description ? listing.description.substring(0, 120) : `${listing.address}のシェアハウス情報。`,
         openGraph: {
             title: listing.title,
@@ -51,9 +54,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
 }
 
+// No change needed for 404 link, but ensuring consistency.
+// The main change was handled in getListing above.
 export default async function RoomPage({ params }: PageProps) {
     const { id } = await params;
     const listing = await getListing(id);
+    // ...
 
     if (!listing) {
         return (

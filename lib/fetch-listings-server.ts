@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { toRomaji, slugify } from '@/lib/romaji';
 
 // Define the shape of our search parameters
 export type SearchParams = {
@@ -68,7 +69,12 @@ export const fetchListingsServer = async (searchParams: SearchParams) => {
             // We need "Region": ["Prefecture1", "Prefecture2"]
             // Since this is a server function, we can do this mapping at runtime or statically.
             // Given the small size, iterating is fine.
+            // region-mapping.json is simple: "Prefecture": "Region"
+            // We need "Region": ["Prefecture1", "Prefecture2"]
+            // Since this is a server function, we can do this mapping at runtime or statically.
+            // Given the small size, iterating is fine.
             const region = searchParams.region;
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
             const regionMapping: { [key: string]: string } = require('@/data/region-mapping.json');
 
             const targetPrefectures = Object.entries(regionMapping)
@@ -207,5 +213,35 @@ export const fetchListingsServer = async (searchParams: SearchParams) => {
     // Post-processing for "complex text matches" if absolutely necessary? 
     // No, let's return what we have.
 
-    return { listings: data, count };
+    // Generate Slugs for all listings (or use DB slug)
+    const listingsWithSlugs = await Promise.all((data || []).map(async (l) => {
+        // If DB already has a valid slug, use it.
+        if (l.slug && l.slug.length > 0) {
+            return l;
+        }
+
+        // Fallback: Generate runtime if missing
+        // Construct base string: "Prefecture City"
+        const locationString = `${l.prefecture || ''} ${l.city || ''}`;
+
+        let pathSlug = '';
+        if (locationString.trim()) {
+            try {
+                const romaji = await toRomaji(locationString);
+                pathSlug = slugify(romaji);
+            } catch (e) {
+                console.error("Romaji conversion failed for", l.id, e);
+            }
+        }
+
+        // Final safety: if pathSlug is empty, try to use just prefecture from map if possible.
+        // (Handled inside toRomaji fallback ideally)
+
+        return {
+            ...l,
+            slug: pathSlug // Add slug to listing object
+        };
+    }));
+
+    return { listings: listingsWithSlugs, count };
 };

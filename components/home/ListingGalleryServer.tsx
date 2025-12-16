@@ -50,6 +50,9 @@ export default async function ListingGalleryServer() {
                                 viewCount={l.view_count || 0}
                                 favoritesCount={l.favorites_count || 0}
                                 inquiryCount={l.inquiry_count || 0}
+                                prefecture={l.prefecture}
+                                city={l.city}
+                                slug={l.slug}
                             />
                         ))
                     )}

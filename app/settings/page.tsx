@@ -59,9 +59,38 @@ export default function SettingsPage() {
         router.push('/login');
     };
 
-    const handleDeleteAccount = () => {
-        if (window.confirm("本当にアカウントを削除しますか？\nこの操作は取り消せません。すべてのデータが失われます。")) {
-            alert("アカウント削除機能は現在開発中です。\nお手数ですがお問い合わせよりご連絡ください。");
+    const handleWithdrawAccount = async () => {
+        if (!window.confirm("本当に退会しますか？\n\n・投稿した物件情報、体験談は削除されます\n・プロフィール画像は削除されます\n・同じメールアドレスやグーグルアカウントで再登録することはできません\n\nこの操作は取り消せません。")) {
+            return;
+        }
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                alert("セッションが見つかりません。再度ログインしてください。");
+                return;
+            }
+
+            const res = await fetch('/api/withdraw-account', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Unknown error');
+            }
+
+            // Success
+            await supabase.auth.signOut();
+            alert("退会処理が完了しました。");
+            router.push('/');
+
+        } catch (error: any) {
+            console.error("Withdrawal error:", error);
+            alert("退会処理に失敗しました: " + error.message);
         }
     };
 
@@ -216,8 +245,8 @@ export default function SettingsPage() {
                             <span className="font-bold text-sm flex items-center gap-2"><MdLogout /> ログアウト</span>
                             <MdChevronRight className="text-gray-400" />
                         </button>
-                        <button onClick={handleDeleteAccount} className="w-full p-4 flex items-center justify-between hover:bg-red-50 transition text-left text-red-600">
-                            <span className="font-bold text-sm">アカウントの削除</span>
+                        <button onClick={handleWithdrawAccount} className="w-full p-4 flex items-center justify-between hover:bg-red-50 transition text-left text-red-600">
+                            <span className="font-bold text-sm">退会する</span>
                             <MdChevronRight className="text-red-300" />
                         </button>
                     </div>

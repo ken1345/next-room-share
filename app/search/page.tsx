@@ -798,19 +798,11 @@ function SearchContent() {
                                 {/* Page Numbers (Simple logic: show all or window - for now showing up to 5) */}
                                 {Array.from({ length: totalPages }).map((_, i) => {
                                     const p = i + 1;
-                                    // Show first, last, current, and neighbors. Simplified: Show all if small, or just window around current.
-                                    // For simplicity in this iteration: Show all if < 10, otherwise complicated logic.
-                                    // Let's implement simple window: Current-2 to Current+2
-                                    if (totalPages > 7 && (p < currentPage - 2 || p > currentPage + 2) && p !== 1 && p !== totalPages) {
-                                        if (p === currentPage - 3 || p === currentPage + 3) return <span key={p} className="flex items-center">...</span>;
-                                        return null;
-                                    }
-
                                     return (
                                         <button
                                             key={p}
                                             onClick={() => setCurrentPage(p)}
-                                            className={`w-10 h-10 rounded-full font-bold shadow-md transition ${currentPage === p ? 'bg-[#bf0000] text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border ${currentPage === p ? 'bg-[#bf0000] text-white border-[#bf0000]' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
                                         >
                                             {p}
                                         </button>
@@ -830,22 +822,13 @@ function SearchContent() {
                     </main>
                 </div>
             </div>
-
-            {/* Scroll To Top Button */}
-            <button
-                onClick={scrollToTop}
-                className={`fixed bottom-6 right-6 bg-[#bf0000] text-white p-4 rounded-full shadow-lg hover:bg-red-700 transition-all duration-300 z-50 ${showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
-                aria-label="Scroll to top"
-            >
-                <MdKeyboardArrowRight className="transform -rotate-90 text-2xl" />
-            </button>
-        </div >
+        </div>
     );
 }
 
 export default function SearchPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+        <Suspense fallback={<div>Loading...</div>}>
             <SearchContent />
         </Suspense>
     );

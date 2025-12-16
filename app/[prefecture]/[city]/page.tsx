@@ -1,24 +1,27 @@
 import { Suspense } from 'react';
+import { Metadata } from 'next';
 import SearchClient from '@/components/search/SearchClient';
-import { fetchListings } from '@/lib/fetch-listings';
+import { fetchListingsServer } from '@/lib/fetch-listings-server';
 
-export async function generateMetadata({ params }: { params: { prefecture: string; city: string } }) {
-    const pref = decodeURIComponent(params.prefecture);
-    const city = decodeURIComponent(params.city);
+export async function generateMetadata({ params }: { params: Promise<{ prefecture: string; city: string }> }): Promise<Metadata> {
+    const { prefecture, city } = await params;
+    const pref = decodeURIComponent(prefecture);
+    const cityName = decodeURIComponent(city);
     return {
-        title: `${pref}${city}のルームシェア・シェアハウス募集 | ルームシェアmikke`,
-        description: `${pref}${city}のルームシェア、シェアハウス物件一覧。`,
+        title: `${pref}${cityName}のルームシェア・シェアハウス募集 | ルームシェアmikke`,
+        description: `${pref}${cityName}のルームシェア、シェアハウス物件一覧。`,
     };
 }
 
-export default async function CityPage({ params }: { params: { prefecture: string; city: string } }) {
-    const pref = decodeURIComponent(params.prefecture);
-    const city = decodeURIComponent(params.city);
-    const { listings, count } = await fetchListings({ pref, city });
+export default async function CityPage({ params }: { params: Promise<{ prefecture: string; city: string }> }) {
+    const { prefecture, city } = await params;
+    const pref = decodeURIComponent(prefecture);
+    const cityName = decodeURIComponent(city);
+    const { listings, count } = await fetchListingsServer({ pref, city: cityName });
 
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <SearchClient initialListings={listings || []} initialCount={count || 0} />
+            <SearchClient listings={listings || []} totalCount={count || 0} />
         </Suspense>
     );
 }

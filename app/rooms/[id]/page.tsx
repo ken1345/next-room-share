@@ -1,7 +1,7 @@
 "use client";
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { MdTrain, MdLocationOn, MdArrowBack, MdCheck, MdPerson, MdEmail, MdShare, MdFavoriteBorder, MdFavorite } from 'react-icons/md';
+import { MdTrain, MdLocationOn, MdArrowBack, MdCheck, MdPerson, MdEmail, MdShare, MdFavoriteBorder, MdFavorite, MdFlag } from 'react-icons/md';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import ImageGallery from '@/components/ImageGallery';
@@ -134,6 +134,20 @@ export default function RoomDetailsPage() {
                     </button>
                     <button className="text-gray-400 hover:text-blue-600 p-2 rounded-full hover:bg-blue-50 transition">
                         <MdShare size={24} />
+                    </button>
+                    <button
+                        onClick={() => {
+                            if (!user) {
+                                alert("通報するにはログインが必要です");
+                                window.location.href = `/login?redirect=/rooms/${id}/report`;
+                            } else {
+                                window.location.href = `/rooms/${id}/report`;
+                            }
+                        }}
+                        className="text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition"
+                        title="この物件を通報する"
+                    >
+                        <MdFlag size={24} />
                     </button>
                 </div>
             </div>

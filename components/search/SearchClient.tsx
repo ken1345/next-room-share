@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { MdSearch, MdLocationOn, MdTrain, MdMap, MdFilterList, MdCheckBox, MdCheckBoxOutlineBlank, MdSort, MdKeyboardArrowRight, MdCheck, MdArrowBack, MdSave, MdKeyboardArrowUp } from 'react-icons/md';
@@ -41,6 +41,7 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
     const featureParam = searchParams.get('feature');
 
     const [activeTab, setActiveTab] = useState(initialMode);
+    const [triggerSearch, setTriggerSearch] = useState(0);
 
     // Filter States
     const [rentMin, setRentMin] = useState<number>(Number(searchParams.get('min_rent')) || 0);
@@ -65,6 +66,18 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
         station: searchParams.get('station') || null
     });
 
+    // Refs for Manual Filters (to avoid stale closures in useEffect)
+    const areaRef = useRef(areaSelection);
+    const stationRef = useRef(stationSelection);
+
+    useEffect(() => {
+        areaRef.current = areaSelection;
+    }, [areaSelection]);
+
+    useEffect(() => {
+        stationRef.current = stationSelection;
+    }, [stationSelection]);
+
     // Pagination State
     const ITEMS_PER_PAGE = 20;
     const [currentPage, setCurrentPage] = useState<number>(Number(searchParams.get('page')) || 1);
@@ -74,7 +87,7 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
         const params = new URLSearchParams();
 
         if (activeTab !== 'area') params.set('tab', activeTab);
-        params.set('tab', activeTab);
+        // params.set('tab', activeTab); // Removed duplicate line
 
         if (featureParam) params.set('feature', featureParam);
 
@@ -86,14 +99,23 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
         if (selectedAmenities.length > 0) params.set('amenities', selectedAmenities.join(','));
         if (filterType.length > 0) params.set('types', filterType.join(','));
 
+        console.log('Search Effect Triggered', {
+            triggerSearch,
+            activeTab,
+            areaSelection: areaRef.current,
+            stationSelection: stationRef.current
+        });
+
         if (activeTab === 'area') {
-            if (areaSelection.region) params.set('region', areaSelection.region);
-            if (areaSelection.prefecture) params.set('pref', areaSelection.prefecture);
-            if (areaSelection.city) params.set('city', areaSelection.city);
+            const area = areaRef.current;
+            if (area.region) params.set('region', area.region);
+            if (area.prefecture) params.set('pref', area.prefecture);
+            if (area.city) params.set('city', area.city);
         } else {
-            if (stationSelection.prefecture) params.set('station_pref', stationSelection.prefecture);
-            if (stationSelection.line) params.set('line', stationSelection.line);
-            if (stationSelection.station) params.set('station', stationSelection.station);
+            const station = stationRef.current;
+            if (station.prefecture) params.set('station_pref', station.prefecture);
+            if (station.line) params.set('line', station.line);
+            if (station.station) params.set('station', station.station);
         }
 
         if (currentPage > 1) params.set('page', currentPage.toString());
@@ -101,7 +123,10 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
         const newQuery = params.toString();
         const currentQuery = searchParams.toString();
 
+        console.log('Query Construction', { newQuery, currentQuery });
+
         if (newQuery !== currentQuery) {
+            console.log('Replacing URL');
             router.replace(`${pathname}?${newQuery}`, { scroll: false });
             sessionStorage.setItem('last_search_url', `${pathname}?${newQuery}`);
         } else {
@@ -110,8 +135,8 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
 
     }, [
         activeTab, keyword, rentMin, rentMax, walkTime, genderFilter,
-        selectedAmenities, filterType, areaSelection, stationSelection,
-        currentPage, pathname, router, featureParam, searchParams
+        selectedAmenities, filterType,
+        currentPage, pathname, router, featureParam, searchParams, triggerSearch
     ]);
 
     // Handlers
@@ -502,6 +527,16 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                         </div>
                                     )}
                                 </div>
+                                {/* Apply Button for Area */}
+                                <div className="mt-4 flex justify-end">
+                                    <button
+                                        onClick={() => setTriggerSearch(prev => prev + 1)}
+                                        className="bg-[#bf0000] text-white font-bold px-8 py-3 rounded-lg shadow-md hover:bg-[#900000] transition flex items-center gap-2"
+                                    >
+                                        <MdSearch className="text-xl" />
+                                        この条件で検索する
+                                    </button>
+                                </div>
                             </div>
                         )}
 
@@ -602,6 +637,16 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                         </div>
                                     )}
                                 </div>
+                                {/* Apply Button for Station */}
+                                <div className="mt-4 flex justify-end">
+                                    <button
+                                        onClick={() => setTriggerSearch(prev => prev + 1)}
+                                        className="bg-[#bf0000] text-white font-bold px-8 py-3 rounded-lg shadow-md hover:bg-[#900000] transition flex items-center gap-2"
+                                    >
+                                        <MdSearch className="text-xl" />
+                                        この条件で検索する
+                                    </button>
+                                </div>
                             </div>
                         )}
 
@@ -678,6 +723,7 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                     </main>
                 </div>
             </div>
+
             {/* Scroll To Top Button */}
             <button
                 onClick={scrollToTop}

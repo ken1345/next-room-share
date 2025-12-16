@@ -61,17 +61,28 @@ export const fetchListingsServer = async (searchParams: SearchParams) => {
     if (activeTab === 'area') {
         if (searchParams.pref) {
             query = query.eq('prefecture', searchParams.pref);
+        } else if (searchParams.region) {
+            // Region filtering
+            // Invert the region mapping to find all prefectures for the selected region
+            // region-mapping.json is simple: "Prefecture": "Region"
+            // We need "Region": ["Prefecture1", "Prefecture2"]
+            // Since this is a server function, we can do this mapping at runtime or statically.
+            // Given the small size, iterating is fine.
+            const region = searchParams.region;
+            const regionMapping: { [key: string]: string } = require('@/data/region-mapping.json');
+
+            const targetPrefectures = Object.entries(regionMapping)
+                .filter(([_, r]) => r === region)
+                .map(([pref]) => pref);
+
+            if (targetPrefectures.length > 0) {
+                query = query.in('prefecture', targetPrefectures);
+            }
         }
+
         if (searchParams.city) {
             query = query.eq('city', searchParams.city);
         }
-        // Region is a derived concept, normally we'd filter by list of prefectures in that region.
-        // But current client logic: if (region && p.prefecture !== region) which worked because 'region' selection in UI resets pref?
-        // Wait, the client logic `if (areaSelection.region && p.prefecture !== areaSelection.prefecture)` looks wrong in my previous read?
-        // Ah, `handleRegionSelect` sets only region. The client logic didn't seem to implement region filtering if pref wasn't selected? 
-        // "Region/Prefecture/City" logic in client: `if (areaSelection.prefecture && p.prefecture !== areaSelection.prefecture)` 
-        // It seems only Prefecture was actually effective in the filter logic I saw.
-        // So Server side: just support Pref and City.
     }
 
     // 3. Station Filter

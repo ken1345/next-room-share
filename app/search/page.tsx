@@ -7,12 +7,19 @@ import Loading from '@/app/loading'; // Assuming loading.tsx exists or we use in
 // Static metadata removed in favor of generateMetadata below
 // export const metadata: Metadata = { ... };
 
+// Next.js 15+ Page Props (searchParams is a Promise)
+type PageProps = {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+    const resolvedParams = await searchParams;
+
     // Dynamic Title Logic
     let titleParts = [];
 
     // 1. Feature / Concept
-    const feature = typeof searchParams.feature === 'string' ? searchParams.feature : null;
+    const feature = typeof resolvedParams.feature === 'string' ? resolvedParams.feature : null;
     if (feature) {
         const featureMap: Record<string, string> = {
             'pet': 'ペット可',
@@ -30,21 +37,21 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     }
 
     // 2. Area
-    const pref = typeof searchParams.pref === 'string' ? searchParams.pref : null;
-    const city = typeof searchParams.city === 'string' ? searchParams.city : null;
-    const region = typeof searchParams.region === 'string' ? searchParams.region : null;
+    const pref = typeof resolvedParams.pref === 'string' ? resolvedParams.pref : null;
+    const city = typeof resolvedParams.city === 'string' ? resolvedParams.city : null;
+    const region = typeof resolvedParams.region === 'string' ? resolvedParams.region : null;
 
     if (city) titleParts.push(city);
     else if (pref) titleParts.push(pref);
     else if (region) titleParts.push(region);
 
     // 3. Station
-    const station = typeof searchParams.station === 'string' ? searchParams.station : null;
+    const station = typeof resolvedParams.station === 'string' ? resolvedParams.station : null;
     if (station) titleParts.push(`${station}駅`);
-    else if (typeof searchParams.line === 'string') titleParts.push(searchParams.line);
+    else if (typeof resolvedParams.line === 'string') titleParts.push(resolvedParams.line);
 
     // 4. Keyword
-    const q = typeof searchParams.q === 'string' ? searchParams.q : null;
+    const q = typeof resolvedParams.q === 'string' ? resolvedParams.q : null;
     if (q) titleParts.push(`「${q}」`);
 
     // Base Title
@@ -64,30 +71,27 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     };
 }
 
-// Next.js 13/14 Page Props
-type PageProps = {
-    searchParams: { [key: string]: string | string[] | undefined };
-};
-
 export default async function SearchPage({ searchParams }: PageProps) {
+    const resolvedParams = await searchParams;
+
     // Normalize search params to our type
     const normalizedParams: SearchParams = {
-        tab: typeof searchParams.tab === 'string' ? searchParams.tab : undefined,
-        q: typeof searchParams.q === 'string' ? searchParams.q : undefined,
-        min_rent: typeof searchParams.min_rent === 'string' ? searchParams.min_rent : undefined,
-        max_rent: typeof searchParams.max_rent === 'string' ? searchParams.max_rent : undefined,
-        walk: typeof searchParams.walk === 'string' ? searchParams.walk : undefined,
-        gender: typeof searchParams.gender === 'string' ? searchParams.gender : undefined,
-        amenities: typeof searchParams.amenities === 'string' ? searchParams.amenities : undefined,
-        types: typeof searchParams.types === 'string' ? searchParams.types : undefined,
-        region: typeof searchParams.region === 'string' ? searchParams.region : undefined,
-        pref: typeof searchParams.pref === 'string' ? searchParams.pref : undefined,
-        city: typeof searchParams.city === 'string' ? searchParams.city : undefined,
-        station_pref: typeof searchParams.station_pref === 'string' ? searchParams.station_pref : undefined,
-        line: typeof searchParams.line === 'string' ? searchParams.line : undefined,
-        station: typeof searchParams.station === 'string' ? searchParams.station : undefined,
-        feature: typeof searchParams.feature === 'string' ? searchParams.feature : undefined,
-        page: typeof searchParams.page === 'string' ? searchParams.page : undefined,
+        tab: typeof resolvedParams.tab === 'string' ? resolvedParams.tab : undefined,
+        q: typeof resolvedParams.q === 'string' ? resolvedParams.q : undefined,
+        min_rent: typeof resolvedParams.min_rent === 'string' ? resolvedParams.min_rent : undefined,
+        max_rent: typeof resolvedParams.max_rent === 'string' ? resolvedParams.max_rent : undefined,
+        walk: typeof resolvedParams.walk === 'string' ? resolvedParams.walk : undefined,
+        gender: typeof resolvedParams.gender === 'string' ? resolvedParams.gender : undefined,
+        amenities: typeof resolvedParams.amenities === 'string' ? resolvedParams.amenities : undefined,
+        types: typeof resolvedParams.types === 'string' ? resolvedParams.types : undefined,
+        region: typeof resolvedParams.region === 'string' ? resolvedParams.region : undefined,
+        pref: typeof resolvedParams.pref === 'string' ? resolvedParams.pref : undefined,
+        city: typeof resolvedParams.city === 'string' ? resolvedParams.city : undefined,
+        station_pref: typeof resolvedParams.station_pref === 'string' ? resolvedParams.station_pref : undefined,
+        line: typeof resolvedParams.line === 'string' ? resolvedParams.line : undefined,
+        station: typeof resolvedParams.station === 'string' ? resolvedParams.station : undefined,
+        feature: typeof resolvedParams.feature === 'string' ? resolvedParams.feature : undefined,
+        page: typeof resolvedParams.page === 'string' ? resolvedParams.page : undefined,
     };
 
     const { listings, count } = await fetchListingsServer(normalizedParams);

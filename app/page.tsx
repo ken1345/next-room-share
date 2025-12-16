@@ -302,10 +302,12 @@ function ListingGallery() {
     <section className="bg-gray-50 py-12 border-t">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-end mb-6">
-          <SectionTitle title="新着のシェアハウス" subtitle="本日公開！写真で選ぶ最新物件" />
-          <button className="text-[#bf0000] font-bold border border-[#bf0000] bg-white px-4 py-1 rounded-full hover:bg-[#bf0000] hover:text-white transition text-sm">
-            もっと見る
-          </button>
+          <SectionTitle title="新着のルームシェア" subtitle="本日公開！写真で選ぶ最新物件" />
+          <Link href="/search">
+            <button className="text-[#bf0000] font-bold border border-[#bf0000] bg-white px-4 py-1 rounded-full hover:bg-[#bf0000] hover:text-white transition text-sm">
+              もっと見る
+            </button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">

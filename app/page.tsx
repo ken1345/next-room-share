@@ -1,6 +1,6 @@
 // app/page.tsx
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from 'next/link';
 
 import {
@@ -9,14 +9,38 @@ import {
   MdCampaign, MdTimer, MdSportsEsports, MdFitnessCenter, MdMovie, MdSpa,
   MdSchool, MdComputer, MdChildCare, MdTranslate,
   MdCalculate, MdPlaylistAddCheck, MdTimeline, MdPsychology, MdAutoStories, MdStar, MdPlace, MdFace,
-  MdArrowForward, MdCameraAlt, MdTag, MdPerson, MdCalendarToday
+  MdArrowForward, MdCameraAlt, MdTag, MdPerson, MdCalendarToday, MdKeyboardArrowUp
 } from "react-icons/md";
 import PhotoPropertyCard from "@/components/PhotoPropertyCard";
 import { MOCK_STORIES } from '@/data/mock-stories';
 
 // ヘッダー・フッターは layout.tsx にあるため省略
 
+// ヘッダー・フッターは layout.tsx にあるため省略
+
 export default function Home() {
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   return (
     <div className="text-gray-700 font-sans pb-20">
 
@@ -31,7 +55,7 @@ export default function Home() {
       </section>
 
       {/* 2. 検索バー (前回と同じ) */}
-      <section className="bg-[#bf0000] py-4 sticky top-0 z-50 shadow-md border-b-4 border-[#900000]">
+      <section className="bg-[#bf0000] py-4 shadow-md border-b-4 border-[#900000]">
         <div className="container mx-auto px-4 flex justify-center gap-2 md:gap-6 text-sm md:text-base">
           <Link href="/search?mode=area">
             <SearchButton icon={<MdLocationOn />} text="エリアから" isOutline />
@@ -189,6 +213,15 @@ export default function Home() {
       <BeforeAfterGallery />
 
 
+      {/* Scroll To Top Button */}
+      <button
+        onClick={scrollToTop}
+        className={`fixed bottom-6 right-6 bg-[#bf0000] text-white p-4 rounded-full shadow-lg hover:bg-black transition-all duration-300 z-50 ${showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+        aria-label="Scroll to top"
+      >
+        <MdKeyboardArrowUp className="text-2xl" />
+      </button>
+
     </div >
   );
 }
@@ -270,7 +303,6 @@ function FeatureCard({ color, icon, title }: { color: string, icon: React.ReactN
 }
 
 // ================= Listing Gallery with Supabase =================
-import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
 function ListingGallery() {

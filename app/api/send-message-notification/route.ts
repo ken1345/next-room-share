@@ -64,7 +64,7 @@ export async function POST(request: Request) {
         }
 
         const { data, error: resendError } = await resend.emails.send({
-            from: process.env.RESEND_FROM_EMAIL || 'RoomMikke <onboarding@resend.dev>',
+            from: process.env.RESEND_FROM_EMAIL || 'ルームシェアmikke <onboarding@resend.dev>',
             to: toEmail,
             subject: `${subjectPrefix}【ルームシェアmikke】${senderName}さんからメッセージが届きました`,
             text: `

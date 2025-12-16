@@ -16,7 +16,7 @@ export async function POST(request: Request) {
         }
 
         const resend = new Resend(resendApiKey);
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'RoomMikke <onboarding@resend.dev>';
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'ルームシェアmikke <onboarding@resend.dev>';
 
         // 1. Send to Admin
         await resend.emails.send({

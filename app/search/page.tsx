@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { MdSearch, MdLocationOn, MdTrain, MdMap, MdFilterList, MdCheckBox, MdCheckBoxOutlineBlank, MdSort, MdKeyboardArrowRight, MdCheck, MdArrowBack, MdSave } from 'react-icons/md';
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
@@ -33,31 +33,92 @@ type StationSelection = {
 // Mock Data removed
 
 function SearchContent() {
+    const router = useRouter();
+    const pathname = usePathname();
     const searchParams = useSearchParams();
-    const initialMode = searchParams.get('mode') || 'area'; // area, station, map
+
+    // Initialize State from URL Params
+    const initialMode = searchParams.get('tab') || 'area';
     const featureParam = searchParams.get('feature');
 
     const [activeTab, setActiveTab] = useState(initialMode);
-    const [filterType, setFilterType] = useState<string[]>([]);
 
     // Expanded Filters
-    const [rentMin, setRentMin] = useState<number>(0);
-    const [rentMax, setRentMax] = useState<number>(20); // Default max 20man
-    const [keyword, setKeyword] = useState('');
-    const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-    const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
-    const [walkTime, setWalkTime] = useState<number | null>(null);
+    const [rentMin, setRentMin] = useState<number>(Number(searchParams.get('min_rent')) || 0);
+    const [rentMax, setRentMax] = useState<number>(searchParams.get('max_rent') ? Number(searchParams.get('max_rent')) : 20);
+    const [keyword, setKeyword] = useState(searchParams.get('q') || '');
+    const [selectedAmenities, setSelectedAmenities] = useState<string[]>(searchParams.get('amenities')?.split(',').filter(Boolean) || []);
+    const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>((searchParams.get('gender') as any) || 'all');
+    const [walkTime, setWalkTime] = useState<number | null>(searchParams.get('walk') ? Number(searchParams.get('walk')) : null);
+    const [filterType, setFilterType] = useState<string[]>(searchParams.get('types')?.split(',').filter(Boolean) || []);
+
+    // Area Selection State
+    const [areaSelection, setAreaSelection] = useState<AreaSelection>({
+        region: searchParams.get('region') || null,
+        prefecture: searchParams.get('pref') || null,
+        city: searchParams.get('city') || null
+    });
+
+    // Station Selection State
+    const [stationSelection, setStationSelection] = useState<StationSelection>({
+        prefecture: searchParams.get('station_pref') || null,
+        line: searchParams.get('line') || null,
+        station: searchParams.get('station') || null
+    });
 
     // Data State
     const [listings, setListings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
 
-    // Area Selection State
-    const [areaSelection, setAreaSelection] = useState<AreaSelection>({ region: null, prefecture: null, city: null });
+    // Sync State to URL
+    useEffect(() => {
+        const params = new URLSearchParams();
 
-    // Station Selection State
-    const [stationSelection, setStationSelection] = useState<StationSelection>({ prefecture: null, line: null, station: null });
+        if (activeTab !== 'area') params.set('tab', activeTab); // default 'area' usually implies no param or specific param
+        // Actually typically we want to preserve tab.
+        params.set('tab', activeTab);
+
+        if (featureParam) params.set('feature', featureParam);
+
+        if (keyword) params.set('q', keyword);
+        if (rentMin > 0) params.set('min_rent', rentMin.toString());
+        if (rentMax < 50) params.set('max_rent', rentMax.toString()); // Assuming 50 is max possible
+        if (walkTime) params.set('walk', walkTime.toString());
+        if (genderFilter !== 'all') params.set('gender', genderFilter);
+        if (selectedAmenities.length > 0) params.set('amenities', selectedAmenities.join(','));
+        if (filterType.length > 0) params.set('types', filterType.join(','));
+
+        if (activeTab === 'area') {
+            if (areaSelection.region) params.set('region', areaSelection.region);
+            if (areaSelection.prefecture) params.set('pref', areaSelection.prefecture);
+            if (areaSelection.city) params.set('city', areaSelection.city);
+        } else {
+            if (stationSelection.prefecture) params.set('station_pref', stationSelection.prefecture);
+            if (stationSelection.line) params.set('line', stationSelection.line);
+            if (stationSelection.station) params.set('station', stationSelection.station);
+        }
+
+        const newQuery = params.toString();
+        const currentQuery = searchParams.toString();
+
+        // Avoid pushing if no change (though setState likely triggered this, so it IS a change)
+        // But we need to compare logically to prevent loops if we were updating state from URL in another effect (we are not, we only init).
+        // However, we should be careful not to push identical URL.
+
+        // Construct full URL
+        // Using replace to prevent massive history stack
+        router.replace(`${pathname}?${newQuery}`, { scroll: false });
+
+    }, [
+        activeTab, keyword, rentMin, rentMax, walkTime, genderFilter,
+        selectedAmenities, filterType, areaSelection, stationSelection,
+        pathname, router, featureParam
+        // searchParams included in dependency might cause loop if we are not careful? 
+        // No, searchParams changes when we navigate. 
+        // If we navigate, searchParams changes, re-triggering this effect?
+        // If state matches URL, params.toString() will match currentQuery.
+    ]);
 
     // Fetch Data
     useEffect(() => {

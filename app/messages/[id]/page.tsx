@@ -146,7 +146,7 @@ export default function MessageThreadPage() {
         <div className="flex flex-col h-[100dvh] bg-gray-100 font-sans">
             {/* Header */}
             <header className="bg-white border-b px-4 py-3 flex items-center gap-4 shadow-sm z-10 shrink-0">
-                <Link href="/account" className="text-gray-500 hover:text-gray-800">
+                <Link href="/messages" className="text-gray-500 hover:text-gray-800">
                     <MdArrowBack size={24} />
                 </Link>
                 <div className="flex-1 min-w-0">

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { MdHome, MdPerson } from "react-icons/md";
+import { MdHome, MdPerson, MdMail } from "react-icons/md";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
@@ -41,19 +41,27 @@ export default function Header() {
             <Link href="/search" className="hover:text-[#bf0000] transition">部屋を探す</Link>
             <Link href="/host" className="hover:text-[#bf0000] transition">部屋を貸す</Link>
 
-
             {user ? (
               // Logged In
-              <Link href="/account" className="flex items-center gap-1 hover:text-[#bf0000] transition ml-2">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200">
-                  {user.user_metadata?.avatar_url ? (
-                    <img src={user.user_metadata.avatar_url} alt="User" className="w-full h-full object-cover" />
-                  ) : (
-                    <MdPerson size={20} />
-                  )}
-                </div>
-                <span className="hidden md:inline">アカウント</span>
-              </Link>
+              <>
+                <Link href="/messages" className="flex items-center gap-1 hover:text-[#bf0000] transition ml-2">
+                  <div className="relative">
+                    <MdMail size={22} className="text-gray-600" />
+                    {/* Badge logic could go here */}
+                  </div>
+                  <span className="hidden md:inline">メッセージ</span>
+                </Link>
+                <Link href="/account" className="flex items-center gap-1 hover:text-[#bf0000] transition ml-2">
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200">
+                    {user.user_metadata?.avatar_url ? (
+                      <img src={user.user_metadata.avatar_url} alt="User" className="w-full h-full object-cover" />
+                    ) : (
+                      <MdPerson size={20} />
+                    )}
+                  </div>
+                  <span className="hidden md:inline">アカウント</span>
+                </Link>
+              </>
             ) : (
               // Logged Out
               <>

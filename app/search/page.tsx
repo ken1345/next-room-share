@@ -39,8 +39,13 @@ function SearchContent() {
 
     const [activeTab, setActiveTab] = useState(initialMode);
     const [filterType, setFilterType] = useState<string[]>([]);
-    const [rentRange, setRentRange] = useState<number>(15);
+
+    // Expanded Filters
+    const [rentMin, setRentMin] = useState<number>(0);
+    const [rentMax, setRentMax] = useState<number>(20); // Default max 20man
     const [keyword, setKeyword] = useState('');
+    const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+    const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
 
     // Data State
     const [listings, setListings] = useState<any[]>([]);
@@ -70,64 +75,9 @@ function SearchContent() {
             }
             setLoading(false);
         };
-
-        const checkUserAndLoadPrefs = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-                setUser(session.user);
-                // Load preferences
-                const { data, error } = await supabase
-                    .from('users')
-                    .select('search_preferences')
-                    .eq('id', session.user.id)
-                    .single();
-
-                if (data?.search_preferences) {
-                    const prefs = data.search_preferences as any;
-                    // Only load valid prefs
-                    if (prefs.activeTab) setActiveTab(prefs.activeTab);
-                    if (prefs.areaSelection) setAreaSelection(prefs.areaSelection);
-                    if (prefs.stationSelection) setStationSelection(prefs.stationSelection);
-                    if (prefs.rentRange) setRentRange(prefs.rentRange);
-                    if (prefs.keyword) setKeyword(prefs.keyword);
-                    if (prefs.filterType) setFilterType(prefs.filterType);
-                }
-            }
-        };
-
         fetchListings();
-        checkUserAndLoadPrefs();
     }, []);
 
-    const saveConditions = async () => {
-        if (!user) {
-            alert("検索条件を保存するにはログインが必要です。");
-            return;
-        }
-
-        const preferences = {
-            activeTab,
-            areaSelection,
-            stationSelection,
-            rentRange,
-            keyword,
-            filterType
-        };
-
-        const { error } = await supabase
-            .from('users')
-            .update({ search_preferences: preferences })
-            .eq('id', user.id);
-
-        if (error) {
-            console.error("Error saving preferences:", error);
-            alert("保存に失敗しました。");
-        } else {
-            alert("検索条件を保存しました！次回訪問時に自動的に適用されます。");
-        }
-    };
-
-    // Area Handlers
     // Area Handlers
     const handleRegionSelect = (region: string) => {
         setAreaSelection({ region, prefecture: null, city: null });
@@ -139,7 +89,6 @@ function SearchContent() {
 
     const handleCitySelect = (city: string) => {
         setAreaSelection(prev => ({ ...prev, city }));
-        // Here you would typically trigger a search or update URL
     };
 
     const resetAreaSelection = () => {
@@ -207,12 +156,45 @@ function SearchContent() {
             if (!typeCodes.includes(p.room_type)) return false;
         }
 
-        // 5. Rent Filter
-        // rentRange is Max Price in Man-en (e.g. 15 -> 150000)
-        // p.price is raw integer
-        if (p.price > rentRange * 10000) return false;
+        // 5. Rent Filter (Min/Max)
+        // p.price is raw integer (yen)
+        // inputs are in 'man-en' (10000 yen)
+        if (p.price < rentMin * 10000) return false;
+        if (p.price > rentMax * 10000) return false;
 
-        if (p.price > rentRange * 10000) return false;
+        // 6. Gender Filter
+        if (genderFilter !== 'all') {
+            // Logic depends on DB structure. Assuming p.gender_restriction or amenities tags
+            // If p.gender_restriction is 'female', 'male', 'none'
+            // If user wants 'female' -> show 'female' only or 'none' (any)?
+            // Usually: 
+            // - User Male -> Show 'male' allowed (none, male). Hide 'female'.
+            // - User Female -> Show 'female' allowed (none, female). Hide 'male'.
+            // - BUT this filter says "Gender: Male OK / Female OK".
+            // If "Male OK" selected -> Show properties where men can live.
+
+            if (genderFilter === 'male') {
+                // Exclude female-only
+                if (p.gender_restriction === 'female' || p.amenities?.includes('女性限定') || p.amenities?.includes('女性専用')) return false;
+            }
+            if (genderFilter === 'female') {
+                // Exclude male-only (if exists)
+                if (p.gender_restriction === 'male' || p.amenities?.includes('男性限定') || p.amenities?.includes('男性専用')) return false;
+            }
+        }
+
+        // 7. Amenities Filter (AND logic: must have ALL selected)
+        if (selectedAmenities.length > 0) {
+            if (!p.amenities) return false;
+            const hasAll = selectedAmenities.every(a => {
+                // Mapping fuzzy terms if needed, or exact match
+                if (a === 'Wifi無料') return p.amenities.includes('高速インターネット(光回線)') || p.amenities.includes('インターネット無料');
+                if (a === 'エアコン') return p.amenities.includes('エアコン') || p.amenities.includes('冷暖房完備');
+                if (a === '外国人可') return p.amenities.includes('外国人歓迎');
+                return p.amenities.includes(a);
+            });
+            if (!hasAll) return false;
+        }
 
         // 6. Feature Filter (New)
         if (featureParam) {
@@ -276,6 +258,33 @@ function SearchContent() {
                                 <MdFilterList size={20} /> 絞り込み条件
                             </div>
 
+                            {/* 家賃 (Rent) */}
+                            <div className="mb-6">
+                                <h4 className="text-sm font-bold text-gray-600 mb-2">家賃 (万円)</h4>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="50"
+                                        value={rentMin}
+                                        onChange={(e) => setRentMin(Number(e.target.value))}
+                                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                                        placeholder="下限"
+                                    />
+                                    <span className="text-gray-400">~</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="50"
+                                        value={rentMax}
+                                        onChange={(e) => setRentMax(Number(e.target.value))}
+                                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                                        placeholder="上限"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* 部屋タイプ (Room Type) */}
                             <div className="mb-6">
                                 <h4 className="text-sm font-bold text-gray-600 mb-2">部屋タイプ</h4>
                                 <div className="space-y-2">
@@ -301,29 +310,72 @@ function SearchContent() {
                                 </div>
                             </div>
 
-                            {/* 家賃 */}
-                            {/* 家賃 */}
+                            {/* 性別 (Gender) */}
                             <div className="mb-6">
-                                <h4 className="text-sm font-bold text-gray-600 mb-2">家賃上限: {rentRange}万円</h4>
-                                <input
-                                    type="range"
-                                    min="3" max="20" step="1"
-                                    value={rentRange}
-                                    onChange={(e) => setRentRange(Number(e.target.value))}
-                                    className="w-full accent-[#bf0000]"
-                                />
-                                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>3万</span>
-                                    <span>20万</span>
+                                <h4 className="text-sm font-bold text-gray-600 mb-2">入居条件</h4>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="gender"
+                                            checked={genderFilter === 'all'}
+                                            onChange={() => setGenderFilter('all')}
+                                            className="text-[#bf0000] focus:ring-[#bf0000]"
+                                        />
+                                        <span className="text-sm text-gray-700">指定なし</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="gender"
+                                            checked={genderFilter === 'male'}
+                                            onChange={() => setGenderFilter('male')}
+                                            className="text-[#bf0000] focus:ring-[#bf0000]"
+                                        />
+                                        <span className="text-sm text-gray-700">男性OK</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="gender"
+                                            checked={genderFilter === 'female'}
+                                            onChange={() => setGenderFilter('female')}
+                                            className="text-[#bf0000] focus:ring-[#bf0000]"
+                                        />
+                                        <span className="text-sm text-gray-700">女性OK</span>
+                                    </label>
                                 </div>
                             </div>
 
-                            <button
-                                onClick={saveConditions}
-                                className="w-full bg-gray-800 text-white font-bold py-2 rounded-lg hover:bg-black transition flex items-center justify-center gap-2"
-                            >
-                                <MdSave /> 条件を保存して検索
-                            </button>
+                            {/* こだわり条件 (Amenities) */}
+                            <div className="mb-6">
+                                <h4 className="text-sm font-bold text-gray-600 mb-2">こだわり条件</h4>
+                                <div className="space-y-2">
+                                    {[
+                                        'Wifi無料', '家具家電付き', 'エアコン',
+                                        'オートロック', 'ペット可', '駐車場あり',
+                                        '駐輪場あり', '即入居可', '外国人可'
+                                    ].map(amenity => (
+                                        <label key={amenity} className="flex items-center gap-2 cursor-pointer">
+                                            <div className="relative flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedAmenities.includes(amenity)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) setSelectedAmenities(prev => [...prev, amenity]);
+                                                        else setSelectedAmenities(prev => prev.filter(x => x !== amenity));
+                                                    }}
+                                                    className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all checked:border-[#bf0000] checked:bg-[#bf0000]"
+                                                />
+                                                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                                    <MdCheck size={12} />
+                                                </span>
+                                            </div>
+                                            <span className="text-xs text-gray-700">{amenity}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </aside>
 

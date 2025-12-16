@@ -33,15 +33,18 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
     const CardContent = (
         <div className="group cursor-pointer bg-white rounded-xl shadow-sm hover:shadow-xl transition overflow-hidden border border-gray-100 flex flex-col h-full">
             {/* 写真エリア（大きく確保） */}
-            <div
-                className={`relative h-48 w-full ${image || 'bg-gray-200'} overflow-hidden bg-cover bg-center`}
-                style={imageUrl ? { backgroundImage: `url('${imageUrl}')` } : undefined}
-            >
+            <div className={`relative h-48 w-full ${image || 'bg-gray-200'} overflow-hidden`}>
+                {/* Background Image with Zoom Effect */}
+                <div
+                    className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-110"
+                    style={imageUrl ? { backgroundImage: `url('${imageUrl}')` } : undefined}
+                />
+
                 {/* NEWバッジ */}
                 <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-md z-10">NEW</span>
 
-                {/* 画像拡大アニメーション */}
-                <div className="w-full h-full bg-gray-300 opacity-50 group-hover:scale-110 transition duration-700"></div>
+                {/* Subtle dark overlay on hover */}
+                <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition z-0"></div>
 
                 {/* 写真の上に価格を乗せる（モダンな手法） */}
                 <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg shadow-sm">

@@ -71,6 +71,10 @@ function SearchContent() {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
 
+    // Pagination State
+    const ITEMS_PER_PAGE = 20;
+    const [currentPage, setCurrentPage] = useState<number>(Number(searchParams.get('page')) || 1);
+
     // Sync State to URL
     useEffect(() => {
         const params = new URLSearchParams();
@@ -99,6 +103,9 @@ function SearchContent() {
             if (stationSelection.station) params.set('station', stationSelection.station);
         }
 
+        // Always include page if not 1
+        if (currentPage > 1) params.set('page', currentPage.toString());
+
         const newQuery = params.toString();
         const currentQuery = searchParams.toString();
 
@@ -113,7 +120,7 @@ function SearchContent() {
     }, [
         activeTab, keyword, rentMin, rentMax, walkTime, genderFilter,
         selectedAmenities, filterType, areaSelection, stationSelection,
-        pathname, router, featureParam
+        currentPage, pathname, router, featureParam
         // searchParams included in dependency might cause loop if we are not careful? 
         // No, searchParams changes when we navigate. 
         // If we navigate, searchParams changes, re-triggering this effect?
@@ -174,10 +181,20 @@ function SearchContent() {
     // Filtering logic (simple mock)
     // Filtering logic
     const filteredProperties = listings.filter(p => {
-        // 1. Keyword Filter (Title, Description, Address)
+        // 1. Keyword Filter (Title, Description, Address, Station, City, Prefecture)
         if (keyword) {
             const k = keyword.toLowerCase();
-            const text = (p.title + p.description + p.address).toLowerCase();
+            // Robust search across multiple fields
+            const text = [
+                p.title,
+                p.description,
+                p.address,
+                p.prefecture,
+                p.city,
+                p.station_name,
+                p.station_line
+            ].filter(Boolean).join(' ').toLowerCase();
+
             if (!text.includes(k)) return false;
         }
 
@@ -276,10 +293,54 @@ function SearchContent() {
         return true;
     });
 
+    // Pagination Logic
+    const totalItems = filteredProperties.length;
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+    const paginatedProperties = filteredProperties.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
+    // Scroll to top when page changes (optional, but good UX)
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [currentPage]);
+
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [
+        activeTab, keyword, rentMin, rentMax, walkTime, genderFilter,
+        selectedAmenities, filterType, areaSelection, stationSelection, featureParam
+    ]);
+
+    // Scroll To Top Logic
+    const [showScrollTop, setShowScrollTop] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 300) {
+                setShowScrollTop(true);
+            } else {
+                setShowScrollTop(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 pb-20 font-sans">
-            {/* Header Search Bar */}
-            <div className="bg-[#bf0000] p-4 text-white sticky top-0 z-50 shadow-md">
+            {/* Header Search Bar (Not Sticky) */}
+            <div className="bg-[#bf0000] p-4 text-white shadow-md">
                 <div className="container mx-auto max-w-lg">
                     <div className="relative">
                         <input
@@ -287,15 +348,15 @@ function SearchContent() {
                             value={keyword}
                             onChange={(e) => setKeyword(e.target.value)}
                             placeholder="駅名・エリア・キーワードを入力"
-                            className="w-full pl-10 pr-4 py-3 rounded-full text-gray-800 focus:outline-none shadow-sm font-bold"
+                            className="w-full pl-10 pr-4 py-3 rounded-full bg-white text-gray-800 focus:outline-none shadow-sm font-bold"
                         />
                         <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-2xl" />
                     </div>
                 </div>
             </div>
 
-            {/* Mode Tabs */}
-            <div className="bg-white border-b sticky top-[72px] z-40">
+            {/* Mode Tabs (Not Sticky) */}
+            <div className="bg-white border-b">
                 <div className="container mx-auto px-4 max-w-4xl grid grid-cols-2 text-center text-sm md:text-base font-bold text-gray-500">
                     <button
                         onClick={() => setActiveTab('area')}
@@ -309,9 +370,10 @@ function SearchContent() {
                     >
                         <MdTrain /> 沿線・駅から
                     </button>
-
                 </div>
             </div>
+
+
 
             <div className="container mx-auto px-4 max-w-6xl py-6">
                 <div className="flex flex-col md:flex-row gap-6">
@@ -683,7 +745,7 @@ function SearchContent() {
 
                         {/* Results Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredProperties.map(p => (
+                            {paginatedProperties.length > 0 ? paginatedProperties.map(p => (
                                 <div key={p.id} className="h-[320px]">
                                     <PhotoPropertyCard
                                         id={p.id}
@@ -701,20 +763,71 @@ function SearchContent() {
                                         inquiryCount={p.inquiry_count || 0}
                                     />
                                 </div>
-                            ))}
+                            )) : (
+                                <div className="col-span-full py-20 text-center text-gray-500">
+                                    <p className="text-xl font-bold mb-2">該当する物件が見つかりませんでした</p>
+                                    <p className="text-sm">条件を変更して再度検索してください。</p>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Pagination Placeholder */}
-                        <div className="mt-10 flex justify-center gap-2">
-                            <button className="w-10 h-10 rounded-full bg-[#bf0000] text-white font-bold shadow-md">1</button>
-                            <button className="w-10 h-10 rounded-full bg-white text-gray-600 font-bold hover:bg-gray-100 border border-gray-200">2</button>
-                            <button className="w-10 h-10 rounded-full bg-white text-gray-600 font-bold hover:bg-gray-100 border border-gray-200">3</button>
-                        </div>
+                        {/* Real Pagination */}
+                        {totalPages > 1 && (
+                            <div className="mt-10 flex justify-center gap-2">
+                                {/* Prev Button */}
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                                >
+                                    &lt;
+                                </button>
+
+                                {/* Page Numbers (Simple logic: show all or window - for now showing up to 5) */}
+                                {Array.from({ length: totalPages }).map((_, i) => {
+                                    const p = i + 1;
+                                    // Show first, last, current, and neighbors. Simplified: Show all if small, or just window around current.
+                                    // For simplicity in this iteration: Show all if < 10, otherwise complicated logic.
+                                    // Let's implement simple window: Current-2 to Current+2
+                                    if (totalPages > 7 && (p < currentPage - 2 || p > currentPage + 2) && p !== 1 && p !== totalPages) {
+                                        if (p === currentPage - 3 || p === currentPage + 3) return <span key={p} className="flex items-center">...</span>;
+                                        return null;
+                                    }
+
+                                    return (
+                                        <button
+                                            key={p}
+                                            onClick={() => setCurrentPage(p)}
+                                            className={`w-10 h-10 rounded-full font-bold shadow-md transition ${currentPage === p ? 'bg-[#bf0000] text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
+                                        >
+                                            {p}
+                                        </button>
+                                    );
+                                })}
+
+                                {/* Next Button */}
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                                >
+                                    &gt;
+                                </button>
+                            </div>
+                        )}
                     </main>
-
                 </div>
             </div>
-        </div>
+
+            {/* Scroll To Top Button */}
+            <button
+                onClick={scrollToTop}
+                className={`fixed bottom-6 right-6 bg-[#bf0000] text-white p-4 rounded-full shadow-lg hover:bg-red-700 transition-all duration-300 z-50 ${showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+                aria-label="Scroll to top"
+            >
+                <MdKeyboardArrowRight className="transform -rotate-90 text-2xl" />
+            </button>
+        </div >
     );
 }
 

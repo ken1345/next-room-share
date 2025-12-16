@@ -61,6 +61,8 @@ create table public.listings (
   latitude float,
   longitude float,
   amenities text[],
+  equipment text[],
+  building_type text,
   images text[],
   host_id uuid references public.users(id) not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null

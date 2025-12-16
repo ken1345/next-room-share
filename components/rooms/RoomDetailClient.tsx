@@ -93,7 +93,17 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
 
     // Safely parse arrays
     const amenities = property.amenities || [];
+    const equipment = property.equipment || [];
     const images = property.images || [];
+
+    const buildingTypeLabel: { [key: string]: string } = {
+        'detached': '一戸建て',
+        'mansion': 'マンション',
+        'apartment': 'アパート',
+        'other': 'その他'
+    };
+    const buildingTypeName = property.building_type ? buildingTypeLabel[property.building_type] || property.building_type : '建物種別不明';
+
 
     return (
         <div className="min-h-screen bg-gray-50 pb-24 font-sans">
@@ -126,6 +136,12 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
                             <div className="flex flex-wrap gap-4 text-sm font-bold text-gray-500">
                                 <span className="flex items-center gap-1"><MdLocationOn className="text-[#bf0000]" /> {property.address}</span>
                                 <span className="flex items-center gap-1"><MdTrain className="text-gray-400" /> 最寄駅未設定</span>
+                                <span className="flex items-center gap-1 bg-gray-100 px-2 rounded text-gray-600 border border-gray-200">{buildingTypeName}</span>
+                                {property.updated_at && (
+                                    <span className="text-xs font-normal text-gray-400 self-center ml-auto">
+                                        最終更新: {new Date(property.updated_at).toLocaleDateString()}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
@@ -137,9 +153,20 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
                             </p>
                         </div>
 
-                        {/* Amenities / Details */}
+                        {/* Shared Facilities */}
                         <div className="mb-8 border-b pb-6">
-                            <h2 className="text-xl font-bold text-gray-800 mb-4">設備・条件</h2>
+                            <h2 className="text-xl font-bold text-gray-800 mb-4">共用設備</h2>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm font-bold text-gray-600">
+                                {equipment.map((item: string, i: number) => (
+                                    <div key={i} className="flex items-center gap-2 bg-blue-50 text-blue-800 px-3 py-2 rounded-lg"><MdCheck className="text-blue-500" /> {item}</div>
+                                ))}
+                                {equipment.length === 0 && <div className="text-gray-400">登録された設備はありません</div>}
+                            </div>
+                        </div>
+
+                        {/* Amenities / Features */}
+                        <div className="mb-8 border-b pb-6">
+                            <h2 className="text-xl font-bold text-gray-800 mb-4">特徴・こだわり (良ポイント)</h2>
                             <div className="grid grid-cols-2 gap-4 text-sm font-bold text-gray-600">
                                 {amenities.map((item: string, i: number) => (
                                     <div key={i} className="flex items-center gap-2"><MdCheck className="text-green-500" /> {item}</div>

@@ -41,6 +41,8 @@ function HostPageContent() {
         type: 'private', // private, semi, shared
         gender: 'any',
         amenities: [] as string[],
+        equipment: [] as string[],
+        buildingType: 'mansion',
     });
 
     // Get cities for current prefecture
@@ -51,11 +53,26 @@ function HostPageContent() {
         return AREA_DATA[region]?.[form.prefecture] || [];
     }, [form.prefecture]);
 
+    const buildingTypeOptions = [
+        { value: 'detached', label: '一戸建て' },
+        { value: 'mansion', label: 'マンション' },
+        { value: 'apartment', label: 'アパート' },
+        { value: 'other', label: 'その他' }
+    ];
+
+    const equipmentOptions = [
+        "炊飯器", "お風呂", "電子レンジ", "冷蔵庫", "洗濯機", "テレビ", "エアコン", "Wifi"
+    ];
+
     const amenityOptions = [
+        "即入居可",
+        "住民票登録可",
+        "年齢制限なし",
+        "預り金なし",
+        "駐車場有",
+        "駐輪場有",
         "ペット相談可",
         "高速インターネット(光回線)",
-        "駐車場あり",
-        "女性限定",
         "外国人歓迎",
         "楽器可",
         "DIY可"
@@ -67,6 +84,15 @@ function HostPageContent() {
                 ? prev.amenities.filter(a => a !== option)
                 : [...prev.amenities, option];
             return { ...prev, amenities: newAmenities };
+        });
+    };
+
+    const toggleEquipment = (option: string) => {
+        setForm(prev => {
+            const newEquipment = prev.equipment.includes(option)
+                ? prev.equipment.filter(a => a !== option)
+                : [...prev.equipment, option];
+            return { ...prev, equipment: newEquipment };
         });
     };
 
@@ -120,6 +146,8 @@ function HostPageContent() {
                     type: data.room_type,
                     gender: data.gender_restriction,
                     amenities: data.amenities || [],
+                    equipment: data.equipment || [],
+                    buildingType: data.building_type || 'mansion',
                 });
                 if (data.images) setExistingImages(data.images);
                 setOriginalHostId(data.host_id);
@@ -292,12 +320,15 @@ function HostPageContent() {
                 station_name: form.stationName,
                 minutes_to_station: form.minutesToStation ? parseInt(form.minutesToStation) : null,
                 // Type and Gender
+                // Type and Gender
                 room_type: form.type,
                 gender_restriction: form.gender,
+                building_type: form.buildingType,
 
                 latitude: 35.681236,
                 longitude: 139.767125,
                 amenities: form.amenities,
+                equipment: form.equipment,
                 images: uploadedImageUrls,
                 host_id: user.id,
             };
@@ -585,6 +616,18 @@ function HostPageContent() {
                                     </select>
                                 </div>
                                 <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">建物の種類</label>
+                                    <select
+                                        value={form.buildingType}
+                                        onChange={e => setForm({ ...form, buildingType: e.target.value })}
+                                        className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] outline-none font-bold"
+                                    >
+                                        {buildingTypeOptions.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">入居者条件</label>
                                     <select
                                         value={form.gender}
@@ -741,6 +784,26 @@ function HostPageContent() {
                                     min="0"
                                     className="w-full p-4 pl-8 bg-gray-50 rounded-lg border border-gray-200 focus:bg-white focus:border-[#bf0000] outline-none transition font-bold text-lg"
                                 />
+                            </div>
+                        </div>
+
+                        <div className="mt-6 mb-6">
+                            <label className="block text-sm font-bold text-gray-700 mb-2">共用設備</label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {equipmentOptions.map((option) => (
+                                    <label key={option} className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition ${form.equipment.includes(option)
+                                        ? 'bg-blue-50 border-blue-500 text-blue-600'
+                                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                                        }`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={form.equipment.includes(option)}
+                                            onChange={() => toggleEquipment(option)}
+                                            className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded border-gray-300"
+                                        />
+                                        <span className="text-sm font-bold">{option}</span>
+                                    </label>
+                                ))}
                             </div>
                         </div>
 

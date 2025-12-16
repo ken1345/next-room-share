@@ -7,8 +7,13 @@ import { supabase } from '@/lib/supabase';
 import { MdCloudUpload, MdHome, MdAttachMoney, MdTrain, MdInfo, MdCheck, MdArrowBack, MdEdit } from 'react-icons/md';
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
 import TRAIN_DATA_JSON from '@/data/pref_line_station_full.json';
+import REGION_MAPPING from '@/data/region-mapping.json';
+import AREA_DATA_JSON from '@/data/generated-area-data.json';
 
 const TRAIN_DATA: { [key: string]: { [key: string]: string[] } } = TRAIN_DATA_JSON;
+const REGION_DATA: { [key: string]: string } = REGION_MAPPING;
+const AREA_DATA: { [key: string]: { [key: string]: string[] } } = AREA_DATA_JSON;
+const UNIQUE_REGIONS = Array.from(new Set(Object.values(REGION_DATA)));
 
 function HostPageContent() {
     const router = useRouter();
@@ -26,6 +31,7 @@ function HostPageContent() {
     const [form, setForm] = useState({
         title: '',
         description: '',
+        region: '',
         prefecture: '東京都',
         city: '',
         stationLine: '',
@@ -36,6 +42,14 @@ function HostPageContent() {
         gender: 'any',
         amenities: [] as string[],
     });
+
+    // Get cities for current prefecture
+    const cities = React.useMemo(() => {
+        if (!form.prefecture) return [];
+        const region = REGION_DATA[form.prefecture];
+        if (!region) return [];
+        return AREA_DATA[region]?.[form.prefecture] || [];
+    }, [form.prefecture]);
 
     const amenityOptions = [
         "ペット相談可",
@@ -96,6 +110,7 @@ function HostPageContent() {
                 setForm({
                     title: data.title,
                     description: data.description,
+                    region: REGION_DATA[data.prefecture] || '',
                     prefecture: data.prefecture,
                     city: data.city,
                     stationLine: data.station_line,
@@ -562,7 +577,31 @@ function HostPageContent() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">都道府県</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">地域 <span className="text-[#bf0000] text-xs ml-1">必須</span></label>
+                                <select
+                                    value={form.region}
+                                    onChange={e => {
+                                        const newRegion = e.target.value;
+                                        setForm({
+                                            ...form,
+                                            region: newRegion,
+                                            prefecture: '', // Reset Pref
+                                            city: '', // Reset City
+                                            stationLine: '',
+                                            stationName: ''
+                                        });
+                                    }}
+                                    required
+                                    className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] outline-none font-bold"
+                                >
+                                    <option value="">地域を選択</option>
+                                    {UNIQUE_REGIONS.map(r => (
+                                        <option key={r} value={r}>{r}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">都道府県 <span className="text-[#bf0000] text-xs ml-1">必須</span></label>
                                 <select
                                     value={form.prefecture}
                                     onChange={e => {
@@ -570,27 +609,36 @@ function HostPageContent() {
                                         setForm({
                                             ...form,
                                             prefecture: newPref,
+                                            city: '', // Reset City
                                             stationLine: '', // Reset Line
                                             stationName: ''  // Reset Station
                                         });
                                     }}
+                                    required
                                     className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] outline-none font-bold"
                                 >
                                     <option value="">都道府県を選択</option>
-                                    {Object.keys(TRAIN_DATA).map(pref => (
-                                        <option key={pref} value={pref}>{pref}</option>
-                                    ))}
+                                    {Object.keys(TRAIN_DATA)
+                                        .filter(pref => form.region ? REGION_DATA[pref] === form.region : true)
+                                        .map(pref => (
+                                            <option key={pref} value={pref}>{pref}</option>
+                                        ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">市区町村</label>
-                                <input
-                                    type="text"
+                                <label className="block text-sm font-bold text-gray-700 mb-2">市区町村 <span className="text-[#bf0000] text-xs ml-1">必須</span></label>
+                                <select
                                     value={form.city}
                                     onChange={e => setForm({ ...form, city: e.target.value })}
-                                    placeholder="例：渋谷区"
-                                    className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:bg-white focus:border-[#bf0000] outline-none transition font-bold"
-                                />
+                                    required
+                                    className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] outline-none font-bold"
+                                    disabled={!form.prefecture}
+                                >
+                                    <option value="">市区町村を選択</option>
+                                    {cities.map(c => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 
@@ -650,7 +698,7 @@ function HostPageContent() {
                         </h2>
 
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">月額家賃</label>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">月額家賃 <span className="text-[#bf0000] text-xs ml-1">必須</span></label>
                             <div className="relative max-w-xs">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">¥</span>
                                 <input
@@ -658,6 +706,8 @@ function HostPageContent() {
                                     value={form.rent}
                                     onChange={e => setForm({ ...form, rent: e.target.value })}
                                     placeholder="65000"
+                                    required
+                                    min="0"
                                     className="w-full p-4 pl-8 bg-gray-50 rounded-lg border border-gray-200 focus:bg-white focus:border-[#bf0000] outline-none transition font-bold text-lg"
                                 />
                             </div>

@@ -424,8 +424,8 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                 <h4 className="text-sm font-bold text-gray-600 mb-2">共用設備</h4>
                                 <div className="space-y-2">
                                     {[
-                                        "炊飯器", "お風呂", "電子レンジ", "冷蔵庫", "洗濯機", "テレビ", "エアコン", "Wifi",
-                                        "食洗器", "シャワー", "トイレ", "掃除機", "ドライヤー", "アイロン", "オートロック"
+                                        "炊飯器", "電子レンジ", "冷蔵庫", "食洗器", "シャワー", "お風呂", "洗濯機", "トイレ", "テレビ", "エアコン", "Wifi",
+                                        "掃除機", "ドライヤー", "アイロン", "オートロック"
                                     ].map(item => (
                                         <label key={item} className="flex items-center gap-2 cursor-pointer">
                                             <div className="relative flex items-center">
@@ -453,8 +453,7 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                 <h4 className="text-sm font-bold text-gray-600 mb-2">個室設備</h4>
                                 <div className="space-y-2">
                                     {[
-                                        "布団", "ベッド", "エアコン", "インターネット", "ベランダ", "テレビ",
-                                        "机", "椅子", "収納", "フローリング", "畳"
+                                        "布団", "ベッド", "エアコン", "インターネット", "テレビ", "机", "椅子", "収納", "ベランダ", "フローリング", "畳"
                                     ].map(item => (
                                         <label key={item} className="flex items-center gap-2 cursor-pointer">
                                             <div className="relative flex items-center">

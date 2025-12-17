@@ -62,7 +62,6 @@ function LoginForm() {
         try {
             const origin = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : '';
             const finalRedirectUrl = `${origin}${redirectPath}`;
-            console.log('OAuth Redirect URL:', finalRedirectUrl);
 
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',

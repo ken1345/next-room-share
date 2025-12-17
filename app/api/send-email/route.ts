@@ -19,15 +19,10 @@ export async function POST(request: Request) {
         // Resend Configuration
         const resendApiKey = process.env.RESEND_API_KEY;
 
-        // DEBUG: Log environment status
-        console.log("Debug: Checking RESEND_API_KEY...");
         if (!resendApiKey) {
-            console.error("Debug: RESEND_API_KEY is undefined or empty.");
-            // Log available keys to see if IT IS even there (don't log values)
-            console.log("Debug: Available Env Keys:", Object.keys(process.env).filter(k => k.startsWith('RESEND') || k.startsWith('NEXT')));
-            return NextResponse.json({ error: "Server configuration error: Key missing" }, { status: 500 });
+            console.error("Resend API Key missing");
+            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
         }
-        console.log("Debug: RESEND_API_KEY is present. Length:", resendApiKey.length);
 
         // Use the new email address for Admin alerts
         const adminEmail = 'dfofox@gmail.com';

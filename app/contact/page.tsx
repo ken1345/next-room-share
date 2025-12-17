@@ -3,7 +3,21 @@ import React, { useState } from 'react';
 import { MdEmail } from 'react-icons/md';
 
 export default function ContactPage() {
-    const [submitted, setSubmitted] = useState(false);
+    // State for Turnstile
+    const [turnstileToken, setTurnstileToken] = useState('');
+
+    // Setup global callback for Turnstile
+    React.useEffect(() => {
+        // @ts-ignore
+        window.onTurnstileSuccess = (token: string) => {
+            setTurnstileToken(token);
+        };
+
+        return () => {
+            // @ts-ignore
+            window.onTurnstileSuccess = undefined;
+        };
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -15,12 +29,9 @@ export default function ContactPage() {
         const category = (form.elements.namedItem('category') as HTMLSelectElement).value;
         const message = (form.elements.namedItem('message') as HTMLTextAreaElement).value;
 
-        // Check Turnstile token
-        const formData = new FormData(form);
-        const turnstileToken = formData.get('cf-turnstile-response');
-
+        // Check Turnstile token (from state)
         if (!turnstileToken) {
-            alert("セキュリティチェックを行ってください。");
+            alert("セキュリティチェックを行ってください（チェックボックスをクリック）。\nもし表示されていない場合はページを更新してください。");
             return;
         }
 
@@ -35,7 +46,8 @@ export default function ContactPage() {
                 setSubmitted(true);
                 window.scrollTo(0, 0);
             } else {
-                alert("送信に失敗しました。しばらく経ってから再度お試しください。");
+                const data = await res.json();
+                alert(`送信に失敗しました: ${data.error || '不明なエラー'}`);
             }
         } catch (error) {
             console.error("Error sending inquiry:", error);
@@ -119,7 +131,14 @@ export default function ContactPage() {
                     </div>
 
                     {/* Cloudflare Turnstile */}
-                    <div className="cf-turnstile" data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}></div>
+                    <div className="min-h-[65px]">
+                        <div
+                            className="cf-turnstile"
+                            data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                            data-callback="onTurnstileSuccess"
+                        ></div>
+                    </div>
+                    {/* Using standard script tag because Next/Script logic can sometimes be tricky with inline execution order for callbacks */}
                     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
                     <div className="pt-4">

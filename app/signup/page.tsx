@@ -29,11 +29,14 @@ function SignupForm() {
     const handleGoogleSignup = async () => {
         setIsLoading(true);
         try {
-            const origin = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+            const origin = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : '';
+            const finalRedirectUrl = `${origin}${redirectPath}`;
+            console.log('OAuth Signup Redirect URL:', finalRedirectUrl);
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${origin}${redirectPath}`,
+                    redirectTo: finalRedirectUrl,
                 }
             });
             if (error) throw error;

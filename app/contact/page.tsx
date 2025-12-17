@@ -1,38 +1,41 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MdEmail } from 'react-icons/md';
 
 export default function ContactPage() {
-    // State for Turnstile
-    const [turnstileToken, setTurnstileToken] = useState('');
     const [submitted, setSubmitted] = useState(false);
 
-    // Setup global callback for Turnstile
-    React.useEffect(() => {
-        // @ts-ignore
-        window.onTurnstileSuccess = (token: string) => {
-            setTurnstileToken(token);
-        };
+    // Custom Anti-Spam: Time Guard
+    // track when the component mounted
+    const [mountTime, setMountTime] = useState<number>(0);
 
-        return () => {
-            // @ts-ignore
-            window.onTurnstileSuccess = undefined;
-        };
+    useEffect(() => {
+        setMountTime(Date.now());
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Form elements access (simple way)
+        // 1. Time Guard Check (Client-side)
+        // Humans take at least a few seconds to fill a form.
+        // Bots often submit immediately.
+        const timeElapsed = Date.now() - mountTime;
+        if (timeElapsed < 2000) { // 2 seconds threshold
+            alert("送信が早すぎます。もう一度お試しください。");
+            return;
+        }
+
+        // Form elements access
         const form = e.target as HTMLFormElement;
         const name = (form.elements.namedItem('name') as HTMLInputElement).value;
         const email = (form.elements.namedItem('email') as HTMLInputElement).value;
         const category = (form.elements.namedItem('category') as HTMLSelectElement).value;
         const message = (form.elements.namedItem('message') as HTMLTextAreaElement).value;
 
-        // Check Turnstile token (from state)
-        if (!turnstileToken) {
-            alert("セキュリティチェックを行ってください（チェックボックスをクリック）。\nもし表示されていない場合はページを更新してください。");
+        // 2. Honeypot check (Client-side pre-check)
+        const honey = (form.elements.namedItem('username_check') as HTMLInputElement).value;
+        if (honey) {
+            // Silently fail for bots
             return;
         }
 
@@ -40,7 +43,15 @@ export default function ContactPage() {
             const res = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, category, message, turnstileToken }),
+                body: JSON.stringify({
+                    name,
+                    email,
+                    category,
+                    message,
+                    spamCheck: {
+                        honey
+                    }
+                }),
             });
 
             if (res.ok) {
@@ -96,6 +107,12 @@ export default function ContactPage() {
                         />
                     </div>
 
+                    {/* Honeypot Field (Invisible) */}
+                    <div style={{ display: 'none' }} aria-hidden="true">
+                        <label htmlFor="username_check">Do not fill this field</label>
+                        <input type="text" id="username_check" name="username_check" autoComplete="off" tabIndex={-1} />
+                    </div>
+
                     <div>
                         <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-1">メールアドレス <span className="text-red-500">*</span></label>
                         <input
@@ -130,17 +147,6 @@ export default function ContactPage() {
                             placeholder="お問い合わせ内容をご記入ください..."
                         ></textarea>
                     </div>
-
-                    {/* Cloudflare Turnstile */}
-                    <div className="min-h-[65px]">
-                        <div
-                            className="cf-turnstile"
-                            data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-                            data-callback="onTurnstileSuccess"
-                        ></div>
-                    </div>
-                    {/* Using standard script tag because Next/Script logic can sometimes be tricky with inline execution order for callbacks */}
-                    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
                     <div className="pt-4">
                         <button

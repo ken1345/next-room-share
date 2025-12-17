@@ -4,28 +4,17 @@ import { Resend } from 'resend';
 export async function POST(request: Request) {
 
     try {
-        const { name, email, category, message, turnstileToken } = await request.json();
+        const { name, email, category, message, spamCheck } = await request.json();
 
-        // 0. Verify Turnstile Token
-        const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
-        if (turnstileSecret && turnstileToken) {
-            const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
-            const formData = new FormData();
-            formData.append('secret', turnstileSecret);
-            formData.append('response', turnstileToken);
-            formData.append('remoteip', ip);
-
-            const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-                body: formData,
-                method: 'POST',
-            });
-
-            const outcome = await result.json();
-            if (!outcome.success) {
-                console.error("Turnstile failed:", outcome);
-                return NextResponse.json({ error: "Spam check failed" }, { status: 400 });
-            }
+        // 0. Spam Verification (Custom)
+        // Check Honeypot (must be empty)
+        if (spamCheck?.honey) {
+            console.warn("Honeypot filled by:", email);
+            return NextResponse.json({ error: "Spam detected" }, { status: 400 });
         }
+
+        // Check Math (Removed for smarter UX)
+        // if (spamCheck?.mathAnswer !== '8') ...
 
         // Resend Configuration
         const resendApiKey = process.env.RESEND_API_KEY;

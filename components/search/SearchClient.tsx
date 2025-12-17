@@ -713,10 +713,12 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                         )}
 
                         {/* Results Grid - using props now */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {/* Results Grid - using props now */}
+                        <div className="grid grid-cols-1 gap-6">
                             {listings.length > 0 ? listings.map(p => (
-                                <div key={p.id} className="h-[320px]">
+                                <div key={p.id} className="h-auto">
                                     <PhotoPropertyCard
+                                        horizontal={true}
                                         id={p.id}
                                         title={p.title}
                                         price={p.price}
@@ -743,7 +745,8 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                     <p className="text-xl font-bold mb-2">該当する物件が見つかりませんでした</p>
                                     <p className="text-sm">条件を変更して再度検索してください。</p>
                                 </div>
-                            )}
+                            )
+                            }
                         </div>
 
                         {/* Real Pagination - Using totalCount passed from server */}

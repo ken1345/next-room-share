@@ -21,9 +21,10 @@ interface PhotoPropertyCardProps {
     prefecture?: string;
     city?: string;
     slug?: string;
+    horizontal?: boolean;
 }
 
-export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, description, viewCount, favoritesCount, inquiryCount, prefecture, city, slug }: PhotoPropertyCardProps) {
+export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, description, viewCount, favoritesCount, inquiryCount, prefecture, city, slug, horizontal = false }: PhotoPropertyCardProps) {
     // Format price: If raw value (>100), convert to Man-yen units (e.g. 12000 -> 1.2)
     // If small value (<100), assume already formatted.
     let displayPrice = price;
@@ -39,9 +40,9 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
     }
 
     const CardContent = (
-        <div className="group cursor-pointer bg-white rounded-xl shadow-sm hover:shadow-xl transition overflow-hidden border border-gray-100 flex flex-col h-full">
-            {/* 写真エリア（大きく確保 -> 少し高さを減らす request） */}
-            <div className={`relative h-36 w-full ${image || 'bg-gray-200'} overflow-hidden`}>
+        <div className={`group cursor-pointer bg-white rounded-xl shadow-sm hover:shadow-xl transition overflow-hidden border border-gray-100 flex ${horizontal ? 'flex-row h-40 md:h-48' : 'flex-col h-full'}`}>
+            {/* 写真エリア */}
+            <div className={`relative ${horizontal ? 'w-1/3 min-w-[120px] md:min-w-[180px] h-full' : 'h-36 w-full'} ${image || 'bg-gray-200'} overflow-hidden`}>
                 {/* Background Image with Zoom Effect */}
                 <div
                     className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-110"
@@ -54,10 +55,10 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
                 {/* Subtle dark overlay on hover */}
                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition z-0"></div>
 
-                {/* 写真の上に価格を乗せる（モダンな手法） */}
-                <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg shadow-sm">
-                    <span className="text-xs text-gray-500 font-bold">家賃</span>
-                    <span className="text-lg font-bold text-[#bf0000] ml-1">¥{displayPrice}万</span>
+                {/* 写真の上に価格を乗せる（モダンな手法） - Horizontalの場合は右下、Verticalも右下だがHorizontalだと画像内右下 */}
+                <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 md:px-3 md:py-1 rounded-lg shadow-sm">
+                    <span className="text-[10px] md:text-xs text-gray-500 font-bold">家賃</span>
+                    <span className="text-sm md:text-lg font-bold text-[#bf0000] ml-1">¥{displayPrice}万</span>
                 </div>
             </div>
 

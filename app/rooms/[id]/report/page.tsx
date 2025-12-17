@@ -34,21 +34,19 @@ export default function ReportPage() {
         e.preventDefault();
         setLoading(true);
 
-        // Here we would typically save to a 'reports' table.
-        // For now, we'll simulate a submission.
-        // TODO: Create 'reports' table in Supabase
-
-        /*
         const { error } = await supabase.from('reports').insert({
             listing_id: id,
             reporter_id: user.id,
             reason,
             description
         });
-        */
 
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (error) {
+            console.error('Report submission failed:', error);
+            alert('通報の送信に失敗しました。時間をおいて再度お試しください。');
+            setLoading(false);
+            return;
+        }
 
         setLoading(false);
         setSubmitted(true);
@@ -78,7 +76,6 @@ export default function ReportPage() {
                     <MdFlag size={30} className="text-[#bf0000]" />
                     <div>
                         <h1 className="text-xl font-bold text-gray-800">物件を通報する</h1>
-                        <p className="text-xs text-red-600 font-bold">この報告はホストには通知されません</p>
                     </div>
                 </div>
 

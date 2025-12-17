@@ -30,6 +30,7 @@ export async function POST(request: Request) {
         console.log("Debug: RESEND_API_KEY is present. Length:", resendApiKey.length);
 
         // Use the new email address for Admin alerts
+        const adminEmail = 'dfofox@gmail.com';
 
         const resend = new Resend(resendApiKey);
         const fromEmail = process.env.RESEND_FROM_EMAIL || 'ルームシェアmikke <onboarding@resend.dev>';

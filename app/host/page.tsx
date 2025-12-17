@@ -42,6 +42,7 @@ function HostPageContent() {
         gender: 'any',
         amenities: [] as string[],
         equipment: [] as string[],
+        personalEquipment: [] as string[],
         buildingType: 'mansion',
     });
 
@@ -61,7 +62,12 @@ function HostPageContent() {
     ];
 
     const equipmentOptions = [
-        "炊飯器", "お風呂", "電子レンジ", "冷蔵庫", "洗濯機", "テレビ", "エアコン", "Wifi"
+        "炊飯器", "お風呂", "電子レンジ", "冷蔵庫", "洗濯機", "テレビ", "エアコン", "Wifi",
+        "食洗器", "シャワー", "トイレ", "掃除機", "ドライヤー", "アイロン", "オートロック"
+    ];
+
+    const personalEquipmentOptions = [
+        "布団", "ベッド", "エアコン", "インターネット", "ベランダ", "テレビ", "机", "椅子", "収納", "フローリング", "畳"
     ];
 
     const amenityOptions = [
@@ -75,7 +81,13 @@ function HostPageContent() {
         "高速インターネット(光回線)",
         "外国人歓迎",
         "楽器可",
-        "DIY可"
+        "DIY可",
+        "鍵付き個室",
+        "2人入居可",
+        "光熱費込み",
+        "仕事場利用可",
+        "友人宿泊可",
+        "喫煙可"
     ];
 
     const toggleAmenity = (option: string) => {
@@ -93,6 +105,15 @@ function HostPageContent() {
                 ? prev.equipment.filter(a => a !== option)
                 : [...prev.equipment, option];
             return { ...prev, equipment: newEquipment };
+        });
+    };
+
+    const togglePersonalEquipment = (option: string) => {
+        setForm(prev => {
+            const newPersonal = prev.personalEquipment.includes(option)
+                ? prev.personalEquipment.filter(a => a !== option)
+                : [...prev.personalEquipment, option];
+            return { ...prev, personalEquipment: newPersonal };
         });
     };
 
@@ -147,6 +168,7 @@ function HostPageContent() {
                     gender: data.gender_restriction,
                     amenities: data.amenities || [],
                     equipment: data.equipment || [],
+                    personalEquipment: data.personal_equipment || [],
                     buildingType: data.building_type || 'mansion',
                 });
                 if (data.images) setExistingImages(data.images);
@@ -329,6 +351,7 @@ function HostPageContent() {
                 longitude: 139.767125,
                 amenities: form.amenities,
                 equipment: form.equipment,
+                personal_equipment: form.personalEquipment,
                 images: uploadedImageUrls,
                 host_id: user.id,
             };
@@ -521,6 +544,22 @@ function HostPageContent() {
                                                 <div className="flex flex-wrap gap-1">
                                                     {form.amenities.map(tag => (
                                                         <span key={tag} className="text-xs bg-red-50 text-[#bf0000] px-2 py-1 rounded-full font-bold">
+                                                            {tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-400 text-xs">なし</span>
+                                            )}
+                                        </dd>
+                                    </div>
+                                    <div className="grid grid-cols-3 border-b border-gray-50 pb-2">
+                                        <dt className="text-gray-500 text-sm font-bold">個室設備</dt>
+                                        <dd className="col-span-2 text-gray-800">
+                                            {form.personalEquipment.length > 0 ? (
+                                                <div className="flex flex-wrap gap-1">
+                                                    {form.personalEquipment.map(tag => (
+                                                        <span key={tag} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-bold">
                                                             {tag}
                                                         </span>
                                                     ))}
@@ -799,6 +838,26 @@ function HostPageContent() {
                                             type="checkbox"
                                             checked={form.equipment.includes(option)}
                                             onChange={() => toggleEquipment(option)}
+                                            className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded border-gray-300"
+                                        />
+                                        <span className="text-sm font-bold">{option}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="mt-6 mb-6">
+                            <label className="block text-sm font-bold text-gray-700 mb-2">個室設備（部屋にあるもの）</label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {personalEquipmentOptions.map((option) => (
+                                    <label key={option} className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition ${form.personalEquipment.includes(option)
+                                        ? 'bg-blue-50 border-blue-500 text-blue-600'
+                                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                                        }`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={form.personalEquipment.includes(option)}
+                                            onChange={() => togglePersonalEquipment(option)}
                                             className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded border-gray-300"
                                         />
                                         <span className="text-sm font-bold">{option}</span>

@@ -164,6 +164,20 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
                             </div>
                         </div>
 
+                        {/* Personal Equipment */}
+                        <div className="mb-8 border-b pb-6">
+                            <h2 className="text-xl font-bold text-gray-800 mb-4">個室設備（部屋にあるもの）</h2>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm font-bold text-gray-600">
+                                {property.personal_equipment && property.personal_equipment.length > 0 ? (
+                                    property.personal_equipment.map((item: string, i: number) => (
+                                        <div key={i} className="flex items-center gap-2 bg-green-50 text-green-800 px-3 py-2 rounded-lg"><MdCheck className="text-green-500" /> {item}</div>
+                                    ))
+                                ) : (
+                                    <div className="text-gray-400">登録された個室設備はありません</div>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Amenities / Features */}
                         <div className="mb-8 border-b pb-6">
                             <h2 className="text-xl font-bold text-gray-800 mb-4">特徴・こだわり (良ポイント)</h2>

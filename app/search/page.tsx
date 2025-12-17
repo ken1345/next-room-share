@@ -83,6 +83,8 @@ export default async function SearchPage({ searchParams }: PageProps) {
         walk: typeof resolvedParams.walk === 'string' ? resolvedParams.walk : undefined,
         gender: typeof resolvedParams.gender === 'string' ? resolvedParams.gender : undefined,
         amenities: typeof resolvedParams.amenities === 'string' ? resolvedParams.amenities : undefined,
+        equipment: typeof resolvedParams.equipment === 'string' ? resolvedParams.equipment : undefined,
+        personal_equipment: typeof resolvedParams.personal_equipment === 'string' ? resolvedParams.personal_equipment : undefined,
         types: typeof resolvedParams.types === 'string' ? resolvedParams.types : undefined,
         region: typeof resolvedParams.region === 'string' ? resolvedParams.region : undefined,
         pref: typeof resolvedParams.pref === 'string' ? resolvedParams.pref : undefined,

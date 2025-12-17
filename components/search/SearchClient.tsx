@@ -48,6 +48,8 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
     const [rentMax, setRentMax] = useState<number>(searchParams.get('max_rent') ? Number(searchParams.get('max_rent')) : 50); // Default to 50 if logic implies no limit? Or 20? App had 20 but slider might vary.
     const [keyword, setKeyword] = useState(searchParams.get('q') || '');
     const [selectedAmenities, setSelectedAmenities] = useState<string[]>(searchParams.get('amenities')?.split(',').filter(Boolean) || []);
+    const [selectedEquipment, setSelectedEquipment] = useState<string[]>(searchParams.get('equipment')?.split(',').filter(Boolean) || []);
+    const [selectedPersonalEquipment, setSelectedPersonalEquipment] = useState<string[]>(searchParams.get('personal_equipment')?.split(',').filter(Boolean) || []);
     const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>((searchParams.get('gender') as any) || 'all');
     const [walkTime, setWalkTime] = useState<number | null>(searchParams.get('walk') ? Number(searchParams.get('walk')) : null);
     const [filterType, setFilterType] = useState<string[]>(searchParams.get('types')?.split(',').filter(Boolean) || []);
@@ -97,6 +99,8 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
         if (walkTime) params.set('walk', walkTime.toString());
         if (genderFilter !== 'all') params.set('gender', genderFilter);
         if (selectedAmenities.length > 0) params.set('amenities', selectedAmenities.join(','));
+        if (selectedEquipment.length > 0) params.set('equipment', selectedEquipment.join(','));
+        if (selectedPersonalEquipment.length > 0) params.set('personal_equipment', selectedPersonalEquipment.join(','));
         if (filterType.length > 0) params.set('types', filterType.join(','));
 
         console.log('Search Effect Triggered', {
@@ -135,7 +139,7 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
 
     }, [
         activeTab, keyword, rentMin, rentMax, walkTime, genderFilter,
-        selectedAmenities, filterType,
+        selectedAmenities, selectedEquipment, selectedPersonalEquipment, filterType,
         currentPage, pathname, router, featureParam, searchParams, triggerSearch
     ]);
 
@@ -221,7 +225,7 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
         setCurrentPage(1);
     }, [
         activeTab, keyword, rentMin, rentMax, walkTime, genderFilter,
-        selectedAmenities, filterType, areaSelection, stationSelection, featureParam
+        selectedAmenities, selectedEquipment, selectedPersonalEquipment, filterType, areaSelection, stationSelection, featureParam
     ]);
 
     return (
@@ -389,9 +393,10 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                 <h4 className="text-sm font-bold text-gray-600 mb-2">こだわり条件</h4>
                                 <div className="space-y-2">
                                     {[
-                                        'Wifi無料', '家具家電付き', 'エアコン',
-                                        'オートロック', 'ペット可', '駐車場あり',
-                                        '駐輪場あり', '即入居可', '外国人可'
+                                        "即入居可", "住民票登録可", "年齢制限なし", "預り金なし",
+                                        "駐車場有", "駐輪場有", "ペット相談可", "高速インターネット(光回線)",
+                                        "外国人歓迎", "楽器可", "DIY可", "鍵付き個室", "2人入居可",
+                                        "光熱費込み", "仕事場利用可", "友人宿泊可", "カップル可", "家族宿泊可", "喫煙可"
                                     ].map(amenity => (
                                         <label key={amenity} className="flex items-center gap-2 cursor-pointer">
                                             <div className="relative flex items-center">
@@ -409,6 +414,64 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                                 </span>
                                             </div>
                                             <span className="text-xs text-gray-700">{amenity}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 共用設備 (Equipment) */}
+                            <div className="mb-6">
+                                <h4 className="text-sm font-bold text-gray-600 mb-2">共用設備</h4>
+                                <div className="space-y-2">
+                                    {[
+                                        "炊飯器", "お風呂", "電子レンジ", "冷蔵庫", "洗濯機", "テレビ", "エアコン", "Wifi",
+                                        "食洗器", "シャワー", "トイレ", "掃除機", "ドライヤー", "アイロン", "オートロック"
+                                    ].map(item => (
+                                        <label key={item} className="flex items-center gap-2 cursor-pointer">
+                                            <div className="relative flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedEquipment.includes(item)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) setSelectedEquipment(prev => [...prev, item]);
+                                                        else setSelectedEquipment(prev => prev.filter(x => x !== item));
+                                                    }}
+                                                    className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all checked:border-[#bf0000] checked:bg-[#bf0000]"
+                                                />
+                                                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                                    <MdCheck size={12} />
+                                                </span>
+                                            </div>
+                                            <span className="text-xs text-gray-700">{item}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 個室設備 (Personal Equipment) */}
+                            <div className="mb-6">
+                                <h4 className="text-sm font-bold text-gray-600 mb-2">個室設備</h4>
+                                <div className="space-y-2">
+                                    {[
+                                        "布団", "ベッド", "エアコン", "インターネット", "ベランダ", "テレビ",
+                                        "机", "椅子", "収納", "フローリング", "畳"
+                                    ].map(item => (
+                                        <label key={item} className="flex items-center gap-2 cursor-pointer">
+                                            <div className="relative flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedPersonalEquipment.includes(item)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) setSelectedPersonalEquipment(prev => [...prev, item]);
+                                                        else setSelectedPersonalEquipment(prev => prev.filter(x => x !== item));
+                                                    }}
+                                                    className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm transition-all checked:border-[#bf0000] checked:bg-[#bf0000]"
+                                                />
+                                                <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                                    <MdCheck size={12} />
+                                                </span>
+                                            </div>
+                                            <span className="text-xs text-gray-700">{item}</span>
                                         </label>
                                     ))}
                                 </div>

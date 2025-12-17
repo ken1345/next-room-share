@@ -10,6 +10,8 @@ export type SearchParams = {
     walk?: string;
     gender?: string;
     amenities?: string;
+    equipment?: string;
+    personal_equipment?: string;
     types?: string;
 
     // Area params
@@ -164,11 +166,24 @@ export const fetchListingsServer = async (searchParams: SearchParams) => {
     // 7. Amenities Filter (AND logic)
     if (searchParams.amenities) {
         const amenities = searchParams.amenities.split(',');
-        // In Supabase, if `amenities` is text[], `.contains('amenities', ['Wifi'])` works.
-        // If it's pure text, we need multiple ilikes?
-        // Let's assume it is an array based on usage.
         if (amenities.length > 0) {
             query = query.contains('amenities', amenities);
+        }
+    }
+
+    // 7.5 Equipment Filter (AND logic)
+    if (searchParams.equipment) {
+        const equipment = searchParams.equipment.split(',');
+        if (equipment.length > 0) {
+            query = query.contains('equipment', equipment);
+        }
+    }
+
+    // 7.6 Personal Equipment Filter (AND logic)
+    if (searchParams.personal_equipment) {
+        const personalEquipment = searchParams.personal_equipment.split(',');
+        if (personalEquipment.length > 0) {
+            query = query.contains('personal_equipment', personalEquipment);
         }
     }
 

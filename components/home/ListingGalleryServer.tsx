@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { unstable_noStore as noStore } from 'next/cache';
 import { supabase } from "@/lib/supabase";
 import PhotoPropertyCard from "@/components/PhotoPropertyCard";
 import SectionTitle from "@/components/SectionTitle";
 
 export default async function ListingGalleryServer() {
+    noStore();
     const { data: listings, error } = await supabase
         .from('listings')
         .select('*')

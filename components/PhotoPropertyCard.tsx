@@ -69,18 +69,23 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
                 {/* Header Row: Badges and Stats (Horizontal Only) */}
                 <div className="flex justify-between items-start mb-1">
                     <div className="flex gap-1 flex-wrap">
-                        {badges.map((badge, i) => (
+                        {badges.slice(0, 5).map((badge, i) => (
                             <span key={i} className="text-[10px] bg-gray-100 text-gray-800 px-2 py-0.5 rounded border border-gray-200">
                                 {badge}
                             </span>
                         ))}
+                        {badges.length > 5 && (
+                            <span className="text-[10px] text-gray-500 px-1 py-0.5">
+                                +{badges.length - 5}
+                            </span>
+                        )}
                     </div>
 
                     {horizontal && (viewCount !== undefined || favoritesCount !== undefined || inquiryCount !== undefined) && (
-                        <div className="flex gap-2 text-[10px] text-gray-500 whitespace-nowrap ml-2">
+                        <div className="flex gap-2 text-[10px] text-gray-600 whitespace-nowrap ml-2">
                             <span>閲覧:{viewCount || 0}</span>
                             <span><MdStar className="inline text-yellow-500" /> {favoritesCount || 0}</span>
-                            <span>問合:{inquiryCount || 0}</span>
+                            <span>問い合わせ:{inquiryCount || 0}</span>
                         </div>
                     )}
                 </div>

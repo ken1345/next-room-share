@@ -184,7 +184,7 @@ export default function AccountPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {myListings.map((l) => (
                                 <div key={l.id} className={`bg-white rounded-xl shadow-sm border overflow-hidden ${!(l.is_public ?? true) ? 'border-gray-300 opacity-75 grayscale-[0.5]' : 'border-gray-100'}`}>
-                                    <div className="h-[260px] relative">
+                                    <div className="h-auto relative">
                                         {!(l.is_public ?? true) && (
                                             <div className="absolute top-2 right-2 z-10 bg-gray-600 text-white text-xs font-bold px-2 py-1 rounded">停止中</div>
                                         )}
@@ -247,7 +247,7 @@ export default function AccountPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {favorites.map((l) => (
                                 <div key={l.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                                    <div className="h-[260px] relative">
+                                    <div className="h-auto relative">
                                         <PhotoPropertyCard
                                             id={l.id}
                                             imageUrl={l.images && l.images.length > 0 ? l.images[0] : undefined}

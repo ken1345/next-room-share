@@ -728,7 +728,7 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                         station={p.station_name ? `${p.station_name} ${p.minutes_to_station}分` : p.address}
                                         badges={[
                                             p.room_type === 'private' ? '個室' : p.room_type === 'semi' ? '半個室' : 'ドミトリー',
-                                            ...(p.amenities || []).slice(0, 1)
+                                            ...(p.amenities || [])
                                         ]}
                                         imageUrl={p.images?.[0]}
                                         image={!p.images?.length ? 'bg-gray-200' : undefined}

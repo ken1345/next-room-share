@@ -4,11 +4,33 @@ import { Resend } from 'resend';
 export async function POST(request: Request) {
 
     try {
-        const { name, email, category, message } = await request.json();
+        const { name, email, category, message, turnstileToken } = await request.json();
+
+        // 0. Verify Turnstile Token
+        const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+        if (turnstileSecret && turnstileToken) {
+            const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+            const formData = new FormData();
+            formData.append('secret', turnstileSecret);
+            formData.append('response', turnstileToken);
+            formData.append('remoteip', ip);
+
+            const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+                body: formData,
+                method: 'POST',
+            });
+
+            const outcome = await result.json();
+            if (!outcome.success) {
+                console.error("Turnstile failed:", outcome);
+                return NextResponse.json({ error: "Spam check failed" }, { status: 400 });
+            }
+        }
 
         // Resend Configuration
         const resendApiKey = process.env.RESEND_API_KEY;
-        const adminEmail = process.env.ADMIN_EMAIL || 'delivered@resend.dev'; // Fallback for testing/Resend interception
+        // Use the new email address for Admin alerts
+        const adminEmail = 'dfofox@gmail.com';
 
         if (!resendApiKey) {
             console.error("Resend API Key missing");
@@ -34,16 +56,18 @@ ${message}
         });
 
         // 2. Send Confirmation to User
-        // Test Mode Redirect
-        const ownerEmail = 'dfofox@gmail.com';
         const isTestMode = !process.env.RESEND_VERIFIED_DOMAIN;
 
         let toUserEmail = email;
         let debugInfo = "";
 
+        // In test mode (no verified domain), we usually can only send to the verified admin email.
+        // However, if we want to confirm the user gets an email, we might strictly send to adminEmail.
+        // If the user's requirement "send destination to dfofox@gmail.com" implies ONLY the admin notification, that's done above.
+        // The implementation below assumes the confirmation email logic remains similar but safe.
         if (isTestMode) {
-            toUserEmail = ownerEmail;
-            debugInfo = `\n\n(Test Mode: Originally sent to ${email})`;
+            toUserEmail = adminEmail; // Prevent sending to unverified random emails in test mode
+            debugInfo = `\n\n(Test Mode: Originally addressed to ${email})`;
         }
 
         await resend.emails.send({

@@ -15,11 +15,20 @@ export default function ContactPage() {
         const category = (form.elements.namedItem('category') as HTMLSelectElement).value;
         const message = (form.elements.namedItem('message') as HTMLTextAreaElement).value;
 
+        // Check Turnstile token
+        const formData = new FormData(form);
+        const turnstileToken = formData.get('cf-turnstile-response');
+
+        if (!turnstileToken) {
+            alert("セキュリティチェックを行ってください。");
+            return;
+        }
+
         try {
             const res = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, category, message }),
+                body: JSON.stringify({ name, email, category, message, turnstileToken }),
             });
 
             if (res.ok) {
@@ -108,6 +117,10 @@ export default function ContactPage() {
                             placeholder="お問い合わせ内容をご記入ください..."
                         ></textarea>
                     </div>
+
+                    {/* Cloudflare Turnstile */}
+                    <div className="cf-turnstile" data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY} data-callback="javascriptCallback"></div>
+                    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
                     <div className="pt-4">
                         <button

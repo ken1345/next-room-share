@@ -125,13 +125,7 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
                     <main className="flex-1 min-w-0">
                         {/* Title & Stats */}
                         <div className="mb-8 border-b pb-6">
-                            <div className="flex gap-2 mb-3">
-                                {amenities.slice(0, 3).map((badge: string, i: number) => (
-                                    <span key={i} className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold border border-gray-200">
-                                        {badge}
-                                    </span>
-                                ))}
-                            </div>
+
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 leading-tight mb-4">{property.title}</h1>
                             <div className="flex flex-wrap gap-4 text-sm font-bold text-gray-500">
                                 <span className="flex items-center gap-1"><MdLocationOn className="text-[#bf0000]" /> {property.address}</span>

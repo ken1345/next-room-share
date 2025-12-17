@@ -65,38 +65,62 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
             </div>
 
             {/* 情報エリア */}
-            <div className="p-3 flex flex-col flex-grow">
-                {/* タグ列 */}
-                <div className="flex gap-1 mb-2 flex-wrap">
-                    {badges.map((badge, i) => (
-                        <span key={i} className="text-[10px] bg-gray-100 text-gray-800 px-2 py-0.5 rounded border border-gray-200">
-                            {badge}
-                        </span>
-                    ))}
+            <div className="p-3 flex flex-col flex-grow relative">
+                {/* Header Row: Badges and Stats (Horizontal Only) */}
+                <div className="flex justify-between items-start mb-1">
+                    <div className="flex gap-1 flex-wrap">
+                        {badges.map((badge, i) => (
+                            <span key={i} className="text-[10px] bg-gray-100 text-gray-800 px-2 py-0.5 rounded border border-gray-200">
+                                {badge}
+                            </span>
+                        ))}
+                    </div>
+
+                    {horizontal && (viewCount !== undefined || favoritesCount !== undefined || inquiryCount !== undefined) && (
+                        <div className="flex gap-2 text-[10px] text-gray-500 whitespace-nowrap ml-2">
+                            <span>閲覧:{viewCount || 0}</span>
+                            <span><MdStar className="inline text-yellow-500" /> {favoritesCount || 0}</span>
+                            <span>問合:{inquiryCount || 0}</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* タイトル */}
                 <h3 className="font-bold text-gray-900 text-sm md:text-base leading-snug mb-1 group-hover:text-[#bf0000] transition line-clamp-1">
                     {title}
                 </h3>
+
+                {/* Horizontal: Location Line immediately below Title */}
+                {horizontal ? (
+                    <div className="flex items-center text-xs font-bold text-gray-700 mb-2">
+                        <span className="mr-2">{prefecture}{city}</span>
+                        <MdTrain className="mr-1 text-gray-500" />
+                        {station}
+                    </div>
+                ) : null}
+
+                {/* Description - Expanded for Horizontal */}
                 {description && (
-                    <p className="text-xs text-gray-800 line-clamp-2 md:line-clamp-3 mb-2 leading-relaxed">
+                    <p className={`text-xs text-gray-800 leading-relaxed mb-2 ${horizontal ? 'line-clamp-4 flex-grow' : 'line-clamp-2 md:line-clamp-3'}`}>
                         {description}
                     </p>
                 )}
 
-                {/* 最寄り駅 & Stats */}
-                {/* Stats / Station / Equipment */}
+                {/* Footer Area: Stats (Vertical) or Equipment (Horizontal) */}
                 <div className="mt-auto pt-2 border-t border-gray-200 flex flex-col gap-1 text-xs font-bold text-gray-600">
-                    <div className="flex items-center text-gray-700">
-                        <span className="mr-2 font-bold">{prefecture}{city}</span>
-                        <MdTrain className="mr-1 text-gray-600" />
-                        {station}
-                    </div>
+
+                    {/* Vertical Mode Location */}
+                    {!horizontal && (
+                        <div className="flex items-center text-gray-700">
+                            <span className="mr-2 font-bold">{prefecture}{city}</span>
+                            <MdTrain className="mr-1 text-gray-600" />
+                            {station}
+                        </div>
+                    )}
 
                     {horizontal ? (
-                        /* Horizontal Mode: Show Equipment & Stats */
-                        <div className="flex flex-col gap-1 mt-1">
+                        /* Horizontal Mode: Show Equipment */
+                        <div className="flex flex-col gap-1">
                             {equipment.length > 0 && (
                                 <div className="flex flex-wrap gap-1 items-center">
                                     <span className="text-[10px] text-green-700 font-bold bg-green-50 border border-green-200 px-1 rounded">共用:</span>
@@ -111,15 +135,7 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
                                     {personalEquipment.length > 5 && <span className="text-[10px] text-gray-500">+{personalEquipment.length - 5}</span>}
                                 </div>
                             )}
-
-                            {/* Stats in Horizontal view (Bottom aligned) */}
-                            {(viewCount !== undefined || favoritesCount !== undefined || inquiryCount !== undefined) && (
-                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-600 mt-1">
-                                    <span>閲覧：{viewCount || 0}</span>
-                                    <span><MdStar className="inline text-yellow-500" /> {favoritesCount || 0}</span>
-                                    <span>問い合わせ：{inquiryCount || 0}</span>
-                                </div>
-                            )}
+                            {/* Stats moved to header */}
                         </div>
                     ) : (
                         /* Vertical Mode: Show Stats */

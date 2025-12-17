@@ -206,10 +206,7 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
                                         </div>
                                     </div>
 
-                                    <p className="text-gray-500 text-sm leading-relaxed">
-                                        {/* ホストの自己紹介があればここに表示 */}
-                                        親切・丁寧な対応を心がけています。シェアハウスでの生活について、なんでもご相談ください。
-                                    </p>
+
                                 </div>
                             </div>
                         </div>

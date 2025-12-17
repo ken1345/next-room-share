@@ -144,7 +144,6 @@ function SignupForm() {
                     >
                         <FcGoogle size={22} /> Googleで登録
                     </button>
-                    <p className="text-xs text-center text-gray-400">※Supabase側でGoogleプロバイダー設定が必要です</p>
 
                     <div className="relative flex py-2 items-center">
                         <div className="flex-grow border-t border-gray-200"></div>

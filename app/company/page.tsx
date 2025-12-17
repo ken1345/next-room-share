@@ -1,55 +1,65 @@
 "use client";
 import React from 'react';
 import Link from 'next/link';
-import { MdBusiness } from 'react-icons/md';
+import { MdPerson } from 'react-icons/md';
 
 export default function CompanyPage() {
     return (
         <div className="container mx-auto px-4 py-16 text-gray-700">
             <div className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-100">
                 <h1 className="text-3xl font-bold mb-8 flex items-center gap-2 text-gray-800">
-                    <MdBusiness className="text-[#bf0000]" /> 運営会社
+                    <MdPerson className="text-[#bf0000]" /> 運営管理人
                 </h1>
 
-                <div className="overflow-hidden rounded-lg border border-gray-200">
-                    <table className="w-full text-left border-collapse">
-                        <tbody>
-                            <tr className="border-b border-gray-100 hover:bg-gray-50 transition">
-                                <th className="py-4 px-6 bg-gray-50 font-bold w-1/3 text-gray-600">会社名</th>
-                                <td className="py-4 px-6">株式会社ルームシェアmikke</td>
-                            </tr>
-                            <tr className="border-b border-gray-100 hover:bg-gray-50 transition">
-                                <th className="py-4 px-6 bg-gray-50 font-bold text-gray-600">設立</th>
-                                <td className="py-4 px-6">2024年4月1日</td>
-                            </tr>
-                            <tr className="border-b border-gray-100 hover:bg-gray-50 transition">
-                                <th className="py-4 px-6 bg-gray-50 font-bold text-gray-600">代表者</th>
-                                <td className="py-4 px-6">代表取締役 山田 太郎</td>
-                            </tr>
-                            <tr className="border-b border-gray-100 hover:bg-gray-50 transition">
-                                <th className="py-4 px-6 bg-gray-50 font-bold text-gray-600">所在地</th>
-                                <td className="py-4 px-6">〒100-0000<br />東京都千代田区1-1-1 シェアビルディング 10F</td>
-                            </tr>
-                            <tr className="border-b border-gray-100 hover:bg-gray-50 transition">
-                                <th className="py-4 px-6 bg-gray-50 font-bold text-gray-600">事業内容</th>
-                                <td className="py-4 px-6">
-                                    <ul className="list-disc list-inside space-y-1">
-                                        <li>ルームシェア・シェアハウスのマッチングプラットフォーム運営</li>
-                                        <li>不動産情報の提供・仲介</li>
-                                        <li>コミュニティ形成支援</li>
-                                    </ul>
-                                </td>
-                            </tr>
-                            <tr className="hover:bg-gray-50 transition">
-                                <th className="py-4 px-6 bg-gray-50 font-bold text-gray-600">お問い合わせ</th>
-                                <td className="py-4 px-6">
-                                    <Link href="/contact" className="text-[#bf0000] hover:underline font-bold">
-                                        お問い合わせフォーム
-                                    </Link>よりご連絡ください
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div className="space-y-8">
+                    <section>
+                        <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">運営者プロフィール</h2>
+                        <div className="flex flex-col md:flex-row gap-6 items-start">
+                            {/* Optional: Add a placeholder image or remove if not needed */}
+                            <div className="bg-gray-100 p-6 rounded-lg flex-1">
+                                <p className="font-bold text-lg mb-1">佐藤 恒一（さとう こういち）</p>
+                                <p className="text-sm text-gray-500 mb-4">Web運営・コミュニティ運営 / 東京都在住</p>
+                                <p className="text-gray-700 leading-relaxed mb-4">
+                                    自分自身も上京時にルームシェアで助けられた経験があり、「安心して相手を探せる掲示板がもっと必要だ」と感じて本サイトを立ち上げました。
+                                </p>
+                                <p className="text-gray-700 leading-relaxed mb-4">
+                                    この掲示板では、募集する側・探す側のどちらにとっても不安が少なくなるように、投稿ルールの整備、迷惑投稿のチェック、改善要望の反映を地道に続けています。
+                                </p>
+                                <p className="text-gray-700 leading-relaxed">
+                                    「いい相手が見つかった」「内見前に不安が解消できた」みたいな声が増えるのが一番のやりがいです。
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">運営情報</h2>
+                        <dl className="grid grid-cols-1 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 border-b border-gray-50 pb-2">
+                                <dt className="font-bold text-gray-600">所在地（公開範囲）</dt>
+                                <dd className="col-span-2 text-gray-800">
+                                    東京都（23区内）<br />
+
+                                </dd>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 border-b border-gray-50 pb-2">
+                                <dt className="font-bold text-gray-600">お問い合わせ</dt>
+                                <dd className="col-span-2 text-gray-800">
+                                    <div className="mb-2">
+                                        <span className="font-bold text-sm block text-gray-500">フォーム</span>
+                                        <Link href="/contact" className="text-[#bf0000] hover:underline">
+                                            https://roommikke.jp/contact
+                                        </Link>
+                                    </div>
+
+                                </dd>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 border-b border-gray-50 pb-2">
+                                <dt className="font-bold text-gray-600">対応時間</dt>
+                                <dd className="col-span-2 text-gray-800">平日 19:00〜22:00（目安）</dd>
+                            </div>
+                        </dl>
+                    </section>
                 </div>
             </div>
         </div>

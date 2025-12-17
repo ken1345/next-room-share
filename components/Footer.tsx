@@ -70,7 +70,7 @@ export default function Footer() {
           <ul className="space-y-3">
             <li>
               <Link href="/company" className="hover:text-white transition flex items-center gap-2">
-                <MdStore className="text-gray-600" /> 運営会社
+                <MdStore className="text-gray-600" /> 運営管理人
               </Link>
             </li>
             <li>
@@ -83,11 +83,7 @@ export default function Footer() {
                 <MdSecurity className="text-gray-600" /> プライバシーポリシー
               </Link>
             </li>
-            <li>
-              <Link href="/commercial" className="hover:text-white transition flex items-center gap-2">
-                <MdStore className="text-gray-600" /> 特定商取引法に基づく表記
-              </Link>
-            </li>
+
             <li>
               <Link href="/faq" className="hover:text-white transition flex items-center gap-2">
                 <MdHelp className="text-gray-600" /> よくある質問

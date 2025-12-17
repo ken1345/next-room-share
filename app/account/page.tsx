@@ -242,7 +242,7 @@ export default function AccountPage() {
 
                 {/* Favorites Section */}
                 <section>
-                    <h3 className="text-lg font-bold text-gray-800 mb-4 px-1">お気に入りした物件</h3>
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 px-1">ウォッチリスト</h3>
                     {favorites.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {favorites.map((l) => (
@@ -268,7 +268,7 @@ export default function AccountPage() {
                         </div>
                     ) : (
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-8 text-center text-gray-500">
-                            <p>お気に入りに登録された物件はありません。</p>
+                            <p>ウォッチリストに登録された物件はありません。</p>
                         </div>
                     )}
                 </section>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { MdTrain, MdLocationOn, MdArrowBack, MdCheck, MdPerson, MdEmail, MdFavoriteBorder, MdFavorite, MdFlag } from 'react-icons/md';
+import { MdTrain, MdLocationOn, MdArrowBack, MdCheck, MdPerson, MdEmail, MdFavoriteBorder, MdFavorite, MdFlag, MdStar, MdStarBorder } from 'react-icons/md';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import ImageGallery from '@/components/ImageGallery';
@@ -65,7 +65,7 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
 
     const handleToggleLike = async () => {
         if (!user) {
-            alert("お気に入り登録にはログインが必要です");
+            alert("ウォッチリスト登録にはログインが必要です");
             return;
         }
 
@@ -180,7 +180,7 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
 
                         {/* Amenities / Features */}
                         <div className="mb-8 border-b pb-6">
-                            <h2 className="text-xl font-bold text-gray-800 mb-4">特徴・こだわり (良ポイント)</h2>
+                            <h2 className="text-xl font-bold text-gray-800 mb-4">特徴・こだわり</h2>
                             <div className="grid grid-cols-2 gap-4 text-sm font-bold text-gray-600">
                                 {amenities.map((item: string, i: number) => (
                                     <div key={i} className="flex items-center gap-2"><MdCheck className="text-green-500" /> {item}</div>
@@ -254,12 +254,12 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
                                 <button
                                     onClick={handleToggleLike}
                                     className={`flex-1 font-bold py-3 rounded-xl border transition flex items-center justify-center gap-2 ${isLiked
-                                        ? 'bg-red-50 text-[#bf0000] border-red-100'
+                                        ? 'bg-yellow-50 text-yellow-500 border-yellow-200'
                                         : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
                                         }`}
                                 >
-                                    {isLiked ? <MdFavorite size={20} /> : <MdFavoriteBorder size={20} />}
-                                    {isLiked ? '登録済み' : 'お気に入り'}
+                                    {isLiked ? <MdStar size={24} /> : <MdStarBorder size={24} />}
+                                    {isLiked ? 'リスト登録済' : 'ウォッチリスト'}
                                 </button>
                                 <button
                                     onClick={() => {

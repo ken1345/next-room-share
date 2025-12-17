@@ -1,5 +1,5 @@
 "use client";
-import { MdTrain, MdVisibility, MdEmail } from "react-icons/md";
+import { MdTrain, MdVisibility, MdEmail, MdStar } from "react-icons/md";
 import Link from "next/link";
 
 import { getRoomUrl } from "@/lib/url-utils";
@@ -85,7 +85,7 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
                     {(viewCount !== undefined || favoritesCount !== undefined || inquiryCount !== undefined) && (
                         <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-400">
                             <span>閲覧：{viewCount || 0}</span>
-                            <span>♡：{favoritesCount || 0}</span>
+                            <span><MdStar className="inline text-yellow-500" /> {favoritesCount || 0}</span>
                             <span>問い合わせ：{inquiryCount || 0}</span>
                         </div>
                     )}

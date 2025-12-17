@@ -5,6 +5,7 @@ import { MdEmail } from 'react-icons/md';
 export default function ContactPage() {
     // State for Turnstile
     const [turnstileToken, setTurnstileToken] = useState('');
+    const [submitted, setSubmitted] = useState(false);
 
     // Setup global callback for Turnstile
     React.useEffect(() => {

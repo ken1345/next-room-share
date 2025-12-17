@@ -12,6 +12,7 @@ interface PhotoPropertyCardProps {
     station: string;
     badges: string[];
     title: string;
+    description?: string;
     viewCount?: number;
     favoritesCount?: number;
     inquiryCount?: number;
@@ -22,7 +23,7 @@ interface PhotoPropertyCardProps {
     slug?: string;
 }
 
-export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, viewCount, favoritesCount, inquiryCount, prefecture, city, slug }: PhotoPropertyCardProps) {
+export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, description, viewCount, favoritesCount, inquiryCount, prefecture, city, slug }: PhotoPropertyCardProps) {
     // Format price: If raw value (>100), convert to Man-yen units (e.g. 12000 -> 1.2)
     // If small value (<100), assume already formatted.
     let displayPrice = price;
@@ -39,8 +40,8 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
 
     const CardContent = (
         <div className="group cursor-pointer bg-white rounded-xl shadow-sm hover:shadow-xl transition overflow-hidden border border-gray-100 flex flex-col h-full">
-            {/* 写真エリア（大きく確保） */}
-            <div className={`relative h-48 w-full ${image || 'bg-gray-200'} overflow-hidden`}>
+            {/* 写真エリア（大きく確保 -> 少し高さを減らす request） */}
+            <div className={`relative h-36 w-full ${image || 'bg-gray-200'} overflow-hidden`}>
                 {/* Background Image with Zoom Effect */}
                 <div
                     className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-110"
@@ -72,9 +73,14 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
                 </div>
 
                 {/* タイトル */}
-                <h3 className="font-bold text-gray-800 text-sm md:text-base leading-snug mb-2 group-hover:text-[#bf0000] transition line-clamp-2">
+                <h3 className="font-bold text-gray-800 text-sm md:text-base leading-snug mb-1 group-hover:text-[#bf0000] transition line-clamp-1">
                     {title}
                 </h3>
+                {description && (
+                    <p className="text-xs text-gray-500 line-clamp-2 md:line-clamp-3 mb-2 leading-relaxed">
+                        {description}
+                    </p>
+                )}
 
                 {/* 最寄り駅 */}
                 {/* 最寄り駅 & Stats */}

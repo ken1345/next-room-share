@@ -49,6 +49,7 @@ export default async function ListingGalleryServer() {
                                 station={l.address ? l.address.split(' ')[0] : '駅指定なし'} // Simple fallback
                                 badges={l.amenities ? l.amenities.slice(0, 2) : []}
                                 title={l.title}
+                                description={l.description}
                                 viewCount={l.view_count || 0}
                                 favoritesCount={l.favorites_count || 0}
                                 inquiryCount={l.inquiry_count || 0}

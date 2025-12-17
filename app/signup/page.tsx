@@ -29,10 +29,11 @@ function SignupForm() {
     const handleGoogleSignup = async () => {
         setIsLoading(true);
         try {
+            const origin = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}${redirectPath}`,
+                    redirectTo: `${origin}${redirectPath}`,
                 }
             });
             if (error) throw error;
@@ -61,7 +62,7 @@ function SignupForm() {
                         age: form.age,
                         occupation: form.occupation,
                     },
-                    emailRedirectTo: `${window.location.origin}${redirectPath}`
+                    emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}${redirectPath}`
                 }
             });
 

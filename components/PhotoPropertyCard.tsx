@@ -22,9 +22,11 @@ interface PhotoPropertyCardProps {
     city?: string;
     slug?: string;
     horizontal?: boolean;
+    equipment?: string[];
+    personalEquipment?: string[];
 }
 
-export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, description, viewCount, favoritesCount, inquiryCount, prefecture, city, slug, horizontal = false }: PhotoPropertyCardProps) {
+export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, description, viewCount, favoritesCount, inquiryCount, prefecture, city, slug, horizontal = false, equipment = [], personalEquipment = [] }: PhotoPropertyCardProps) {
     // Format price: If raw value (>100), convert to Man-yen units (e.g. 12000 -> 1.2)
     // If small value (<100), assume already formatted.
     let displayPrice = price;
@@ -40,9 +42,9 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
     }
 
     const CardContent = (
-        <div className={`group cursor-pointer bg-white rounded-xl shadow-sm hover:shadow-xl transition overflow-hidden border border-gray-100 flex ${horizontal ? 'flex-row h-40 md:h-48' : 'flex-col h-full'}`}>
+        <div className={`group cursor-pointer bg-white rounded-xl shadow-sm hover:shadow-xl transition overflow-hidden border border-gray-100 flex ${horizontal ? 'flex-row h-auto' : 'flex-col h-full'}`}>
             {/* 写真エリア */}
-            <div className={`relative ${horizontal ? 'w-1/3 min-w-[120px] md:min-w-[180px] h-full' : 'h-36 w-full'} ${image || 'bg-gray-200'} overflow-hidden`}>
+            <div className={`relative flex-shrink-0 ${horizontal ? 'w-48 h-48' : 'h-36 w-full'} ${image || 'bg-gray-200'} overflow-hidden`}>
                 {/* Background Image with Zoom Effect */}
                 <div
                     className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-110"
@@ -67,34 +69,67 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
                 {/* タグ列 */}
                 <div className="flex gap-1 mb-2 flex-wrap">
                     {badges.map((badge, i) => (
-                        <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded border border-gray-200">
+                        <span key={i} className="text-[10px] bg-gray-100 text-gray-800 px-2 py-0.5 rounded border border-gray-200">
                             {badge}
                         </span>
                     ))}
                 </div>
 
                 {/* タイトル */}
-                <h3 className="font-bold text-gray-800 text-sm md:text-base leading-snug mb-1 group-hover:text-[#bf0000] transition line-clamp-1">
+                <h3 className="font-bold text-gray-900 text-sm md:text-base leading-snug mb-1 group-hover:text-[#bf0000] transition line-clamp-1">
                     {title}
                 </h3>
                 {description && (
-                    <p className="text-xs text-gray-500 line-clamp-2 md:line-clamp-3 mb-2 leading-relaxed">
+                    <p className="text-xs text-gray-800 line-clamp-2 md:line-clamp-3 mb-2 leading-relaxed">
                         {description}
                     </p>
                 )}
 
-                {/* 最寄り駅 */}
                 {/* 最寄り駅 & Stats */}
-                <div className="mt-auto pt-2 border-t border-gray-100 flex flex-col gap-1 text-xs font-bold text-gray-500">
-                    <div className="flex items-center">
-                        <MdTrain className="mr-1 text-gray-400" /> {station}
+                {/* Stats / Station / Equipment */}
+                <div className="mt-auto pt-2 border-t border-gray-200 flex flex-col gap-1 text-xs font-bold text-gray-600">
+                    <div className="flex items-center text-gray-700">
+                        <span className="mr-2 font-bold">{prefecture}{city}</span>
+                        <MdTrain className="mr-1 text-gray-600" />
+                        {station}
                     </div>
-                    {(viewCount !== undefined || favoritesCount !== undefined || inquiryCount !== undefined) && (
-                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-400">
-                            <span>閲覧：{viewCount || 0}</span>
-                            <span><MdStar className="inline text-yellow-500" /> {favoritesCount || 0}</span>
-                            <span>問い合わせ：{inquiryCount || 0}</span>
+
+                    {horizontal ? (
+                        /* Horizontal Mode: Show Equipment & Stats */
+                        <div className="flex flex-col gap-1 mt-1">
+                            {equipment.length > 0 && (
+                                <div className="flex flex-wrap gap-1 items-center">
+                                    <span className="text-[10px] text-green-700 font-bold bg-green-50 border border-green-200 px-1 rounded">共用:</span>
+                                    {equipment.slice(0, 5).map(e => <span key={e} className="text-[10px] text-green-800 bg-green-50 px-1.5 rounded border border-green-100">{e}</span>)}
+                                    {equipment.length > 5 && <span className="text-[10px] text-gray-500">+{equipment.length - 5}</span>}
+                                </div>
+                            )}
+                            {personalEquipment.length > 0 && (
+                                <div className="flex flex-wrap gap-1 items-center">
+                                    <span className="text-[10px] text-blue-700 font-bold bg-blue-50 border border-blue-200 px-1 rounded">個室:</span>
+                                    {personalEquipment.slice(0, 5).map(e => <span key={e} className="text-[10px] text-blue-800 bg-blue-50 px-1.5 rounded border border-blue-100">{e}</span>)}
+                                    {personalEquipment.length > 5 && <span className="text-[10px] text-gray-500">+{personalEquipment.length - 5}</span>}
+                                </div>
+                            )}
+
+                            {/* Stats in Horizontal view (Bottom aligned) */}
+                            {(viewCount !== undefined || favoritesCount !== undefined || inquiryCount !== undefined) && (
+                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-600 mt-1">
+                                    <span>閲覧：{viewCount || 0}</span>
+                                    <span><MdStar className="inline text-yellow-500" /> {favoritesCount || 0}</span>
+                                    <span>問い合わせ：{inquiryCount || 0}</span>
+                                </div>
+                            )}
                         </div>
+                    ) : (
+                        /* Vertical Mode: Show Stats */
+                        (viewCount !== undefined || favoritesCount !== undefined || inquiryCount !== undefined) && (
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-600">
+                                <span>閲覧：{viewCount || 0}</span>
+                                <span><MdStar className="inline text-yellow-500" /> {favoritesCount || 0}</span>
+                                <span>問い合わせ：{inquiryCount || 0}</span>
+                            </div>
+                        )
                     )}
                 </div>
             </div>

@@ -721,15 +721,15 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                         horizontal={true}
                                         id={p.id}
                                         title={p.title}
+                                        description={p.description}
                                         price={p.price}
+                                        equipment={p.equipment || []}
+                                        personalEquipment={p.personal_equipment || []}
                                         station={p.station_name ? `${p.station_name} ${p.minutes_to_station}分` : p.address}
                                         badges={[
                                             p.room_type === 'private' ? '個室' : p.room_type === 'semi' ? '半個室' : 'ドミトリー',
                                             ...(p.amenities || []).slice(0, 1)
                                         ]}
-                                        title={p.title}
-                                        description={p.description}
-                                        price={p.price}
                                         imageUrl={p.images?.[0]}
                                         image={!p.images?.length ? 'bg-gray-200' : undefined}
                                         viewCount={p.view_count || 0}

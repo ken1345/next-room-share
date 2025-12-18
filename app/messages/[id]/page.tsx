@@ -112,35 +112,52 @@ export default function MessageThreadPage() {
             if (sentMessage) {
                 setMessages(prev => [...prev, sentMessage]);
             }
-            // Update thread updated_at
-            await supabase
+
+            // Send Email Notification (Non-blocking)
+            const sendNotification = async () => {
+                const recipientId = (user.id === thread.host_id) ? thread.seeker_id : thread.host_id;
+
+                // Determine sender name for notification
+                // If I am host, use host display name. If seeker, use seeker display name.
+                // Fallback to auth metadata if unavailable (should not happen if thread is loaded)
+                let senderName = 'ユーザー';
+                if (user.id === thread.host_id) {
+                    senderName = thread.host?.display_name || user.user_metadata?.full_name;
+                } else if (user.id === thread.seeker_id) {
+                    senderName = thread.seeker?.display_name || user.user_metadata?.full_name;
+                }
+
+                if (!senderName) senderName = user.email?.split('@')[0] || 'ユーザー';
+
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
+
+                if (token) {
+                    fetch('/api/send-message-notification', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            recipientId,
+                            senderName,
+                            messageContent: content,
+                            threadId
+                        })
+                    }).catch(err => console.error("Notification failed", err));
+                }
+            };
+            sendNotification();
+
+            // Update thread updated_at (Best effort)
+            supabase
                 .from('threads')
                 .update({ updated_at: new Date() })
-                .eq('id', threadId);
-
-            // Send Email Notification (Fire and forget)
-            const recipientId = (user.id === thread.host_id) ? thread.seeker_id : thread.host_id;
-            const senderName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'ユーザー';
-
-            // Get session token for authentication
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-
-            if (token) {
-                fetch('/api/send-message-notification', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        recipientId,
-                        senderName,
-                        messageContent: content,
-                        threadId
-                    })
-                }).catch(err => console.error("Notification failed", err));
-            }
+                .eq('id', threadId)
+                .then(({ error }) => {
+                    if (error) console.error("Failed to update thread timestamp", error);
+                });
         }
         setSending(false);
     };

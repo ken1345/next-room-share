@@ -138,6 +138,41 @@ ${form.message}
 
             if (msgError) throw msgError;
 
+            // 3. Send Email Notification
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            // Construct notification payload
+            const recipientId = property.host_id; // Host is the recipient
+            const senderName = form.name || user.user_metadata?.full_name || 'ユーザー';
+            const messageContent = `
+【お問い合わせ内容】
+名前: ${form.name}
+年齢: ${form.age}
+性別: ${form.gender}
+職業: ${form.occupation}
+入居予定: ${form.duration}
+希望日: ${form.moveInDate || '未定'}
+
+${form.message}
+            `.trim();
+
+            if (token) {
+                await fetch('/api/send-message-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        recipientId,
+                        senderName, // API will ignore this now and refetch, but keeping for compatibility if needed or removed
+                        messageContent,
+                        threadId
+                    })
+                }).catch(err => console.error("Notification trigger failed", err));
+            }
+
             setIsSubmitted(true);
 
         } catch (error: any) {

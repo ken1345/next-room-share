@@ -122,16 +122,25 @@ export default function MessageThreadPage() {
             const recipientId = (user.id === thread.host_id) ? thread.seeker_id : thread.host_id;
             const senderName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'ユーザー';
 
-            fetch('/api/send-message-notification', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    recipientId,
-                    senderName,
-                    messageContent: content,
-                    threadId
-                })
-            }).catch(err => console.error("Notification failed", err));
+            // Get session token for authentication
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (token) {
+                fetch('/api/send-message-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        recipientId,
+                        senderName,
+                        messageContent: content,
+                        threadId
+                    })
+                }).catch(err => console.error("Notification failed", err));
+            }
         }
         setSending(false);
     };

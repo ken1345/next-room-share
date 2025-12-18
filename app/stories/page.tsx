@@ -3,6 +3,8 @@ import { MdArrowForward, MdCalendarToday, MdPerson, MdTag } from 'react-icons/md
 import { MOCK_STORIES } from '@/data/mock-stories';
 import { supabase } from '@/lib/supabase';
 
+import ScrollToTop from '@/components/ScrollToTop';
+
 export const revalidate = 0; // Ensure fresh data on every request
 
 export default async function StoriesPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
@@ -128,16 +130,19 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
                 <div className="mt-16 text-center">
                     <h3 className="text-2xl font-bold text-gray-800 mb-4">あなたもシェアハウス生活を始めませんか？</h3>
                     <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+                        <Link href="/" className="inline-flex items-center justify-center gap-2 bg-white text-gray-600 border-2 border-gray-200 w-full md:w-auto px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-50 transition shadow-lg hover:shadow-xl">
+                            TOPに戻る
+                        </Link>
                         <Link href="/stories/new" className="inline-flex items-center justify-center gap-2 bg-white text-[#bf0000] border-2 border-[#bf0000] w-full md:w-auto px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-50 transition shadow-lg hover:shadow-xl">
                             体験談を投稿する
                         </Link>
-                        <Link href="/search" className="inline-flex items-center justify-center gap-2 bg-[#bf0000] text-white w-full md:w-auto px-8 py-4 rounded-full font-bold text-lg hover:bg-black transition shadow-lg hover:shadow-xl">
-                            物件を探す
-                        </Link>
+
 
                     </div>
                 </div>
             </div>
+
+            <ScrollToTop />
         </div>
     );
 }

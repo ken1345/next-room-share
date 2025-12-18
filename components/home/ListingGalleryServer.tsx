@@ -47,7 +47,7 @@ export default async function ListingGalleryServer() {
                                 image={(!l.images || l.images.length === 0) ? 'bg-gray-200' : undefined}
                                 price={l.price}
                                 station={l.station_name ? `${l.station_name} ${l.minutes_to_station}分` : l.address}
-                                badges={l.amenities ? l.amenities.slice(0, 2) : []}
+                                badges={l.amenities || []}
                                 title={l.title}
                                 description={l.description}
                                 viewCount={l.view_count || 0}

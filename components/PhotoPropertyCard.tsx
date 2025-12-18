@@ -69,15 +69,34 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
                 {/* Header Row: Badges and Stats (Horizontal Only) */}
                 <div className="flex justify-between items-start mb-1">
                     <div className="flex gap-1 flex-wrap">
-                        {badges.slice(0, 5).map((badge, i) => (
-                            <span key={i} className="text-[10px] bg-gray-100 text-gray-800 px-2 py-0.5 rounded border border-gray-200">
-                                {badge}
-                            </span>
-                        ))}
-                        {badges.length > 5 && (
-                            <span className="text-[10px] text-gray-500 px-1 py-0.5">
-                                +{badges.length - 5}
-                            </span>
+                        {horizontal ? (
+                            // Horizontal: Max 5 + count
+                            <>
+                                {badges.slice(0, 5).map((badge, i) => (
+                                    <span key={i} className="text-[10px] bg-gray-100 text-gray-800 px-2 py-0.5 rounded border border-gray-200">
+                                        {badge}
+                                    </span>
+                                ))}
+                                {badges.length > 5 && (
+                                    <span className="text-[10px] text-gray-500 px-1 py-0.5">
+                                        +{badges.length - 5}
+                                    </span>
+                                )}
+                            </>
+                        ) : (
+                            // Vertical: Max 3 + "..."
+                            <>
+                                {badges.slice(0, 3).map((badge, i) => (
+                                    <span key={i} className="text-[10px] bg-gray-100 text-gray-800 px-2 py-0.5 rounded border border-gray-200">
+                                        {badge}
+                                    </span>
+                                ))}
+                                {badges.length > 3 && (
+                                    <span className="text-[10px] text-gray-500 px-1 py-0.5 font-bold">
+                                        ...
+                                    </span>
+                                )}
+                            </>
                         )}
                     </div>
 

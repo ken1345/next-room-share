@@ -3,6 +3,8 @@ import { MdArrowBack, MdArrowForward, MdCalendarToday, MdPerson, MdTag } from 'r
 import { MOCK_STORIES } from '@/data/mock-stories';
 import { supabase } from '@/lib/supabase';
 
+import StoryOwnerActions from '@/components/stories/StoryOwnerActions';
+
 export const revalidate = 0;
 
 export default async function StoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -32,6 +34,7 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ id
                 image: data.cover_image,
                 tags: data.tags || [],
                 author: "シェアハウス住人", // Generic author
+                author_id: data.author_id,
                 date: new Date(data.created_at).toLocaleDateString("ja-JP", { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.')
             };
         }
@@ -103,6 +106,8 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ id
                     dangerouslySetInnerHTML={{ __html: story.body || '' }}
                 >
                 </div>
+
+                <StoryOwnerActions storyId={story.id} authorId={story.author_id} />
 
                 {/* Footer Navigation */}
                 <div className="mt-20 border-t border-gray-100 pt-10 text-center">

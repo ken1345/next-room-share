@@ -208,9 +208,14 @@ ${form.message}
                         お問い合わせありがとうございます。<br />
                         ホストからの返信をお待ちください。
                     </p>
-                    <Link href="/search" className="block w-full bg-[#bf0000] text-white font-bold py-3 rounded-xl hover:bg-black transition">
-                        トップへ戻る
-                    </Link>
+                    <div className="flex gap-4">
+                        <Link href={`/rooms/${id}`} className="flex-1 bg-gray-100 text-gray-800 font-bold py-3 rounded-xl hover:bg-gray-200 transition">
+                            物件に戻る
+                        </Link>
+                        <Link href="/search" className="flex-1 bg-[#bf0000] text-white font-bold py-3 rounded-xl hover:bg-black transition">
+                            トップへ戻る
+                        </Link>
+                    </div>
                 </div>
             </div>
         );

@@ -128,6 +128,7 @@ function HostPageContent() {
     const [originalHostId, setOriginalHostId] = useState<string | null>(null);
     const [isDraggingFile, setIsDraggingFile] = useState(false);
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [completedId, setCompletedId] = useState<string | null>(null);
 
     useEffect(() => {
         // Initial check
@@ -438,10 +439,16 @@ function HostPageContent() {
                     throw new Error("更新できませんでした。権限がないか、物件が存在しません。");
                 }
                 error = updateError;
+                setCompletedId(editId);
             } else {
-                const { error: insertError } = await supabase
+                const { data: insertedData, error: insertError } = await supabase
                     .from('listings')
-                    .insert(payload);
+                    .insert(payload)
+                    .select();
+
+                if (insertedData && insertedData.length > 0) {
+                    setCompletedId(insertedData[0].id);
+                }
                 error = insertError;
             }
 
@@ -472,9 +479,16 @@ function HostPageContent() {
                     </div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">{editId ? '修正完了しました！' : '掲載完了しました！'}</h2>
                     <p className="text-gray-500 mb-6">{editId ? '物件情報が更新されました。' : 'あなたの部屋が公開されました。'}<br />お問い合わせをお待ちください。</p>
-                    <Link href="/" className="bg-[#bf0000] text-white font-bold py-3 px-8 rounded-full shadow-md hover:bg-black transition">
-                        トップに戻る
-                    </Link>
+                    <div className="flex flex-col gap-3">
+                        {completedId && (
+                            <Link href={`/rooms/${completedId}`} className="bg-gray-100 text-gray-800 font-bold py-3 px-8 rounded-full hover:bg-gray-200 transition">
+                                物件を確認する
+                            </Link>
+                        )}
+                        <Link href="/" className="bg-[#bf0000] text-white font-bold py-3 px-8 rounded-full shadow-md hover:bg-black transition">
+                            トップに戻る
+                        </Link>
+                    </div>
                 </div>
             </div>
         );

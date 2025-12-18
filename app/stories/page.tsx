@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 
 export const revalidate = 0; // Ensure fresh data on every request
 
-export default async function StoriesPage() {
+export default async function StoriesPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
     // 1. Fetch DB Stories
     const { data: dbStoriesRaw } = await supabase
         .from('stories')
@@ -29,7 +29,15 @@ export default async function StoriesPage() {
     const filteredMocks = MOCK_STORIES.filter(s => !dbTitles.has(s.title));
 
     // 4. Merge
-    const stories = [...dbStories, ...filteredMocks];
+    const allStories = [...dbStories, ...filteredMocks];
+
+    // 5. Pagination Logic
+    const params = await searchParams;
+    const page = Number(params?.page) || 1;
+    const itemsPerPage = 8;
+    const totalPages = Math.ceil(allStories.length / itemsPerPage);
+    const startIndex = (page - 1) * itemsPerPage;
+    const stories = allStories.slice(startIndex, startIndex + itemsPerPage);
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20 font-sans">
@@ -42,7 +50,7 @@ export default async function StoriesPage() {
                         あなたにぴったりの暮らしが見つかるかもしれません。
                     </p>
                     <Link href="/stories/new" className="inline-flex items-center gap-2 bg-white text-[#bf0000] px-6 py-3 rounded-full font-bold shadow-lg hover:bg-gray-100 transition">
-                        体験談を投稿する <MdArrowForward />
+                        体験談を投稿する
                     </Link>
                 </div>
             </section>
@@ -63,7 +71,7 @@ export default async function StoriesPage() {
 
                                 <div className="p-6 flex-1 flex flex-col">
                                     <div className="flex flex-wrap gap-2 mb-3">
-                                        {story.tags.map(tag => (
+                                        {story.tags.map((tag: string) => (
                                             <span key={tag} className="text-xs font-bold text-[#bf0000] bg-red-50 px-2 py-1 rounded-md flex items-center gap-1">
                                                 <MdTag /> {tag}
                                             </span>
@@ -89,12 +97,44 @@ export default async function StoriesPage() {
                     ))}
                 </div>
 
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-4 mt-12">
+                        {page > 1 ? (
+                            <Link href={`/stories?page=${page - 1}`} className="bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-full font-bold hover:bg-gray-50 transition">
+                                前へ
+                            </Link>
+                        ) : (
+                            <span className="bg-gray-100 border border-gray-200 text-gray-300 px-4 py-2 rounded-full font-bold cursor-not-allowed">
+                                前へ
+                            </span>
+                        )}
+                        <span className="font-bold text-gray-600">
+                            {page} / {totalPages}
+                        </span>
+                        {page < totalPages ? (
+                            <Link href={`/stories?page=${page + 1}`} className="bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-full font-bold hover:bg-gray-50 transition">
+                                次へ
+                            </Link>
+                        ) : (
+                            <span className="bg-gray-100 border border-gray-200 text-gray-300 px-4 py-2 rounded-full font-bold cursor-not-allowed">
+                                次へ
+                            </span>
+                        )}
+                    </div>
+                )}
+
                 {/* CTA */}
                 <div className="mt-16 text-center">
                     <h3 className="text-2xl font-bold text-gray-800 mb-4">あなたもシェアハウス生活を始めませんか？</h3>
-                    <Link href="/search" className="inline-flex items-center gap-2 bg-[#bf0000] text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-black transition shadow-lg hover:shadow-xl">
-                        物件を探す <MdArrowForward />
-                    </Link>
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+                        <Link href="/search" className="inline-flex items-center justify-center gap-2 bg-[#bf0000] text-white w-full md:w-auto px-8 py-4 rounded-full font-bold text-lg hover:bg-black transition shadow-lg hover:shadow-xl">
+                            物件を探す
+                        </Link>
+                        <Link href="/stories/new" className="inline-flex items-center justify-center gap-2 bg-white text-[#bf0000] border-2 border-[#bf0000] w-full md:w-auto px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-50 transition shadow-lg hover:shadow-xl">
+                            体験談を投稿する
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

@@ -69,7 +69,7 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ id
                         <MdArrowBack /> 体験談一覧に戻る
                     </Link>
                     <div className="flex flex-wrap gap-2 mb-4">
-                        {story.tags.map(tag => (
+                        {story.tags.map((tag: string) => (
                             <span key={tag} className="text-sm font-bold bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
                                 <MdTag /> {tag}
                             </span>
@@ -107,9 +107,14 @@ export default async function StoryDetailPage({ params }: { params: Promise<{ id
                 {/* Footer Navigation */}
                 <div className="mt-20 border-t border-gray-100 pt-10 text-center">
                     <h3 className="text-xl font-bold text-gray-800 mb-6">気になったら、まずは物件を探してみよう</h3>
-                    <Link href="/search" className="inline-flex items-center gap-2 bg-[#bf0000] text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-black transition shadow-lg hover:shadow-xl">
-                        物件を探す <MdArrowForward />
-                    </Link>
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+                        <Link href="/stories" className="inline-flex items-center justify-center gap-2 bg-white text-gray-600 border-2 border-gray-200 w-full md:w-auto px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-50 transition shadow-lg hover:shadow-xl">
+                            <MdArrowBack /> 一覧に戻る
+                        </Link>
+                        <Link href="/search" className="inline-flex items-center justify-center gap-2 bg-[#bf0000] text-white w-full md:w-auto px-8 py-4 rounded-full font-bold text-lg hover:bg-black transition shadow-lg hover:shadow-xl">
+                            物件を探す
+                        </Link>
+                    </div>
                 </div>
             </div>
         </article>

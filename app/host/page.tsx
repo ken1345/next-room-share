@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { MdCloudUpload, MdHome, MdAttachMoney, MdTrain, MdInfo, MdCheck, MdArrowBack, MdEdit } from 'react-icons/md';
+import { MdCloudUpload, MdHome, MdAttachMoney, MdTrain, MdInfo, MdCheck, MdArrowBack, MdEdit, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
 import TRAIN_DATA_JSON from '@/data/pref_line_station_full.json';
 import REGION_MAPPING from '@/data/region-mapping.json';
@@ -120,11 +120,14 @@ function HostPageContent() {
     };
 
     // Image State
-    const [existingImages, setExistingImages] = useState<string[]>([]);
+    type ImageItem =
+        | { type: 'existing', url: string }
+        | { type: 'new', file: File, url: string };
+
+    const [images, setImages] = useState<ImageItem[]>([]);
     const [originalHostId, setOriginalHostId] = useState<string | null>(null);
-    const [imageFiles, setImageFiles] = useState<File[]>([]);
-    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-    const [isDragging, setIsDragging] = useState(false);
+    const [isDraggingFile, setIsDraggingFile] = useState(false);
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
     useEffect(() => {
         // Initial check
@@ -173,7 +176,9 @@ function HostPageContent() {
                     personalEquipment: data.personal_equipment || [],
                     buildingType: data.building_type || 'mansion',
                 });
-                if (data.images) setExistingImages(data.images);
+                if (data.images) {
+                    setImages(data.images.map((url: string) => ({ type: 'existing', url })));
+                }
                 setOriginalHostId(data.host_id);
             } else if (error) {
                 console.error("Error fetching listing:", error);
@@ -221,16 +226,13 @@ function HostPageContent() {
             try {
                 // Convert to WebP immediately
                 const webpFile = await convertToWebP(originalFile);
-
-                setImageFiles(prev => [...prev, webpFile]);
                 const url = URL.createObjectURL(webpFile);
-                setPreviewUrls(prev => [...prev, url]);
+                setImages(prev => [...prev, { type: 'new', file: webpFile, url }]);
             } catch (error) {
                 console.error("WebP conversion failed:", error);
                 // Fallback
-                setImageFiles(prev => [...prev, originalFile]);
                 const url = URL.createObjectURL(originalFile);
-                setPreviewUrls(prev => [...prev, url]);
+                setImages(prev => [...prev, { type: 'new', file: originalFile, url }]);
             }
         }
     };
@@ -241,36 +243,72 @@ function HostPageContent() {
         }
     };
 
-    const handleDragOver = (e: React.DragEvent) => {
+    // File Drag Handlers
+    const handleFileDragOver = (e: React.DragEvent) => {
         e.preventDefault();
-        setIsDragging(true);
+        setIsDraggingFile(true);
     };
 
-    const handleDragLeave = (e: React.DragEvent) => {
+    const handleFileDragLeave = (e: React.DragEvent) => {
         e.preventDefault();
-        setIsDragging(false);
+        setIsDraggingFile(false);
     };
 
-    const handleDrop = (e: React.DragEvent) => {
+    const handleFileDrop = (e: React.DragEvent) => {
         e.preventDefault();
-        setIsDragging(false);
-        if (e.dataTransfer.files) {
+        setIsDraggingFile(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             processFiles(e.dataTransfer.files);
         }
     };
 
+    // Sort Drag Handlers
+    const handleSortDragStart = (e: React.DragEvent, index: number) => {
+        setDraggedIndex(index);
+        // Ensure effect allows drop
+        e.dataTransfer.effectAllowed = "move";
+    };
+
+    const handleSortDragOver = (e: React.DragEvent, index: number) => {
+        e.preventDefault(); // Necessary to allow dropping
+        e.dataTransfer.dropEffect = "move";
+    };
+
+    const handleSortDrop = (e: React.DragEvent, dropIndex: number) => {
+        e.preventDefault();
+        if (draggedIndex === null || draggedIndex === dropIndex) return;
+
+        setImages(prev => {
+            const newImages = [...prev];
+            const [draggedItem] = newImages.splice(draggedIndex, 1);
+            newImages.splice(dropIndex, 0, draggedItem);
+            return newImages;
+        });
+        setDraggedIndex(null);
+    };
+
     const removeImage = (index: number) => {
-        if (index < existingImages.length) {
-            setExistingImages(prev => prev.filter((_, i) => i !== index));
-        } else {
-            const newIndex = index - existingImages.length;
-            setImageFiles(prev => prev.filter((_, i) => i !== newIndex));
-            setPreviewUrls(prev => {
-                const newUrls = [...prev];
-                URL.revokeObjectURL(newUrls[newIndex]); // Cleanup memory
-                return newUrls.filter((_, i) => i !== newIndex);
-            });
-        }
+        setImages(prev => {
+            const target = prev[index];
+            if (target.type === 'new') {
+                URL.revokeObjectURL(target.url);
+            }
+            return prev.filter((_, i) => i !== index);
+        });
+    };
+
+    const moveImage = (index: number, direction: 'left' | 'right') => {
+        setImages(prev => {
+            const newImages = [...prev];
+            const targetIndex = direction === 'left' ? index - 1 : index + 1;
+
+            if (targetIndex >= 0 && targetIndex < newImages.length) {
+                const temp = newImages[targetIndex];
+                newImages[targetIndex] = newImages[index];
+                newImages[index] = temp;
+            }
+            return newImages;
+        });
     };
 
     const handleCheck = (e: React.FormEvent) => {
@@ -304,28 +342,32 @@ function HostPageContent() {
                 if (createError) throw createError;
             }
 
-            const uploadedImageUrls: string[] = [...existingImages];
+            // 1. Upload Images & Collect URLs in Order
+            const uploadedImageUrls: string[] = [];
 
-            // 1. Upload Images
-            for (const file of imageFiles) {
-                // Sanitize filename: use timestamp + random string + extension to avoid "Invalid key"
-                // Note: file is already converted to .webp in handleImageUpload, but we ensure ext is correct.
-                const fileExt = file.name.split('.').pop() || 'webp';
-                const randomId = Math.random().toString(36).substring(2, 12);
-                const safeFileName = `${Date.now()}_${randomId}.${fileExt}`;
-                const filePath = `listings/${user.id}/${safeFileName}`;
+            for (const img of images) {
+                if (img.type === 'existing') {
+                    uploadedImageUrls.push(img.url);
+                } else {
+                    // Upload new file
+                    const file = img.file;
+                    const fileExt = file.name.split('.').pop() || 'webp';
+                    const randomId = Math.random().toString(36).substring(2, 12);
+                    const safeFileName = `${Date.now()}_${randomId}.${fileExt}`;
+                    const filePath = `listings/${user.id}/${safeFileName}`;
 
-                const { error: uploadError } = await supabase.storage
-                    .from('images')
-                    .upload(filePath, file);
+                    const { error: uploadError } = await supabase.storage
+                        .from('images')
+                        .upload(filePath, file);
 
-                if (uploadError) throw uploadError;
+                    if (uploadError) throw uploadError;
 
-                const { data: { publicUrl } } = supabase.storage
-                    .from('images')
-                    .getPublicUrl(filePath);
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('images')
+                        .getPublicUrl(filePath);
 
-                uploadedImageUrls.push(publicUrl);
+                    uploadedImageUrls.push(publicUrl);
+                }
             }
 
             // 2. Insert or Update Listing
@@ -489,8 +531,8 @@ function HostPageContent() {
                             <h3 className="font-bold text-gray-600 mb-4 text-center md:text-left">検索結果での表示</h3>
                             <div className="max-w-sm mx-auto md:mx-0">
                                 <PhotoPropertyCard
-                                    imageUrl={[...existingImages, ...previewUrls].length > 0 ? [...existingImages, ...previewUrls][0] : undefined}
-                                    image={[...existingImages, ...previewUrls].length > 0 ? undefined : 'bg-gray-200'}
+                                    imageUrl={images.length > 0 ? images[0].url : undefined}
+                                    image={images.length > 0 ? undefined : 'bg-gray-200'}
                                     price={form.rent}
                                     station={`${form.stationName} ${form.minutesToStation}分`}
                                     badges={[
@@ -575,10 +617,10 @@ function HostPageContent() {
                                         <dt className="text-gray-500 text-sm font-bold">写真</dt>
                                         <dd className="col-span-2 text-gray-800">
                                             <div className="flex gap-2 bg-gray-50 p-2 rounded overflow-x-auto">
-                                                {[...existingImages, ...previewUrls].map((url, i) => (
-                                                    <img key={i} src={url} className="h-16 w-16 object-cover rounded" />
+                                                {images.map((img, i) => (
+                                                    <img key={i} src={img.url} className="h-16 w-16 object-cover rounded" />
                                                 ))}
-                                                {[...existingImages, ...previewUrls].length === 0 && <span className="text-gray-400 text-xs">なし</span>}
+                                                {images.length === 0 && <span className="text-gray-400 text-xs">なし</span>}
                                             </div>
                                         </dd>
                                     </div>
@@ -896,31 +938,68 @@ function HostPageContent() {
                         </h2>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                            {[...existingImages, ...previewUrls].map((url, idx) => (
-                                <div key={idx} className="aspect-square rounded-lg bg-gray-100 overflow-hidden relative group">
-                                    <img src={url} alt="preview" className="w-full h-full object-cover" />
+                            {images.map((img, idx) => (
+                                <div
+                                    key={idx}
+                                    className="aspect-square rounded-lg bg-gray-100 overflow-hidden relative group cursor-move"
+                                    draggable
+                                    onDragStart={(e) => handleSortDragStart(e, idx)}
+                                    onDragOver={(e) => handleSortDragOver(e, idx)}
+                                    onDrop={(e) => handleSortDrop(e, idx)}
+                                >
+                                    <img src={img.url} alt="preview" className="w-full h-full object-cover pointer-events-none" />
+
+                                    {/* Remove Button */}
                                     <button
                                         type="button"
                                         onClick={() => removeImage(idx)}
-                                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition hover:bg-black/70 z-10"
                                     >
-                                        ×
+                                        <span className="text-xs">×</span>
                                     </button>
+
+                                    {/* Reorder Controls */}
+                                    <div className="absolute bottom-1 left-1 right-1 flex justify-between opacity-0 group-hover:opacity-100 transition z-10">
+                                        <button
+                                            type="button"
+                                            onClick={() => moveImage(idx, 'left')}
+                                            disabled={idx === 0}
+                                            className="bg-black/50 text-white p-1 rounded hover:bg-black/70 disabled:opacity-30 disabled:hover:bg-black/50"
+                                        >
+                                            <MdChevronLeft size={20} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => moveImage(idx, 'right')}
+                                            disabled={idx === images.length - 1}
+                                            className="bg-black/50 text-white p-1 rounded hover:bg-black/70 disabled:opacity-30 disabled:hover:bg-black/50"
+                                        >
+                                            <MdChevronRight size={20} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
 
                             <label
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
-                                className={`aspect-square rounded-lg bg-gray-50 border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition group ${isDragging ? 'border-[#bf0000] bg-red-50' : 'border-gray-300 hover:bg-gray-100 hover:border-[#bf0000]'
+                                onDragOver={handleFileDragOver}
+                                onDragLeave={handleFileDragLeave}
+                                onDrop={handleFileDrop}
+                                className={`aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition ${isDraggingFile
+                                    ? 'border-[#bf0000] bg-red-50'
+                                    : 'border-gray-300 hover:border-[#bf0000] hover:bg-gray-50'
                                     }`}
                             >
-                                <MdCloudUpload className={`text-3xl mb-2 transition ${isDragging ? 'text-[#bf0000]' : 'text-gray-400 group-hover:text-[#bf0000]'}`} />
-                                <span className={`text-xs font-bold ${isDragging ? 'text-[#bf0000]' : 'text-gray-500 group-hover:text-[#bf0000]'}`}>
-                                    {isDragging ? 'ドロップして追加' : '写真を追加'}
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleImageUpload}
+                                />
+                                <MdCloudUpload className={`text-3xl mb-2 ${isDraggingFile ? 'text-[#bf0000]' : 'text-gray-400'}`} />
+                                <span className={`text-xs font-bold text-center px-2 ${isDraggingFile ? 'text-[#bf0000]' : 'text-gray-500'}`}>
+                                    {isDraggingFile ? 'ドロップして追加' : 'ドラッグ＆ドロップで写真を追加'}
                                 </span>
-                                <input type="file" className="hidden" accept="image/*" multiple onChange={handleImageUpload} />
                             </label>
                         </div>
                     </div>

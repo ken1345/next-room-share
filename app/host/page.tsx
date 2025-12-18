@@ -89,7 +89,9 @@ function HostPageContent() {
         "友人宿泊可",
         "カップル可",
         "家族宿泊可",
-        "喫煙可"
+        "喫煙可",
+        "新築",
+        "リノベ"
     ];
 
     const toggleAmenity = (option: string) => {

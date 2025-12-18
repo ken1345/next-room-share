@@ -28,6 +28,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
             'female': '女性専用',
             'cheap': '格安（3万円以下）',
             'diy': 'DIY可',
+            'new': '新築・改装',
             'gamer': 'ゲーマー向け',
             'gym': 'ジム付き',
             'theater': 'シアタールーム付き',

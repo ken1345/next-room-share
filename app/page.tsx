@@ -139,7 +139,7 @@ export default async function Home() {
           <Link href="/search?feature=foreigner"><FeatureCard color="bg-green-50" icon={<MdPublic className="text-green-500" />} title="国際交流" /></Link>
           <Link href="/search?feature=female"><FeatureCard color="bg-pink-50" icon={<MdFemale className="text-pink-500" />} title="女性専用" /></Link>
           <Link href="/search?feature=cheap"><FeatureCard color="bg-yellow-50" icon={<MdAttachMoney className="text-yellow-600" />} title="格安3万以下" /></Link>
-          <Link href="/search?feature=diy"><FeatureCard color="bg-purple-50" icon={<MdFiberNew className="text-purple-500" />} title="新築・改装" /></Link>
+          <Link href="/search?feature=new"><FeatureCard color="bg-purple-50" icon={<MdFiberNew className="text-purple-500" />} title="新築・改装" /></Link>
         </div>
       </section>
 
@@ -197,10 +197,10 @@ export default async function Home() {
       <section className="container mx-auto px-4 py-10">
         <SectionTitle title="趣味・コンセプトで選ぶ" subtitle="同じ趣味の仲間と暮らす楽しさ" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <Link href="/search?feature=gamer"><ConceptCard icon={<MdSportsEsports />} title="ゲーマー専用" desc="高速回線・防音室完備" /></Link>
-          <Link href="/search?feature=gym"><ConceptCard icon={<MdFitnessCenter />} title="ジム・スタジオ" desc="運動不足解消！" /></Link>
-          <Link href="/search?feature=theater"><ConceptCard icon={<MdMovie />} title="シアタールーム" desc="週末は映画鑑賞会" /></Link>
-          <Link href="/search?feature=sauna"><ConceptCard icon={<MdSpa />} title="サウナ付き" desc="自宅でととのう生活" /></Link>
+          <Link href="/search?feature=foreigner"><ConceptCard icon={<MdPublic />} title="国際交流" desc="英語が飛び交う日常" /></Link>
+          <Link href="/search?feature=pet"><ConceptCard icon={<MdPets />} title="ペット共生" desc="動物好きが集まる家" /></Link>
+          <Link href="/search?feature=wifi"><ConceptCard icon={<MdWifi />} title="テレワーク対応" desc="高速回線で快適仕事" /></Link>
+          <Link href="/search?feature=diy"><ConceptCard icon={<MdFiberNew />} title="DIY・リノベ" desc="自分好みの部屋作り" /></Link>
         </div>
       </section>
 

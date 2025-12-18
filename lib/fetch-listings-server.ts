@@ -203,16 +203,13 @@ export const fetchListingsServer = async (searchParams: SearchParams) => {
         if (f === 'cheap') query = query.lte('price', 30000);
         if (f === 'diy') query = query.contains('amenities', ['DIY可']);
         if (f === 'gamer') query = query.contains('amenities', ['高速インターネット(光回線)']);
-        // For gym/theater/sauna, relying on text search within amenities if specific tag doesn't exist
-        // But .contains works on exact array elements. 
-        // If we need partial match on array elements, that's hard in PostgREST.
-        // We might skip these complex partial matches on Server for now, OR fetch and filter.
-        // Given the small scale, Fetching more and filtering in memory is safer?
-        // But we need pagination.
-        // Let's hope the tags are standardized or use .textSearch on a joined column if available.
-        // For now, let's omit the complex partial text matches for gym/theater/sauna in SQL and accept that 
-        // standard tags are needed, or handle post-fetch (which breaks exact pagination).
-        // Let's stick to simple filters for now.
+        // New / Renovated logic
+        if (f === 'new') {
+            // Search for '新築' OR 'リノベ'
+            // Supabase 'cs' (contains) is AND. For OR, we need .or() filter.
+            // amenities is text[].
+            query = query.or('amenities.cs.{"新築"},amenities.cs.{"リノベ"}');
+        }
     }
 
     // Apply Pagination Range

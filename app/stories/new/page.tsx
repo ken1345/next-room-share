@@ -18,6 +18,7 @@ export default function NewStoryPage() {
         body: '',
         tags: '',
     });
+    const [botCheck, setBotCheck] = useState(''); // Honeypot
 
     useEffect(() => {
         const checkUser = async () => {
@@ -37,9 +38,38 @@ export default function NewStoryPage() {
         e.preventDefault();
         if (!user) return; // Should not happen due to redirect
 
+        // 1. Honeypot Check
+        if (botCheck) {
+            router.push('/stories'); // Fake success
+            return;
+        }
+
+        // 2. Client-side Rate Limit (5 mins)
+        const lastPostTime = localStorage.getItem('last_story_time');
+        if (lastPostTime && Date.now() - Number(lastPostTime) < 5 * 60 * 1000) {
+            alert('投稿間隔が短すぎます。しばらく待ってから再度お試しください。');
+            return;
+        }
+
         setIsLoading(true);
 
         try {
+            // 3. Server-side Rate Limit (DB Check)
+            const { data: recentStories } = await supabase
+                .from('stories')
+                .select('created_at')
+                .eq('author_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (recentStories && recentStories.length > 0) {
+                const lastTime = new Date(recentStories[0].created_at).getTime();
+                if (Date.now() - lastTime < 5 * 60 * 1000) {
+                    alert('投稿間隔が短すぎます。しばらく待ってから再度お試しください。');
+                    return; // Finally block will stop loading
+                }
+            }
+
             // Pick a random color for the image placeholder
             const colors = ['bg-orange-100', 'bg-blue-100', 'bg-green-100', 'bg-purple-100', 'bg-red-100', 'bg-gray-100'];
             const randomColor = colors[Math.floor(Math.random() * colors.length)];
@@ -60,6 +90,9 @@ export default function NewStoryPage() {
                 });
 
             if (error) throw error;
+
+            // Update Client Timestamp
+            localStorage.setItem('last_story_time', String(Date.now()));
 
             // Redirect to stories list
             router.push('/stories');
@@ -90,6 +123,16 @@ export default function NewStoryPage() {
 
             <div className="container mx-auto px-4 max-w-2xl py-10">
                 <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 space-y-6">
+                    {/* Honeypot Field */}
+                    <input
+                        type="text"
+                        name="bot_check"
+                        value={botCheck}
+                        onChange={(e) => setBotCheck(e.target.value)}
+                        style={{ display: 'none' }}
+                        tabIndex={-1}
+                        autoComplete="off"
+                    />
 
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">タイトル</label>

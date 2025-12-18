@@ -15,6 +15,7 @@ export default function ReportPage() {
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [user, setUser] = useState<any>(null);
+    const [botCheck, setBotCheck] = useState(''); // Honeypot
 
     // Check auth
     useEffect(() => {
@@ -32,7 +33,39 @@ export default function ReportPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // 1. Honeypot Check
+        if (botCheck) {
+            // Silently fail
+            setSubmitted(true);
+            return;
+        }
+
+        // 2. Client-side Rate Limit (5 mins)
+        const lastPostTime = localStorage.getItem('last_report_time');
+        if (lastPostTime && Date.now() - Number(lastPostTime) < 5 * 60 * 1000) {
+            alert('投稿間隔が短すぎます。しばらく待ってから再度お試しください。');
+            return;
+        }
+
         setLoading(true);
+
+        // 3. Server-side Rate Limit (DB Check)
+        const { data: recentReports } = await supabase
+            .from('reports')
+            .select('created_at')
+            .eq('reporter_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (recentReports && recentReports.length > 0) {
+            const lastTime = new Date(recentReports[0].created_at).getTime();
+            if (Date.now() - lastTime < 5 * 60 * 1000) {
+                alert('投稿間隔が短すぎます。しばらく待ってから再度お試しください。');
+                setLoading(false);
+                return;
+            }
+        }
 
         const { error } = await supabase.from('reports').insert({
             listing_id: id,
@@ -47,6 +80,9 @@ export default function ReportPage() {
             setLoading(false);
             return;
         }
+
+        // Update Client Timestamp
+        localStorage.setItem('last_report_time', String(Date.now()));
 
         setLoading(false);
         setSubmitted(true);
@@ -80,6 +116,16 @@ export default function ReportPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+                    {/* Honeypot Field */}
+                    <input
+                        type="text"
+                        name="bot_check"
+                        value={botCheck}
+                        onChange={(e) => setBotCheck(e.target.value)}
+                        style={{ display: 'none' }}
+                        tabIndex={-1}
+                        autoComplete="off"
+                    />
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">通報の理由</label>
                         <select

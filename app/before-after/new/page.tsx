@@ -23,6 +23,7 @@ function BeforeAfterPostForm() {
     // Drag State
     const [isDraggingBefore, setIsDraggingBefore] = useState(false);
     const [isDraggingAfter, setIsDraggingAfter] = useState(false);
+    const [botCheck, setBotCheck] = useState(''); // Honeypot
 
     // Auth Check
     useEffect(() => {
@@ -102,6 +103,8 @@ function BeforeAfterPostForm() {
         }
     };
 
+
+
     // Drag & Drop Handlers
     const handleDragOver = (e: React.DragEvent, type: 'before' | 'after') => {
         e.preventDefault();
@@ -147,9 +150,38 @@ function BeforeAfterPostForm() {
         e.preventDefault();
         if (!user || !beforeFile || !afterFile) return;
 
+        // 1. Honeypot Check
+        if (botCheck) {
+            router.push('/before-after'); // Fake success
+            return;
+        }
+
+        // 2. Client-side Rate Limit (5 mins)
+        const lastPostTime = localStorage.getItem('last_ba_post_time');
+        if (lastPostTime && Date.now() - Number(lastPostTime) < 5 * 60 * 1000) {
+            alert('投稿間隔が短すぎます。しばらく待ってから再度お試しください。');
+            return;
+        }
+
         setIsLoading(true);
 
         try {
+            // 3. Server-side Rate Limit (DB Check)
+            const { data: recentPosts } = await supabase
+                .from('before_after_posts')
+                .select('created_at')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (recentPosts && recentPosts.length > 0) {
+                const lastTime = new Date(recentPosts[0].created_at).getTime();
+                if (Date.now() - lastTime < 5 * 60 * 1000) {
+                    alert('投稿間隔が短すぎます。しばらく待ってから再度お試しください。');
+                    return; // Finally block will stop loading
+                }
+            }
+
             // Unload images
             const beforeUrl = await uploadImage(beforeFile);
             const afterUrl = await uploadImage(afterFile);
@@ -166,6 +198,9 @@ function BeforeAfterPostForm() {
                 });
 
             if (error) throw error;
+
+            // Update Client Timestamp
+            localStorage.setItem('last_ba_post_time', String(Date.now()));
 
             alert('投稿が完了しました！');
             router.push('/before-after'); // Redirect to gallery list
@@ -202,6 +237,16 @@ function BeforeAfterPostForm() {
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-8">
+                            {/* Honeypot Field */}
+                            <input
+                                type="text"
+                                name="bot_check"
+                                value={botCheck}
+                                onChange={(e) => setBotCheck(e.target.value)}
+                                style={{ display: 'none' }}
+                                tabIndex={-1}
+                                autoComplete="off"
+                            />
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">タイトル</label>
                                 <input

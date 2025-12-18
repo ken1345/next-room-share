@@ -396,7 +396,8 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                         "即入居可", "住民票登録可", "年齢制限なし", "預り金なし",
                                         "駐車場有", "駐輪場有", "ペット相談可", "高速インターネット(光回線)",
                                         "外国人歓迎", "楽器可", "DIY可", "鍵付き個室", "2人入居可",
-                                        "光熱費込み", "仕事場利用可", "友人宿泊可", "カップル可", "家族宿泊可", "喫煙可"
+                                        "光熱費込み", "仕事場利用可", "友人宿泊可", "カップル可", "家族宿泊可", "喫煙可",
+                                        "新築", "リノベ"
                                     ].map(amenity => (
                                         <label key={amenity} className="flex items-center gap-2 cursor-pointer">
                                             <div className="relative flex items-center">
@@ -512,6 +513,7 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                     {featureParam === 'gym' && 'ジム・スタジオ付き物件'}
                                     {featureParam === 'theater' && 'シアタールーム・プロジェクター付き'}
                                     {featureParam === 'sauna' && 'サウナ付き物件'}
+                                    {featureParam === 'new' && '新築・リノベーション済みの物件'}
                                 </span>
                                 <Link href="/search" className="text-sm underline hover:no-underline">解除する</Link>
                             </div>

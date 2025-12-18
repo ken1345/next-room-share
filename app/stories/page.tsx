@@ -1,13 +1,35 @@
-"use client";
-
 import Link from 'next/link';
 import { MdArrowForward, MdCalendarToday, MdPerson, MdTag } from 'react-icons/md';
 import { MOCK_STORIES } from '@/data/mock-stories';
+import { supabase } from '@/lib/supabase';
 
-export default function StoriesPage() {
-    // For now, serving mock data directly.
-    const stories = MOCK_STORIES;
+export const revalidate = 0; // Ensure fresh data on every request
 
+export default async function StoriesPage() {
+    // 1. Fetch DB Stories
+    const { data: dbStoriesRaw } = await supabase
+        .from('stories')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    // 2. Map DB Stories to match MOCK_STORIES structure
+    const dbStories = (dbStoriesRaw || []).map(s => ({
+        id: s.id, // Keep as UUID string
+        title: s.title,
+        excerpt: s.excerpt,
+        // content/body not needed for list view
+        image: s.cover_image,
+        tags: s.tags || [],
+        author: "シェアハウス住人", // Generic author for now
+        date: new Date(s.created_at).toLocaleDateString("ja-JP", { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.')
+    }));
+
+    // 3. Deduplicate: Filter mocks that have same title as DB stories
+    const dbTitles = new Set(dbStories.map(s => s.title));
+    const filteredMocks = MOCK_STORIES.filter(s => !dbTitles.has(s.title));
+
+    // 4. Merge
+    const stories = [...dbStories, ...filteredMocks];
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20 font-sans">
@@ -26,19 +48,16 @@ export default function StoriesPage() {
             </section>
 
             {/* Content List */}
-            <div className="container mx-auto px-4 max-w-5xl -mt-10 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="container mx-auto px-4 max-w-4xl -mt-10 relative z-10">
+                <div className="grid grid-cols-1 gap-6">
                     {stories.map((story) => (
                         <Link href={`/stories/${story.id}`} key={story.id} className="block group">
-                            <article className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition h-full flex flex-col">
-                                {/* If image is a URL (Supabase Storage), use img tag. If class (Mock), use div. */}
-                                {/* Current mock data used classes. Supabase will likely allow URLs. 
-                                    For compatibility, I'll check if it starts with 'bg-' */}
+                            <article className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition h-full flex flex-col md:flex-row">
                                 {story.image.startsWith('bg-') ? (
-                                    <div className={`h-48 ${story.image} bg-cover bg-center`}></div>
+                                    <div className={`h-48 md:h-auto md:w-64 shrink-0 ${story.image} bg-cover bg-center`}></div>
                                 ) : (
-                                    <div className="h-48 bg-gray-200">
-                                        {/* If I had real images, I'd put an img here. For now, empty or generic placeholder */}
+                                    <div className="h-48 md:h-auto md:w-64 shrink-0 bg-gray-200 relative">
+                                        <img src={story.image} alt={story.title} className="w-full h-full object-cover" />
                                     </div>
                                 )}
 

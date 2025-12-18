@@ -1,16 +1,41 @@
-"use client";
-
 import Link from 'next/link';
 import { MdArrowBack, MdArrowForward, MdCalendarToday, MdPerson, MdTag } from 'react-icons/md';
-import { use } from 'react';
 import { MOCK_STORIES } from '@/data/mock-stories';
+import { supabase } from '@/lib/supabase';
 
-export default function StoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+export const revalidate = 0;
 
-    // Find story from MOCK_STORIES
-    // Note: MOCK_STORIES ids are numbers, params.id is string.
-    const story = MOCK_STORIES.find(s => s.id === Number(id));
+export default async function StoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+
+    let story: any = null;
+
+    // 1. Try finding in MOCK_STORIES (if ID looks numeric)
+    if (!isNaN(Number(id))) {
+        story = MOCK_STORIES.find(s => s.id === Number(id));
+    }
+
+    // 2. If not found, try fetching from Supabase (assuming UUID)
+    if (!story) {
+        const { data } = await supabase
+            .from('stories')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (data) {
+            story = {
+                id: data.id,
+                title: data.title,
+                excerpt: data.excerpt,
+                body: data.content,
+                image: data.cover_image,
+                tags: data.tags || [],
+                author: "シェアハウス住人", // Generic author
+                date: new Date(data.created_at).toLocaleDateString("ja-JP", { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.')
+            };
+        }
+    }
 
     if (!story) {
         return (

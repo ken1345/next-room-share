@@ -128,12 +128,13 @@ export default async function StoriesPage({ searchParams }: { searchParams: Prom
                 <div className="mt-16 text-center">
                     <h3 className="text-2xl font-bold text-gray-800 mb-4">あなたもシェアハウス生活を始めませんか？</h3>
                     <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-                        <Link href="/search" className="inline-flex items-center justify-center gap-2 bg-[#bf0000] text-white w-full md:w-auto px-8 py-4 rounded-full font-bold text-lg hover:bg-black transition shadow-lg hover:shadow-xl">
-                            物件を探す
-                        </Link>
                         <Link href="/stories/new" className="inline-flex items-center justify-center gap-2 bg-white text-[#bf0000] border-2 border-[#bf0000] w-full md:w-auto px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-50 transition shadow-lg hover:shadow-xl">
                             体験談を投稿する
                         </Link>
+                        <Link href="/search" className="inline-flex items-center justify-center gap-2 bg-[#bf0000] text-white w-full md:w-auto px-8 py-4 rounded-full font-bold text-lg hover:bg-black transition shadow-lg hover:shadow-xl">
+                            物件を探す
+                        </Link>
+
                     </div>
                 </div>
             </div>

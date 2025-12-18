@@ -13,9 +13,38 @@ import ListingGalleryServer from '@/components/home/ListingGalleryServer';
 import BeforeAfterGalleryServer from '@/components/home/BeforeAfterGalleryServer';
 import ScrollToTop from '@/components/ScrollToTop';
 
+import { supabase } from '@/lib/supabase';
+
 // Header/Footer are in layout.tsx
 
-export default function Home() {
+export const revalidate = 0; // Ensure fresh data
+
+export default async function Home() {
+  // Fetch DB Stories
+  const { data: dbStoriesRaw } = await supabase
+    .from('stories')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(4);
+
+  // Map DB Stories
+  const dbStories = (dbStoriesRaw || []).map(s => ({
+    id: s.id,
+    title: s.title,
+    excerpt: s.excerpt,
+    image: s.cover_image,
+    tags: s.tags || [],
+    author: "シェアハウス住人",
+    date: new Date(s.created_at).toLocaleDateString("ja-JP", { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.')
+  }));
+
+  // Deduplicate
+  const dbTitles = new Set(dbStories.map(s => s.title));
+  const filteredMocks = MOCK_STORIES.filter(s => !dbTitles.has(s.title));
+
+  // Merge and Limit to 4
+  const stories = [...dbStories, ...filteredMocks].slice(0, 4);
+
   return (
     <div className="text-gray-700 font-sans pb-20">
 
@@ -123,18 +152,20 @@ export default function Home() {
           </div>
 
           <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-hide">
-            {MOCK_STORIES.slice(0, 4).map((story) => (
+            {stories.map((story) => (
               <Link href={`/stories/${story.id}`} key={story.id} className="block group min-w-[300px] md:min-w-[350px]">
                 <article className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition h-full flex flex-col">
                   {story.image.startsWith('bg-') ? (
                     <div className={`h-48 ${story.image} bg-cover bg-center`}></div>
                   ) : (
-                    <div className="h-48 bg-gray-200"></div>
+                    <div className="h-48 bg-gray-200 relative">
+                      <img src={story.image} alt={story.title} className="w-full h-full object-cover" />
+                    </div>
                   )}
 
                   <div className="p-6 flex-1 flex flex-col">
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {story.tags.map(tag => (
+                      {story.tags.map((tag: string) => (
                         <span key={tag} className="text-xs font-bold text-[#bf0000] bg-red-50 px-2 py-1 rounded-md flex items-center gap-1">
                           <MdTag /> {tag}
                         </span>

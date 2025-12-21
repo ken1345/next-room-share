@@ -67,45 +67,47 @@ export default async function RequestPage({ searchParams }: { searchParams: { ar
                 <div className="space-y-4">
                     {requests && requests.length > 0 ? (
                         requests.map((req: any) => (
-                            <div key={req.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-3">
-                                <div className="flex items-start justify-between">
-                                    <h2 className="font-bold text-lg text-gray-800">{req.title}</h2>
-                                    <span className="text-xs text-gray-400">
-                                        {new Date(req.created_at).toLocaleDateString()}
-                                    </span>
-                                </div>
-
-                                <div className="flex flex-wrap gap-3 text-sm text-gray-600">
-                                    <span className="bg-red-50 text-[#bf0000] px-2 py-1 rounded font-bold flex items-center gap-1">
-                                        <MdLocationOn /> {req.area || 'エリア未定'}
-                                    </span>
-                                    {req.budget_max && (
-                                        <span className="bg-gray-100 px-2 py-1 rounded font-bold">
-                                            予算: ~{req.budget_max.toLocaleString()}円
+                            <Link key={req.id} href={`/request/${req.id}`} className="block">
+                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-3 hover:border-red-100 transition">
+                                    <div className="flex items-start justify-between">
+                                        <h2 className="font-bold text-lg text-gray-800">{req.title}</h2>
+                                        <span className="text-xs text-gray-400">
+                                            {new Date(req.created_at).toLocaleDateString()}
                                         </span>
-                                    )}
-                                    {req.move_in_date && (
-                                        <span className="bg-gray-100 px-2 py-1 rounded font-bold flex items-center gap-1">
-                                            <MdCalendarToday /> {new Date(req.move_in_date).toLocaleDateString()} 入居可
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-3 text-sm text-gray-600">
+                                        <span className="bg-red-50 text-[#bf0000] px-2 py-1 rounded font-bold flex items-center gap-1">
+                                            <MdLocationOn /> {req.area || 'エリア未定'}
                                         </span>
-                                    )}
-                                </div>
-
-                                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
-                                    {req.content}
-                                </p>
-
-                                <div className="border-t pt-3 flex items-center gap-2 mt-2">
-                                    <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-                                        {req.users?.photo_url ? (
-                                            <img src={req.users.photo_url} alt={req.users.display_name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-gray-300 text-gray-500 text-xs">No Img</div>
+                                        {req.budget_max && (
+                                            <span className="bg-gray-100 px-2 py-1 rounded font-bold">
+                                                予算: ~{req.budget_max.toLocaleString()}円
+                                            </span>
+                                        )}
+                                        {req.move_in_date && (
+                                            <span className="bg-gray-100 px-2 py-1 rounded font-bold flex items-center gap-1">
+                                                <MdCalendarToday /> {new Date(req.move_in_date).toLocaleDateString()} 入居可
+                                            </span>
                                         )}
                                     </div>
-                                    <span className="text-sm font-bold text-gray-700">{req.users?.display_name || 'ゲスト'}</span>
+
+                                    <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                                        {req.content}
+                                    </p>
+
+                                    <div className="border-t pt-3 flex items-center gap-2 mt-2">
+                                        <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
+                                            {req.users?.photo_url ? (
+                                                <img src={req.users.photo_url} alt={req.users.display_name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-gray-300 text-gray-500 text-xs">No Img</div>
+                                            )}
+                                        </div>
+                                        <span className="text-sm font-bold text-gray-700">{req.users?.display_name || 'ゲスト'}</span>
+                                    </div>
                                 </div>
-                            </div>
+                            </Link>
                         ))
                     ) : (
                         <div className="text-center py-20 text-gray-400">

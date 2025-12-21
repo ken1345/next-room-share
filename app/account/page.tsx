@@ -12,6 +12,8 @@ export default function AccountPage() {
     const [user, setUser] = useState<any>(null);
     const [userData, setUserData] = useState<any>(null);
     const [myListings, setMyListings] = useState<any[]>([]);
+    const [myRequests, setMyRequests] = useState<any[]>([]);
+    const [myGiveaways, setMyGiveaways] = useState<any[]>([]);
     const [favorites, setFavorites] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -56,6 +58,22 @@ export default function AccountPage() {
                     if (listingsData) {
                         setMyListings(listingsData);
                     }
+
+                    // Fetch My Requests
+                    const { data: requestsData } = await supabase
+                        .from('room_requests')
+                        .select('*')
+                        .eq('user_id', session.user.id)
+                        .order('created_at', { ascending: false });
+                    if (requestsData) setMyRequests(requestsData);
+
+                    // Fetch My Giveaways
+                    const { data: giveawaysData } = await supabase
+                        .from('giveaways')
+                        .select('*')
+                        .eq('user_id', session.user.id)
+                        .order('created_at', { ascending: false });
+                    if (giveawaysData) setMyGiveaways(giveawaysData);
 
 
 
@@ -108,6 +126,20 @@ export default function AccountPage() {
         } else {
             setMyListings(prev => prev.filter(item => item.id !== id));
         }
+    };
+
+    const handleDeleteRequest = async (id: string) => {
+        if (!window.confirm("本当に削除しますか？")) return;
+        const { error } = await supabase.from('room_requests').delete().eq('id', id);
+        if (error) alert("削除失敗: " + error.message);
+        else setMyRequests(prev => prev.filter(i => i.id !== id));
+    };
+
+    const handleDeleteGiveaway = async (id: string) => {
+        if (!window.confirm("本当に削除しますか？")) return;
+        const { error } = await supabase.from('giveaways').delete().eq('id', id);
+        if (error) alert("削除失敗: " + error.message);
+        else setMyGiveaways(prev => prev.filter(i => i.id !== id));
     };
 
     const handleToggleVisibility = async (id: number, currentStatus: boolean) => {
@@ -237,6 +269,70 @@ export default function AccountPage() {
                                 物件を掲載する
                             </Link>
                         </div>
+                    )}
+                </section>
+
+                {/* My Requests Section */}
+                <section>
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 px-1">掲載中のリクエスト</h3>
+                    {myRequests.length > 0 ? (
+                        <div className="space-y-4">
+                            {myRequests.map((req) => (
+                                <div key={req.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                    <div className="mb-2">
+                                        <h4 className="font-bold text-gray-800">{req.title}</h4>
+                                        <p className="text-xs text-gray-500">{new Date(req.created_at).toLocaleDateString()}</p>
+                                    </div>
+                                    <div className="flex gap-2 text-xs">
+                                        <Link href={`/request/${req.id}/edit`} className="bg-gray-100 text-gray-600 px-3 py-2 rounded font-bold hover:bg-gray-200 transition flex items-center gap-1">
+                                            <MdEdit /> 編集
+                                        </Link>
+                                        <button onClick={() => handleDeleteRequest(req.id)} className="bg-red-50 text-red-500 px-3 py-2 rounded font-bold hover:bg-red-100 transition">
+                                            削除
+                                        </button>
+                                        <Link href={`/request/${req.id}`} className="ml-auto text-[#bf0000] font-bold hover:underline flex items-center">
+                                            確認 <MdArrowForwardIos className="text-xs" />
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-400 text-sm px-1">リクエストはありません。</p>
+                    )}
+                </section>
+
+                {/* My Giveaways Section */}
+                <section>
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 px-1">掲載中の「あげたい」</h3>
+                    {myGiveaways.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {myGiveaways.map((item) => (
+                                <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                                    <div className="h-32 bg-gray-200 relative">
+                                        {item.image_url ? (
+                                            <img src={item.image_url} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-xs">No Image</div>
+                                        )}
+                                    </div>
+                                    <div className="p-3">
+                                        <h4 className="font-bold text-gray-800 text-sm line-clamp-1 mb-1">{item.title}</h4>
+                                        <p className="text-xs text-gray-500 mb-3">{new Date(item.created_at).toLocaleDateString()}</p>
+                                        <div className="flex gap-2 text-xs">
+                                            <Link href={`/give/${item.id}/edit`} className="bg-gray-100 text-gray-600 px-3 py-2 rounded font-bold hover:bg-gray-200 transition flex items-center gap-1 flex-1 justify-center">
+                                                <MdEdit /> 編集
+                                            </Link>
+                                            <button onClick={() => handleDeleteGiveaway(item.id)} className="bg-red-50 text-red-500 px-3 py-2 rounded font-bold hover:bg-red-100 transition flex-1">
+                                                削除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-400 text-sm px-1">「あげたい」投稿はありません。</p>
                     )}
                 </section>
 

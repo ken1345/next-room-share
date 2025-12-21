@@ -128,7 +128,10 @@ function SignupForm() {
                     </p>
 
                     <div className="space-y-4">
-                        <Link href="/login" className="block w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl hover:bg-black transition shadow-md">
+                        <Link
+                            href={`/login${searchParams.get('redirect') ? `?redirect=${encodeURIComponent(searchParams.get('redirect')!)}` : ''}`}
+                            className="block w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl hover:bg-black transition shadow-md"
+                        >
                             ログインページへ
                         </Link>
                     </div>
@@ -294,7 +297,10 @@ function SignupForm() {
 
                 <div className="mt-8 text-center text-sm text-gray-500">
                     すでにアカウントをお持ちの方は
-                    <Link href="/login" className="text-[#bf0000] font-bold hover:underline ml-1">
+                    <Link
+                        href={`/login${searchParams.get('redirect') ? `?redirect=${encodeURIComponent(searchParams.get('redirect')!)}` : ''}`}
+                        className="text-[#bf0000] font-bold hover:underline ml-1"
+                    >
                         ログイン
                     </Link>
                 </div>

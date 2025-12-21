@@ -66,39 +66,41 @@ export default async function GivePage({ searchParams }: { searchParams: { area?
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {giveaways && giveaways.length > 0 ? (
                         giveaways.map((item: any) => (
-                            <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                                <div className="h-48 bg-gray-200 relative">
-                                    {item.image_url ? (
-                                        <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">No Image</div>
-                                    )}
-                                    {item.location && (
-                                        <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-                                            <MdLocationOn /> {item.location}
-                                        </div>
-                                    )}
-                                </div>
+                            <Link key={item.id} href={`/give/${item.id}`} className="block h-full">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full hover:shadow-md transition">
+                                    <div className="h-48 bg-gray-200 relative">
+                                        {item.image_url ? (
+                                            <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">No Image</div>
+                                        )}
+                                        {item.location && (
+                                            <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                                                <MdLocationOn /> {item.location}
+                                            </div>
+                                        )}
+                                    </div>
 
-                                <div className="p-4 flex-1 flex flex-col">
-                                    <h2 className="font-bold text-gray-800 mb-2 line-clamp-2">{item.title}</h2>
-                                    <p className="text-sm text-gray-500 line-clamp-3 mb-4 flex-1 whitespace-pre-wrap">
-                                        {item.description}
-                                    </p>
+                                    <div className="p-4 flex-1 flex flex-col">
+                                        <h2 className="font-bold text-gray-800 mb-2 line-clamp-2">{item.title}</h2>
+                                        <p className="text-sm text-gray-500 line-clamp-3 mb-4 flex-1 whitespace-pre-wrap">
+                                            {item.description}
+                                        </p>
 
-                                    <div className="flex items-center gap-2 border-t pt-3 mt-auto">
-                                        <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden">
-                                            {item.users?.photo_url ? (
-                                                <img src={item.users.photo_url} alt={item.users.display_name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full bg-gray-300"></div>
-                                            )}
+                                        <div className="flex items-center gap-2 border-t pt-3 mt-auto">
+                                            <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden">
+                                                {item.users?.photo_url ? (
+                                                    <img src={item.users.photo_url} alt={item.users.display_name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gray-300"></div>
+                                                )}
+                                            </div>
+                                            <span className="text-xs font-bold text-gray-600">{item.users?.display_name || 'ゲスト'}</span>
+                                            <span className="text-xs text-gray-400 ml-auto">{new Date(item.created_at).toLocaleDateString()}</span>
                                         </div>
-                                        <span className="text-xs font-bold text-gray-600">{item.users?.display_name || 'ゲスト'}</span>
-                                        <span className="text-xs text-gray-400 ml-auto">{new Date(item.created_at).toLocaleDateString()}</span>
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         ))
                     ) : (
                         <div className="col-span-full text-center py-20 text-gray-400">

@@ -156,7 +156,10 @@ function LoginForm() {
 
                 <div className="mt-8 text-center text-sm text-gray-500">
                     アカウントをお持ちでない方は
-                    <Link href="/signup" className="text-[#bf0000] font-bold hover:underline ml-1">
+                    <Link
+                        href={`/signup${searchParams.get('redirect') ? `?redirect=${encodeURIComponent(searchParams.get('redirect')!)}` : ''}`}
+                        className="text-[#bf0000] font-bold hover:underline ml-1"
+                    >
                         新規登録
                     </Link>
                 </div>

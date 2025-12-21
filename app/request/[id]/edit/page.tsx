@@ -65,7 +65,7 @@ export default function EditRequestPage() {
                 title: form.title,
                 budget_max: form.budget_max ? parseInt(form.budget_max) : null,
                 area: form.area,
-                move_in_date: form.move_in_date,
+                move_in_date: form.move_in_date || null,
                 content: form.content
             })
             .eq('id', id);

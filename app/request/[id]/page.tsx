@@ -41,7 +41,13 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                         <div className="flex flex-col md:flex-row gap-6 justify-between items-start mb-6">
                             <h1 className="text-2xl font-bold text-gray-800 leading-tight">{req.title}</h1>
                             <span className="text-xs text-gray-400 font-bold whitespace-nowrap">
-                                {new Date(req.created_at).toLocaleDateString()}
+                                {new Date(req.created_at).toLocaleString('ja-JP', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
                             </span>
                         </div>
 

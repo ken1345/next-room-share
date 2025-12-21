@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { MdAdd, MdPersonSearch, MdLocationOn, MdCalendarToday, MdChevronLeft } from 'react-icons/md';
 import { supabase } from '@/lib/supabase';
+import SearchAreaFilter from '@/components/SearchAreaFilter';
 
 export const revalidate = 0;
 
@@ -41,20 +42,9 @@ export default async function RequestPage({ searchParams }: { searchParams: { ar
                 {/* Search & Post */}
                 <div className="mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                        <form className="w-full md:w-auto flex-1 flex items-center gap-2">
-                            <div className="relative flex-1">
-                                <MdLocationOn className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <input
-                                    name="area"
-                                    defaultValue={areaQuery}
-                                    placeholder="エリアで絞り込み (例: 新宿)"
-                                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:border-[#bf0000]"
-                                />
-                            </div>
-                            <button type="submit" className="bg-gray-800 text-white font-bold px-4 py-3 rounded-lg hover:bg-black transition text-sm whitespace-nowrap">
-                                検索
-                            </button>
-                        </form>
+                        <div className="w-full md:w-auto flex-1">
+                            <SearchAreaFilter />
+                        </div>
                         <Link href="/request/new">
                             <button className="w-full md:w-auto bg-[#bf0000] text-white font-bold px-6 py-3 rounded-lg shadow-md hover:bg-[#900000] transition flex items-center justify-center gap-2 whitespace-nowrap">
                                 <MdAdd className="text-xl" /> 投稿する
@@ -72,7 +62,13 @@ export default async function RequestPage({ searchParams }: { searchParams: { ar
                                     <div className="flex items-start justify-between">
                                         <h2 className="font-bold text-lg text-gray-800">{req.title}</h2>
                                         <span className="text-xs text-gray-400">
-                                            {new Date(req.created_at).toLocaleDateString()}
+                                            {new Date(req.created_at).toLocaleString('ja-JP', {
+                                                year: 'numeric',
+                                                month: '2-digit',
+                                                day: '2-digit',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
                                         </span>
                                     </div>
 

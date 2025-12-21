@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { MdAdd, MdCardGiftcard, MdLocationOn, MdChevronLeft } from 'react-icons/md';
 import { supabase } from '@/lib/supabase';
+import SearchAreaFilter from '@/components/SearchAreaFilter';
 
 export const revalidate = 0;
 
@@ -40,20 +41,9 @@ export default async function GivePage({ searchParams }: { searchParams: { area?
                 {/* Search & Post */}
                 <div className="mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                        <form className="w-full md:w-auto flex-1 flex items-center gap-2">
-                            <div className="relative flex-1">
-                                <MdLocationOn className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <input
-                                    name="area"
-                                    defaultValue={areaQuery}
-                                    placeholder="エリアで絞り込み (例: 渋谷区)"
-                                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold focus:outline-none focus:border-[#bf0000]"
-                                />
-                            </div>
-                            <button type="submit" className="bg-gray-800 text-white font-bold px-4 py-3 rounded-lg hover:bg-black transition text-sm whitespace-nowrap">
-                                検索
-                            </button>
-                        </form>
+                        <div className="w-full md:w-auto flex-1">
+                            <SearchAreaFilter />
+                        </div>
                         <Link href="/give/new">
                             <button className="w-full md:w-auto bg-[#bf0000] text-white font-bold px-6 py-3 rounded-lg shadow-md hover:bg-[#900000] transition flex items-center justify-center gap-2 whitespace-nowrap">
                                 <MdAdd className="text-xl" /> 投稿する
@@ -62,13 +52,14 @@ export default async function GivePage({ searchParams }: { searchParams: { area?
                     </div>
                 </div>
 
-                {/* List (Grid) */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* List (Stack) */}
+                <div className="space-y-4">
                     {giveaways && giveaways.length > 0 ? (
                         giveaways.map((item: any) => (
-                            <Link key={item.id} href={`/give/${item.id}`} className="block h-full">
-                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full hover:shadow-md transition">
-                                    <div className="h-48 bg-gray-200 relative">
+                            <Link key={item.id} href={`/give/${item.id}`} className="block">
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col md:flex-row hover:shadow-md transition">
+                                    {/* Image Section */}
+                                    <div className="h-48 md:h-auto md:w-64 bg-gray-200 relative shrink-0">
                                         {item.image_url ? (
                                             <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
                                         ) : (
@@ -81,14 +72,15 @@ export default async function GivePage({ searchParams }: { searchParams: { area?
                                         )}
                                     </div>
 
+                                    {/* Content Section */}
                                     <div className="p-4 flex-1 flex flex-col">
-                                        <h2 className="font-bold text-gray-800 mb-2 line-clamp-2">{item.title}</h2>
-                                        <p className="text-sm text-gray-500 line-clamp-3 mb-4 flex-1 whitespace-pre-wrap">
+                                        <h2 className="font-bold text-gray-800 mb-2 line-clamp-2 md:text-lg">{item.title}</h2>
+                                        <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1 whitespace-pre-wrap">
                                             {item.description}
                                         </p>
 
                                         <div className="flex items-center gap-2 border-t pt-3 mt-auto">
-                                            <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden">
+                                            <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
                                                 {item.users?.photo_url ? (
                                                     <img src={item.users.photo_url} alt={item.users.display_name} className="w-full h-full object-cover" />
                                                 ) : (
@@ -96,14 +88,22 @@ export default async function GivePage({ searchParams }: { searchParams: { area?
                                                 )}
                                             </div>
                                             <span className="text-xs font-bold text-gray-600">{item.users?.display_name || 'ゲスト'}</span>
-                                            <span className="text-xs text-gray-400 ml-auto">{new Date(item.created_at).toLocaleDateString()}</span>
+                                            <span className="text-xs text-gray-400 ml-auto">
+                                                {new Date(item.created_at).toLocaleString('ja-JP', {
+                                                    year: 'numeric',
+                                                    month: '2-digit',
+                                                    day: '2-digit',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
                             </Link>
                         ))
                     ) : (
-                        <div className="col-span-full text-center py-20 text-gray-400">
+                        <div className="text-center py-20 text-gray-400">
                             <p className="font-bold text-lg">まだ投稿がありません</p>
                             <p className="text-sm">不要な家具や家電があれば投稿してみましょう！</p>
                         </div>

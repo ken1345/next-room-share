@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { MdArrowBack } from 'react-icons/md';
+import AreaSelector from '@/components/AreaSelector';
 
 export default function NewRequestPage() {
     const router = useRouter();
@@ -72,7 +73,7 @@ export default function NewRequestPage() {
                     <Link href="/request" className="text-gray-500 hover:text-gray-800">
                         <MdArrowBack className="text-2xl" />
                     </Link>
-                    <h1 className="font-bold text-lg">借りたいリクエストを投稿</h1>
+                    <h1 className="font-bold text-lg text-gray-800">借りたいリクエストを投稿</h1>
                 </div>
             </div>
 
@@ -94,12 +95,10 @@ export default function NewRequestPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">エリア希望</label>
-                            <input
-                                type="text"
-                                className="w-full border rounded-lg p-3 text-gray-800 focus:outline-none focus:border-[#bf0000]"
-                                placeholder="例：中央線沿い"
+                            <AreaSelector
                                 value={form.area}
-                                onChange={e => setForm({ ...form, area: e.target.value })}
+                                onChange={(val) => setForm({ ...form, area: val })}
+                                required
                             />
                         </div>
                         <div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { MdArrowBack, MdCloudUpload, MdClose } from 'react-icons/md';
+import AreaSelector from '@/components/AreaSelector';
 
 export default function NewGivePage() {
     const router = useRouter();
@@ -107,7 +108,7 @@ export default function NewGivePage() {
                     <Link href="/give" className="text-gray-500 hover:text-gray-800">
                         <MdArrowBack className="text-2xl" />
                     </Link>
-                    <h1 className="font-bold text-lg">あげたいものを投稿</h1>
+                    <h1 className="font-bold text-lg text-gray-800">あげたいものを投稿</h1>
                 </div>
             </div>
 
@@ -147,12 +148,10 @@ export default function NewGivePage() {
 
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">受け渡し場所・地域</label>
-                        <input
-                            type="text"
-                            className="w-full border rounded-lg p-3 text-gray-800 focus:outline-none focus:border-[#bf0000]"
-                            placeholder="例：渋谷区 / 新宿駅その周辺"
+                        <AreaSelector
                             value={form.location}
-                            onChange={e => setForm({ ...form, location: e.target.value })}
+                            onChange={(val) => setForm({ ...form, location: val })}
+                            required
                         />
                     </div>
 

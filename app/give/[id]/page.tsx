@@ -50,7 +50,13 @@ export default async function GiveDetailPage({ params }: { params: Promise<{ id:
                         <div className="flex flex-col md:flex-row gap-6 justify-between items-start mb-6">
                             <h1 className="text-2xl font-bold text-gray-800 leading-tight">{item.title}</h1>
                             <span className="text-xs text-gray-400 font-bold whitespace-nowrap">
-                                {new Date(item.created_at).toLocaleDateString()}
+                                {new Date(item.created_at).toLocaleString('ja-JP', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
                             </span>
                         </div>
 
@@ -81,11 +87,6 @@ export default async function GiveDetailPage({ params }: { params: Promise<{ id:
                                 </div>
                                 <div>
                                     <p className="font-bold text-gray-800 text-lg">{item.users?.display_name || 'ゲスト'}</p>
-                                    <div className="flex gap-3 text-xs text-gray-500 font-bold mt-1">
-                                        <span>{item.users?.gender || '性別未設定'}</span>
-                                        <span>{item.users?.age ? `${item.users.age}歳` : '年齢未設定'}</span>
-                                        <span>{item.users?.occupation || '職業未設定'}</span>
-                                    </div>
                                 </div>
                             </div>
                         </div>

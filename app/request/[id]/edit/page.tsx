@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { MdArrowBack } from 'react-icons/md';
 import Link from 'next/link';
+import AreaSelector from '@/components/AreaSelector';
 
 export default function EditRequestPage() {
     const router = useRouter();
@@ -86,7 +87,7 @@ export default function EditRequestPage() {
                     <Link href="/account" className="text-gray-500 hover:text-gray-800 font-bold flex items-center gap-1">
                         <MdArrowBack /> キャンセル
                     </Link>
-                    <h1 className="font-bold text-lg ml-4">リクエストを編集</h1>
+                    <h1 className="font-bold text-lg ml-4 text-gray-800">リクエストを編集</h1>
                 </div>
             </div>
 
@@ -105,11 +106,10 @@ export default function EditRequestPage() {
                     {/* Add other fields similarly (simplified for brevity, can match create form) */}
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">希望エリア</label>
-                        <input
-                            type="text"
+                        <AreaSelector
                             value={form.area}
-                            onChange={e => setForm({ ...form, area: e.target.value })}
-                            className="w-full p-4 bg-gray-50 rounded-lg border border-gray-200 font-bold"
+                            onChange={(val) => setForm({ ...form, area: val })}
+                            required
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">

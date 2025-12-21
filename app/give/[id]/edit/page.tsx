@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { MdArrowBack } from 'react-icons/md';
 import Link from 'next/link';
+import AreaSelector from '@/components/AreaSelector';
 
 export default function EditGivePage() {
     const router = useRouter();
@@ -98,11 +99,10 @@ export default function EditGivePage() {
                     </div>
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">場所・エリア</label>
-                        <input
-                            type="text"
+                        <AreaSelector
                             value={form.location}
-                            onChange={e => setForm({ ...form, location: e.target.value })}
-                            className="w-full p-4 bg-gray-50 rounded-lg border border-gray-200 font-bold"
+                            onChange={(val) => setForm({ ...form, location: val })}
+                            required
                         />
                     </div>
                     <div>

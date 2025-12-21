@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { MdHome, MdPerson, MdMail } from "react-icons/md";
+import { MdHome, MdPerson, MdMail, MdMenu, MdClose } from "react-icons/md"; // Added icons
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
@@ -10,6 +10,7 @@ import { User } from '@supabase/supabase-js';
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile menu state
 
   useEffect(() => {
     // Check initial session
@@ -26,17 +27,27 @@ export default function Header() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
   return (
-    <header className="bg-white border-b py-0">
+    <header className="bg-white border-b py-0 relative z-50">
       <div className="container mx-auto px-4 flex justify-between items-center h-20 md:h-24">
         {/* ロゴ部分：クリックでトップへ戻る */}
-        <Link href="/" className="flex items-center gap-1 hover:opacity-80 transition h-full">
+        <Link href="/" className="flex items-center gap-1 hover:opacity-80 transition h-full" onClick={closeMobileMenu}>
           <img src="/logo.webp" alt="ロゴ" className="h-full w-auto object-contain py-1" />
         </Link>
 
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden text-gray-600 hover:text-[#bf0000] focus:outline-none"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? <MdClose size={32} /> : <MdMenu size={32} />}
+        </button>
+
         {/* Desktop Navigation */}
         {!loading && (
-          <div className="flex gap-4 text-sm font-bold text-gray-600 items-center">
+          <div className="hidden md:flex gap-4 text-sm font-bold text-gray-600 items-center">
             <Link href="/search" className="hover:text-[#bf0000] transition">部屋を探す</Link>
             <Link href="/host" className="hover:text-[#bf0000] transition">部屋を貸す</Link>
 
@@ -71,6 +82,45 @@ export default function Header() {
           </div>
         )}
       </div>
+
+      {/* Mobile Navigation Overlay */}
+      {isMobileMenuOpen && !loading && (
+        <div className="md:hidden absolute top-full left-0 w-full bg-white border-b shadow-lg flex flex-col p-4 gap-4 font-bold text-gray-700 animate-in slide-in-from-top-2">
+          <Link href="/search" className="block py-2 border-b border-gray-100 hover:text-[#bf0000]" onClick={closeMobileMenu}>
+            部屋を探す
+          </Link>
+          <Link href="/host" className="block py-2 border-b border-gray-100 hover:text-[#bf0000]" onClick={closeMobileMenu}>
+            部屋を貸す
+          </Link>
+
+          {user ? (
+            <>
+              <Link href="/messages" className="block py-2 border-b border-gray-100 hover:text-[#bf0000] flex items-center gap-2" onClick={closeMobileMenu}>
+                <MdMail size={20} /> メッセージ
+              </Link>
+              <Link href="/account" className="block py-2 hover:text-[#bf0000] flex items-center gap-2" onClick={closeMobileMenu}>
+                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200">
+                  {user.user_metadata?.avatar_url ? (
+                    <img src={user.user_metadata.avatar_url} alt="User" className="w-full h-full object-cover" />
+                  ) : (
+                    <MdPerson size={16} />
+                  )}
+                </div>
+                アカウント
+              </Link>
+            </>
+          ) : (
+            <div className="flex flex-col gap-3 mt-2">
+              <Link href="/signup" className="block text-center py-2 border border-[#bf0000] text-[#bf0000] rounded-full hover:bg-red-50" onClick={closeMobileMenu}>
+                新規登録
+              </Link>
+              <Link href="/login" className="block text-center py-2 bg-[#bf0000] text-white rounded-full hover:bg-black" onClick={closeMobileMenu}>
+                ログイン
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 }

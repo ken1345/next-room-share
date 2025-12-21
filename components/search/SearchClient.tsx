@@ -531,6 +531,8 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                 selectedAmenities={selectedAmenities} setSelectedAmenities={setSelectedAmenities}
                                 selectedEquipment={selectedEquipment} setSelectedEquipment={setSelectedEquipment}
                                 selectedPersonalEquipment={selectedPersonalEquipment} setSelectedPersonalEquipment={setSelectedPersonalEquipment}
+                                collapsible={true}
+                                initialOpen={false}
                             />
                         </div>
 

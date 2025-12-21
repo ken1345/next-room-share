@@ -11,6 +11,8 @@ import {
 import { MOCK_STORIES } from '@/data/mock-stories';
 import SectionTitle from '@/components/SectionTitle';
 import ListingGalleryServer from '@/components/home/ListingGalleryServer';
+import RequestsGalleryServer from '@/components/home/RequestsGalleryServer';
+import GiveawaysGalleryServer from '@/components/home/GiveawaysGalleryServer';
 import BeforeAfterGalleryServer from '@/components/home/BeforeAfterGalleryServer';
 import ScrollToTop from '@/components/ScrollToTop';
 
@@ -93,6 +95,16 @@ export default async function Home() {
       {/* 8. Newly Arrived Rooms (Server Component) */}
       <Suspense fallback={<div className="py-20 text-center text-gray-500">物件情報を読み込み中...</div>}>
         <ListingGalleryServer />
+      </Suspense>
+
+      {/* 9. Newly Arrived Requests (Server Component) */}
+      <Suspense fallback={<div className="py-20 text-center text-gray-500">リクエスト情報を読み込み中...</div>}>
+        <RequestsGalleryServer />
+      </Suspense>
+
+      {/* 10. Newly Arrived Giveaways (Server Component) */}
+      <Suspense fallback={<div className="py-20 text-center text-gray-500">情報を読み込み中...</div>}>
+        <GiveawaysGalleryServer />
       </Suspense>
 
       {/* 3. Diagnosis Banner */}

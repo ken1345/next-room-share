@@ -1,6 +1,7 @@
-"use client";
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 import { MdArrowBack, MdCheck, MdEmail } from 'react-icons/md';
 import Honeypot from '@/components/Honeypot';
 

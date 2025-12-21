@@ -31,7 +31,6 @@ export default function Header() {
       <div className="container mx-auto px-4 flex justify-between items-center h-20 md:h-24">
         {/* ロゴ部分：クリックでトップへ戻る */}
         <Link href="/" className="flex items-center gap-1 hover:opacity-80 transition h-full">
-          <MdHome size={52} className="text-[#bf0000] mt-2" />
           <img src="/logo.webp" alt="ロゴ" className="h-full w-auto object-contain py-1" />
         </Link>
 

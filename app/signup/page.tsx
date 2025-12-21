@@ -15,6 +15,7 @@ function SignupForm() {
         displayName: '',
         email: '',
         password: '',
+        confirmPassword: '',
         gender: '',
         age: '',
         occupation: ''
@@ -49,6 +50,12 @@ function SignupForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (form.password !== form.confirmPassword) {
+            alert("パスワードが一致しません。");
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -206,14 +213,19 @@ function SignupForm() {
 
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2">職業</label>
-                        <input
-                            type="text"
+                        <select
                             required
                             value={form.occupation}
                             onChange={e => setForm({ ...form, occupation: e.target.value })}
-                            className="w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-2 focus:ring-red-100 outline-none font-bold transition text-gray-900"
-                            placeholder="例: 会社員、学生、エンジニア"
-                        />
+                            className="w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-2 focus:ring-red-100 outline-none font-bold transition text-gray-900 appearance-none"
+                        >
+                            <option value="">選択してください</option>
+                            <option value="学生">学生</option>
+                            <option value="会社員・公務員">会社員・公務員</option>
+                            <option value="自営業">自営業</option>
+                            <option value="アルバイト">アルバイト</option>
+                            <option value="無職">無職</option>
+                        </select>
                     </div>
 
                     <div>
@@ -247,6 +259,24 @@ function SignupForm() {
                                 onChange={e => setForm({ ...form, password: e.target.value })}
                                 className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-2 focus:ring-red-100 outline-none font-bold transition text-gray-900"
                                 placeholder="8文字以上"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">パスワード（確認）</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <MdLock size={20} />
+                            </div>
+                            <input
+                                type="password"
+                                required
+                                minLength={8}
+                                value={form.confirmPassword}
+                                onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
+                                className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:border-[#bf0000] focus:ring-2 focus:ring-red-100 outline-none font-bold transition text-gray-900"
+                                placeholder="もう一度入力してください"
                             />
                         </div>
                     </div>

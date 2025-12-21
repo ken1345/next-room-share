@@ -719,28 +719,57 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                         <div className="grid grid-cols-1 gap-6">
                             {listings.length > 0 ? listings.map(p => (
                                 <div key={p.id} className="h-auto">
-                                    <PhotoPropertyCard
-                                        horizontal={true}
-                                        id={p.id}
-                                        title={p.title}
-                                        description={p.description}
-                                        price={p.price}
-                                        equipment={p.equipment || []}
-                                        personalEquipment={p.personal_equipment || []}
-                                        station={p.station_name ? `${p.station_name} ${p.minutes_to_station}分` : p.address}
-                                        badges={[
-                                            p.room_type === 'private' ? '個室' : p.room_type === 'semi' ? '半個室' : 'ドミトリー',
-                                            ...(p.amenities || [])
-                                        ]}
-                                        imageUrl={p.images?.[0]}
-                                        image={!p.images?.length ? 'bg-gray-200' : undefined}
-                                        viewCount={p.view_count || 0}
-                                        favoritesCount={p.favorites_count || 0}
-                                        inquiryCount={p.inquiry_count || 0}
-                                        prefecture={p.prefecture}
-                                        city={p.city}
-                                        slug={p.slug}
-                                    />
+                                    {/* Mobile: Vertical Layout */}
+                                    <div className="block md:hidden h-auto">
+                                        <PhotoPropertyCard
+                                            horizontal={false}
+                                            id={p.id}
+                                            title={p.title}
+                                            description={p.description}
+                                            price={p.price}
+                                            equipment={p.equipment || []}
+                                            personalEquipment={p.personal_equipment || []}
+                                            station={p.station_name ? `${p.station_name} ${p.minutes_to_station}分` : p.address}
+                                            badges={[
+                                                p.room_type === 'private' ? '個室' : p.room_type === 'semi' ? '半個室' : 'ドミトリー',
+                                                ...(p.amenities || [])
+                                            ]}
+                                            imageUrl={p.images?.[0]}
+                                            image={!p.images?.length ? 'bg-gray-200' : undefined}
+                                            viewCount={p.view_count || 0}
+                                            favoritesCount={p.favorites_count || 0}
+                                            inquiryCount={p.inquiry_count || 0}
+                                            prefecture={p.prefecture}
+                                            city={p.city}
+                                            slug={p.slug}
+                                        />
+                                    </div>
+
+                                    {/* Desktop: Horizontal Layout */}
+                                    <div className="hidden md:block h-auto">
+                                        <PhotoPropertyCard
+                                            horizontal={true}
+                                            id={p.id}
+                                            title={p.title}
+                                            description={p.description}
+                                            price={p.price}
+                                            equipment={p.equipment || []}
+                                            personalEquipment={p.personal_equipment || []}
+                                            station={p.station_name ? `${p.station_name} ${p.minutes_to_station}分` : p.address}
+                                            badges={[
+                                                p.room_type === 'private' ? '個室' : p.room_type === 'semi' ? '半個室' : 'ドミトリー',
+                                                ...(p.amenities || [])
+                                            ]}
+                                            imageUrl={p.images?.[0]}
+                                            image={!p.images?.length ? 'bg-gray-200' : undefined}
+                                            viewCount={p.view_count || 0}
+                                            favoritesCount={p.favorites_count || 0}
+                                            inquiryCount={p.inquiry_count || 0}
+                                            prefecture={p.prefecture}
+                                            city={p.city}
+                                            slug={p.slug}
+                                        />
+                                    </div>
                                 </div>
                             )) : (
                                 <div className="col-span-full py-20 text-center text-gray-500">

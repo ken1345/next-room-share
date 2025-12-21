@@ -25,11 +25,50 @@ export default function NewGivePage() {
         });
     }, []);
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // WebP Conversion Utility
+    const convertToWebP = async (file: File): Promise<File> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    reject(new Error('Canvas context not available'));
+                    return;
+                }
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                            type: 'image/webp',
+                            lastModified: Date.now(),
+                        });
+                        resolve(newFile);
+                    } else {
+                        reject(new Error('Conversion failed'));
+                    }
+                }, 'image/webp', 0.8); // Quality 0.8
+            };
+            img.onerror = (err) => reject(err);
+            img.src = URL.createObjectURL(file);
+        });
+    };
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            const url = URL.createObjectURL(file);
-            setImage({ file, url });
+            const originalFile = e.target.files[0];
+            try {
+                const webpFile = await convertToWebP(originalFile);
+                const url = URL.createObjectURL(webpFile);
+                setImage({ file: webpFile, url });
+            } catch (error) {
+                console.error("WebP conversion failed:", error);
+                // Fallback to original
+                const url = URL.createObjectURL(originalFile);
+                setImage({ file: originalFile, url });
+            }
         }
     };
 

@@ -116,30 +116,54 @@ export default function AccountPage() {
     const handleDelete = async (id: number) => {
         if (!window.confirm("本当に削除しますか？\n※この操作は取り消せません。")) return;
 
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('listings')
             .delete()
-            .eq('id', id);
+            .eq('id', id)
+            .select();
 
         if (error) {
             alert("削除に失敗しました: " + error.message);
-        } else {
+        } else if (data && data.length > 0) {
             setMyListings(prev => prev.filter(item => item.id !== id));
+        } else {
+            // RLS assumed to have blocked it if no error but no data returned
+            alert("削除できませんでした。権限がない可能性があります。");
         }
     };
 
     const handleDeleteRequest = async (id: string) => {
         if (!window.confirm("本当に削除しますか？")) return;
-        const { error } = await supabase.from('room_requests').delete().eq('id', id);
-        if (error) alert("削除失敗: " + error.message);
-        else setMyRequests(prev => prev.filter(i => i.id !== id));
+        const { data, error } = await supabase
+            .from('room_requests')
+            .delete()
+            .eq('id', id)
+            .select();
+
+        if (error) {
+            alert("削除失敗: " + error.message);
+        } else if (data && data.length > 0) {
+            setMyRequests(prev => prev.filter(i => i.id !== id));
+        } else {
+            alert("削除できませんでした。権限がない可能性があります。");
+        }
     };
 
     const handleDeleteGiveaway = async (id: string) => {
         if (!window.confirm("本当に削除しますか？")) return;
-        const { error } = await supabase.from('giveaways').delete().eq('id', id);
-        if (error) alert("削除失敗: " + error.message);
-        else setMyGiveaways(prev => prev.filter(i => i.id !== id));
+        const { data, error } = await supabase
+            .from('giveaways')
+            .delete()
+            .eq('id', id)
+            .select();
+
+        if (error) {
+            alert("削除失敗: " + error.message);
+        } else if (data && data.length > 0) {
+            setMyGiveaways(prev => prev.filter(i => i.id !== id));
+        } else {
+            alert("削除できませんでした。権限がない可能性があります。");
+        }
     };
 
     const handleToggleVisibility = async (id: number, currentStatus: boolean) => {

@@ -290,10 +290,7 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                             <h2 className="font-bold text-xl text-gray-800">
                                 {activeTab === 'area' ? 'エリアから探す' : '沿線・駅から探す'}
                             </h2>
-                            <button className="md:hidden text-sm bg-gray-200 px-3 py-1 rounded font-bold flex items-center gap-1">
-                                <MdFilterList /> 絞り込み
-                            </button>
-                            <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
                                 <MdSort />
                                 <select className="bg-transparent font-bold focus:outline-none">
                                     <option>おすすめ順</option>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { MdArrowBack, MdAddPhotoAlternate, MdClose } from 'react-icons/md';
+import { MdArrowBack, MdAddPhotoAlternate, MdClose, MdCloudUpload } from 'react-icons/md';
 import AreaSelector from '@/components/AreaSelector';
 import Honeypot from '@/components/Honeypot';
 

@@ -1,9 +1,8 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 import { MdArrowBack, MdCheck, MdEmail } from 'react-icons/md';
+import Honeypot from '@/components/Honeypot';
 
 export default function RequestContactPage() {
     const params = useParams();
@@ -14,6 +13,7 @@ export default function RequestContactPage() {
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [honeypot, setHoneypot] = useState('');
 
     const [form, setForm] = useState({
         message: '投稿を拝見しました。詳しくお話しできますでしょうか？'
@@ -56,6 +56,10 @@ export default function RequestContactPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Bot Check
+        if (honeypot) return;
+
         if (!user || !req) return;
 
         setSubmitting(true);
@@ -169,6 +173,10 @@ export default function RequestContactPage() {
                             value={form.message}
                             onChange={e => setForm({ ...form, message: e.target.value })}
                         ></textarea>
+                    </div>
+
+                    <div className="mb-0">
+                        <Honeypot onChange={setHoneypot} />
                     </div>
 
                     <button type="submit" disabled={submitting} className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition flex items-center justify-center gap-2">

@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { MdArrowBack, MdCloudUpload, MdClose } from 'react-icons/md';
+import { MdArrowBack, MdAddPhotoAlternate, MdClose } from 'react-icons/md';
 import AreaSelector from '@/components/AreaSelector';
+import Honeypot from '@/components/Honeypot';
 
 export default function NewGivePage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [honeypot, setHoneypot] = useState('');
     const [image, setImage] = useState<{ file?: File, url: string } | null>(null);
     const [form, setForm] = useState({
         title: '',
@@ -81,8 +83,12 @@ export default function NewGivePage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!form.title || !form.description) {
-            alert("タイトルと詳細は必須です。");
+
+        // Bot Check
+        if (honeypot) return;
+
+        if (!form.title || !form.description || !form.location) {
+            alert("必須項目（タイトル、詳細、受け渡し場所）を入力してください。");
             return;
         }
 
@@ -205,12 +211,14 @@ export default function NewGivePage() {
                         />
                     </div>
 
+                    <Honeypot onChange={setHoneypot} />
+
                     <button
                         type="submit"
                         disabled={loading}
                         className={`w-full bg-[#bf0000] text-white font-bold py-4 rounded-lg shadow-md hover:opacity-90 transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        {loading ? '投稿中...' : '投稿する'}
+                        {loading ? '投稿中...' : 'あげたいを投稿する'}
                     </button>
 
                 </form>

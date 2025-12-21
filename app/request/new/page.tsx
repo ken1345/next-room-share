@@ -6,10 +6,12 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { MdArrowBack } from 'react-icons/md';
 import AreaSelector from '@/components/AreaSelector';
+import Honeypot from '@/components/Honeypot';
 
 export default function NewRequestPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [honeypot, setHoneypot] = useState('');
     const [form, setForm] = useState({
         title: '',
         budget_max: '',
@@ -28,6 +30,14 @@ export default function NewRequestPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Honeypot check: If filled, it's a bot.
+        if (honeypot) {
+            console.log("Bot detected");
+            // Silent return or fake delay
+            return;
+        }
+
         if (!form.title || !form.content) {
             alert("必須項目（タイトル、詳細）を入力してください。");
             return;
@@ -132,6 +142,10 @@ export default function NewRequestPage() {
                             onChange={e => setForm({ ...form, content: e.target.value })}
                             required
                         />
+                    </div>
+
+                    <div>
+                        <Honeypot onChange={setHoneypot} />
                     </div>
 
                     <button

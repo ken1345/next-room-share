@@ -4,7 +4,8 @@ import {
   MdHome, MdVpnKey, MdLocationOn, MdTrain,
   MdPets, MdWifi, MdPublic, MdFemale, MdAttachMoney, MdFiberNew,
   MdSportsEsports, MdFitnessCenter, MdMovie, MdSpa,
-  MdCalculate, MdPlaylistAddCheck, MdTimeline, MdPsychology, MdTag, MdPerson, MdCalendarToday, MdArrowForward
+  MdCalculate, MdPlaylistAddCheck, MdTimeline, MdPsychology, MdTag, MdPerson, MdCalendarToday, MdArrowForward,
+  MdPersonSearch, MdCardGiftcard
 } from "react-icons/md";
 
 import { MOCK_STORIES } from '@/data/mock-stories';
@@ -51,9 +52,26 @@ export default async function Home() {
       {/* 1. Main Nav */}
       <section className="bg-white py-8 border-b">
         <div className="container mx-auto px-4">
-          <div className="flex justify-center gap-8 md:gap-80 text-center">
-            <Link href="/search"><NavCard icon={<MdHome size={40} />} title="部屋を探す" sub="Rent a Room" /></Link>
-            <Link href="/host"><NavCard icon={<MdVpnKey size={40} />} title="部屋を貸したい" sub="Host a Room" /></Link>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {/* 1. Find a Room */}
+            <Link href="/search">
+              <NavCard icon={<MdHome size={40} />} title="部屋を探す" sub="Rent a Room" />
+            </Link>
+
+            {/* 2. Request a Room */}
+            <Link href="/request">
+              <NavCard icon={<MdPersonSearch size={40} />} title="部屋を借りたい" sub="Request a Room" />
+            </Link>
+
+            {/* 3. Host a Room */}
+            <Link href="/host">
+              <NavCard icon={<MdVpnKey size={40} />} title="部屋を貸す" sub="Host a Room" />
+            </Link>
+
+            {/* 4. Give Away */}
+            <Link href="/give">
+              <NavCard icon={<MdCardGiftcard size={40} />} title="あげたい" sub="Give Away" />
+            </Link>
           </div>
         </div>
       </section>

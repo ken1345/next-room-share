@@ -132,7 +132,7 @@ export default function AccountPage() {
         }
     };
 
-    const handleDeleteRequest = async (id: string) => {
+    const handleDeleteRequest = async (id: any) => {
         if (!window.confirm("本当に削除しますか？")) return;
         const { data, error } = await supabase
             .from('room_requests')
@@ -143,13 +143,13 @@ export default function AccountPage() {
         if (error) {
             alert("削除失敗: " + error.message);
         } else if (data && data.length > 0) {
-            setMyRequests(prev => prev.filter(i => i.id !== id));
+            setMyRequests(prev => prev.filter(i => i.id != id));
         } else {
             alert("削除できませんでした。権限がない可能性があります。");
         }
     };
 
-    const handleDeleteGiveaway = async (id: string) => {
+    const handleDeleteGiveaway = async (id: any) => {
         if (!window.confirm("本当に削除しますか？")) return;
         const { data, error } = await supabase
             .from('giveaways')
@@ -160,7 +160,7 @@ export default function AccountPage() {
         if (error) {
             alert("削除失敗: " + error.message);
         } else if (data && data.length > 0) {
-            setMyGiveaways(prev => prev.filter(i => i.id !== id));
+            setMyGiveaways(prev => prev.filter(i => i.id != id));
         } else {
             alert("削除できませんでした。権限がない可能性があります。");
         }

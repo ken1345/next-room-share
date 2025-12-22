@@ -48,11 +48,11 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
     const CardContent = (
         <div className={`group cursor-pointer bg-white rounded-xl shadow-sm hover:shadow-xl transition overflow-hidden border border-gray-100 flex ${horizontal ? 'flex-row h-auto' : 'flex-col h-full'}`}>
             {/* 写真エリア */}
-            <div className={`relative flex-shrink-0 ${horizontal ? 'w-48 h-48' : 'h-36 w-full'} ${image || 'bg-gray-200'} overflow-hidden`}>
+            <div className={`relative flex-shrink-0 ${horizontal ? 'w-48 h-48' : 'h-36 w-full'} ${image || 'bg-gray-100'} overflow-hidden`}>
                 {/* Background Image with Zoom Effect */}
                 <div
                     className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-110"
-                    style={imageUrl ? { backgroundImage: `url('${imageUrl}')` } : undefined}
+                    style={{ backgroundImage: imageUrl ? `url('${imageUrl}')` : `url('/nophoto-text.webp')` }}
                 />
 
                 {/* NEWバッジ */}

@@ -42,7 +42,7 @@ export default async function GiveDetailPage({ params }: { params: Promise<{ id:
                         {item.image_url ? (
                             <img src={item.image_url} alt={item.title} className="w-full h-full object-contain bg-black/5" />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">No Image</div>
+                            <img src="/nophoto-notext.webp" alt="No Image" className="w-full h-full object-cover bg-gray-100" />
                         )}
                     </div>
 

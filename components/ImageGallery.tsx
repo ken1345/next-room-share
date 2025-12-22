@@ -37,8 +37,8 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
     // If no images
     if (!images || images.length === 0) {
         return (
-            <div className="w-full h-[300px] bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 font-bold">
-                No Images
+            <div className="w-full h-[300px] bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 font-bold overflow-hidden">
+                <img src="/nophoto-text.webp" alt="No Image" className="w-full h-full object-cover opacity-80" />
             </div>
         );
     }

@@ -24,9 +24,10 @@ interface PhotoPropertyCardProps {
     horizontal?: boolean;
     equipment?: string[];
     personalEquipment?: string[];
+    createdAt?: string; // ISO string
 }
 
-export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, description, viewCount, favoritesCount, inquiryCount, prefecture, city, slug, horizontal = false, equipment = [], personalEquipment = [] }: PhotoPropertyCardProps) {
+export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, description, viewCount, favoritesCount, inquiryCount, prefecture, city, slug, horizontal = false, equipment = [], personalEquipment = [], createdAt }: PhotoPropertyCardProps) {
     // Format price: If raw value (>100), convert to Man-yen units (e.g. 12000 -> 1.2)
     // If small value (<100), assume already formatted.
     let displayPrice = price;
@@ -41,6 +42,9 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
         displayPrice = (numPrice / 10000).toFixed(1).replace(/\.0$/, '');
     }
 
+    // New Badge Logic: Show if created within 2 days (48 hours)
+    const isNew = createdAt ? (new Date().getTime() - new Date(createdAt).getTime()) < (2 * 24 * 60 * 60 * 1000) : false;
+
     const CardContent = (
         <div className={`group cursor-pointer bg-white rounded-xl shadow-sm hover:shadow-xl transition overflow-hidden border border-gray-100 flex ${horizontal ? 'flex-row h-auto' : 'flex-col h-full'}`}>
             {/* 写真エリア */}
@@ -52,7 +56,9 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
                 />
 
                 {/* NEWバッジ */}
-                <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-md z-10">NEW</span>
+                {isNew && (
+                    <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-md z-10">NEW</span>
+                )}
 
                 {/* Subtle dark overlay on hover */}
                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition z-0"></div>

@@ -56,6 +56,7 @@ export default async function ListingGalleryServer() {
                                 prefecture={l.prefecture}
                                 city={l.city}
                                 slug={l.slug}
+                                createdAt={l.created_at}
                             />
                         ))
                     )}

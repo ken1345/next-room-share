@@ -257,6 +257,7 @@ export default function AccountPage() {
                                             inquiryCount={l.inquiry_count || 0}
                                             prefecture={l.prefecture}
                                             city={l.city}
+                                            createdAt={l.created_at}
                                         />
                                     </div>
                                     <div className="p-2 flex gap-2 bg-gray-50 border-t border-gray-100">

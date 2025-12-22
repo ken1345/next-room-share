@@ -560,6 +560,7 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                             prefecture={p.prefecture}
                                             city={p.city}
                                             slug={p.slug}
+                                            createdAt={p.created_at}
                                         />
                                     </div>
 
@@ -586,6 +587,7 @@ export default function SearchClient({ listings, totalCount }: SearchClientProps
                                             prefecture={p.prefecture}
                                             city={p.city}
                                             slug={p.slug}
+                                            createdAt={p.created_at}
                                         />
                                     </div>
                                 </div>

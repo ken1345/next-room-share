@@ -14,7 +14,7 @@ export default function Footer() {
             <span className="text-xl font-bold tracking-tight">ルームシェアmikke</span>
           </div>
           <p className="text-gray-400 leading-relaxed">
-            日本最大級のルームシェア・シェアハウス募集サイト。<br />
+            日本のルームシェア・シェアハウス募集サイト。<br />
             あなたにぴったりの共同生活がここから始まります。
           </p>
         </div>

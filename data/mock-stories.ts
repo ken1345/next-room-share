@@ -20,7 +20,7 @@ export const MOCK_STORIES = [
         author: "Saki.K",
         date: "2023.12.10",
         tags: ["コミュニティ", "女性専用"],
-        image: "bg-orange-100"
+        image: "/stories/story_welcome_home.png"
     },
     {
         id: 2,
@@ -40,7 +40,7 @@ export const MOCK_STORIES = [
         author: "Taro.Y",
         date: "2023.11.25",
         tags: ["エンジニア", "スキルアップ"],
-        image: "bg-blue-100"
+        image: "/stories/story_coding_house.png"
     },
     {
         id: 3,
@@ -59,7 +59,7 @@ export const MOCK_STORIES = [
         author: "Mika.S",
         date: "2023.11.15",
         tags: ["国際交流", "語学学習"],
-        image: "bg-green-100"
+        image: "/stories/story_international_kitchen.png"
     },
     {
         id: 4,
@@ -78,7 +78,7 @@ export const MOCK_STORIES = [
         author: "Kenji.R",
         date: "2023.11.01",
         tags: ["起業", "ビジネス"],
-        image: "bg-purple-100"
+        image: "/stories/story_coworking_business.png"
     },
     {
         id: 5,
@@ -95,7 +95,7 @@ export const MOCK_STORIES = [
         author: "Ai.T",
         date: "2023.10.20",
         tags: ["ペット可", "猫"],
-        image: "bg-red-100"
+        image: "/stories/story_cats_house.png"
     },
     {
         id: 6,
@@ -112,6 +112,6 @@ export const MOCK_STORIES = [
         author: "Hiro.M",
         date: "2023.10.05",
         tags: ["ミニマリスト", "ライフスタイル"],
-        image: "bg-gray-100"
+        image: "/stories/story_minimalist_room.png"
     }
 ];

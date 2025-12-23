@@ -58,7 +58,8 @@ export default function ForgotPasswordPage() {
                 <h1 className="text-2xl font-bold text-gray-800 mb-2">パスワードをお忘れの方</h1>
                 <p className="text-gray-500 mb-8 text-sm">
                     登録したメールアドレスを入力してください。<br />
-                    再設定用のリンクをお送りします。
+                    再設定用のリンクをお送りします。<br />
+                    <span className="text-[#bf0000] font-bold mt-2 inline-block text-xs">※リンクがメールで届くまでに1時間以上時間がかかることがあります。</span>
                 </p>
 
                 {error && (

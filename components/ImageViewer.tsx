@@ -55,17 +55,18 @@ export default function ImageViewer({ images, initialIndex, isOpen, onClose }: I
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center backdrop-blur-sm transition-opacity duration-300">
+
+        <div className="fixed inset-0 z-50 bg-white flex items-center justify-center transition-opacity duration-300">
             {/* Close Button */}
             <button
                 onClick={onClose}
-                className="absolute top-4 right-4 z-50 p-2 text-white/70 hover:text-white bg-black/20 hover:bg-black/50 rounded-full transition"
+                className="absolute top-4 right-4 z-50 p-2 text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 rounded-full transition"
             >
                 <MdClose size={32} />
             </button>
 
             {/* Counter */}
-            <div className="absolute top-6 left-6 text-white/80 font-bold text-sm tracking-widest z-50">
+            <div className="absolute top-6 left-6 text-gray-700 font-bold text-sm tracking-widest z-50">
                 {currentIndex + 1} / {images.length}
             </div>
 
@@ -74,7 +75,7 @@ export default function ImageViewer({ images, initialIndex, isOpen, onClose }: I
                 {/* Navigation Buttons */}
                 <button
                     onClick={(e) => { e.stopPropagation(); showPrev(); }}
-                    className="absolute left-4 md:left-8 p-3 text-white/70 hover:text-white bg-black/20 hover:bg-black/50 rounded-full transition z-50"
+                    className="absolute left-4 md:left-8 p-3 text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 rounded-full transition z-50 shadow-sm border border-gray-100"
                 >
                     <MdKeyboardArrowLeft size={40} />
                 </button>
@@ -82,12 +83,12 @@ export default function ImageViewer({ images, initialIndex, isOpen, onClose }: I
                 <img
                     src={images[currentIndex]}
                     alt={`Image ${currentIndex + 1}`}
-                    className="max-w-full max-h-full object-contain shadow-2xl rounded-sm"
+                    className="max-w-full max-h-full object-contain rounded-sm"
                 />
 
                 <button
                     onClick={(e) => { e.stopPropagation(); showNext(); }}
-                    className="absolute right-4 md:right-8 p-3 text-white/70 hover:text-white bg-black/20 hover:bg-black/50 rounded-full transition z-50"
+                    className="absolute right-4 md:right-8 p-3 text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 rounded-full transition z-50 shadow-sm border border-gray-100"
                 >
                     <MdKeyboardArrowRight size={40} />
                 </button>

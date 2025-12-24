@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { MdKeyboardArrowDown, MdApps } from 'react-icons/md';
+
 import ImageViewer from './ImageViewer';
-import FullPageGallery from './FullPageGallery';
 
 interface ImageGalleryProps {
     images: string[];
@@ -11,7 +10,7 @@ interface ImageGalleryProps {
 export default function ImageGallery({ images, title }: ImageGalleryProps) {
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerIndex, setViewerIndex] = useState(0);
-    const [isFullPageOpen, setIsFullPageOpen] = useState(false);
+
 
     // If no images
     if (!images || images.length === 0) {
@@ -32,9 +31,7 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
         setIsViewerOpen(true);
     };
 
-    const openFullPage = () => {
-        setIsFullPageOpen(true);
-    };
+
 
     return (
         <>
@@ -45,16 +42,7 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
                 onClose={() => setIsViewerOpen(false)}
             />
 
-            {isFullPageOpen && (
-                <FullPageGallery
-                    images={images}
-                    onClose={() => setIsFullPageOpen(false)}
-                    onImageClick={(index) => {
-                        setIsFullPageOpen(false); // Close full page
-                        openViewer(index); // Open slider
-                    }}
-                />
-            )}
+
 
             {/* --- Mobile View (Carousel) --- */}
             <div className="md:hidden relative group">
@@ -103,13 +91,7 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
                     ))}
                 </div>
 
-                {/* 'Show all photos' Button */}
-                <button
-                    onClick={openFullPage}
-                    className="absolute bottom-6 right-6 bg-white text-gray-800 font-bold px-4 py-2 rounded-lg shadow-md border border-gray-200 hover:bg-gray-50 transition flex items-center gap-2 text-sm z-10"
-                >
-                    <MdApps /> すべての写真を表示
-                </button>
+
             </div>
         </>
     );

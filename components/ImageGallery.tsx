@@ -1,7 +1,7 @@
-"use client";
-import React, { useState, useRef, useEffect } from 'react';
-import { MdKeyboardArrowDown } from 'react-icons/md';
+import React, { useState } from 'react';
+import { MdKeyboardArrowDown, MdApps } from 'react-icons/md';
 import ImageViewer from './ImageViewer';
+import FullPageGallery from './FullPageGallery';
 
 interface ImageGalleryProps {
     images: string[];
@@ -11,28 +11,7 @@ interface ImageGalleryProps {
 export default function ImageGallery({ images, title }: ImageGalleryProps) {
     const [isViewerOpen, setIsViewerOpen] = useState(false);
     const [viewerIndex, setViewerIndex] = useState(0);
-    const rightGridRef = useRef<HTMLDivElement>(null);
-    const [showScrollIndicator, setShowScrollIndicator] = useState(false);
-
-    const openViewer = (index: number) => {
-        setViewerIndex(index);
-        setIsViewerOpen(true);
-    };
-
-    // Check if scroll is possible/needed
-    const checkScroll = () => {
-        if (rightGridRef.current) {
-            const { scrollTop, scrollHeight, clientHeight } = rightGridRef.current;
-            // Show indicator if there is content below the fold
-            setShowScrollIndicator(scrollTop + clientHeight < scrollHeight - 10);
-        }
-    };
-
-    useEffect(() => {
-        checkScroll();
-        window.addEventListener('resize', checkScroll);
-        return () => window.removeEventListener('resize', checkScroll);
-    }, [images]);
+    const [isFullPageOpen, setIsFullPageOpen] = useState(false);
 
     // If no images
     if (!images || images.length === 0) {
@@ -44,7 +23,18 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
     }
 
     const mainImage = images[0];
-    const secondaryImages = images.slice(1); // All remaining images
+    // Show max 4 sub-images for the grid
+    const subImages = images.slice(1, 5);
+    const remainingCount = images.length > 5 ? images.length - 5 : 0;
+
+    const openViewer = (index: number) => {
+        setViewerIndex(index);
+        setIsViewerOpen(true);
+    };
+
+    const openFullPage = () => {
+        setIsFullPageOpen(true);
+    };
 
     return (
         <>
@@ -54,6 +44,17 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
                 isOpen={isViewerOpen}
                 onClose={() => setIsViewerOpen(false)}
             />
+
+            {isFullPageOpen && (
+                <FullPageGallery
+                    images={images}
+                    onClose={() => setIsFullPageOpen(false)}
+                    onImageClick={(index) => {
+                        setIsFullPageOpen(false); // Close full page
+                        openViewer(index); // Open slider
+                    }}
+                />
+            )}
 
             {/* --- Mobile View (Carousel) --- */}
             <div className="md:hidden relative group">
@@ -72,64 +73,44 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
                 </div>
             </div>
 
-            {/* --- Desktop View (Split Scrollable) --- */}
-            <div className="hidden md:flex gap-2 h-[450px] rounded-2xl overflow-hidden shadow-sm">
-                {/* Left: Main Image (50%) - Enhanced height */}
+            {/* --- Desktop View (Mosaic Grid) --- */}
+            <div className="hidden md:flex gap-2 h-[400px] rounded-2xl overflow-hidden relative group">
+                {/* Left: Main Image (50%) */}
                 <div
                     onClick={() => openViewer(0)}
-                    className="w-1/2 h-full bg-cover bg-center cursor-pointer group relative hover:opacity-95 transition"
+                    className="w-1/2 h-full bg-cover bg-center cursor-pointer relative hover:opacity-95 transition"
                     style={{ backgroundImage: `url('${mainImage}')` }}
                 >
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></div>
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition"></div>
                 </div>
 
-                {/* Right: Scrollable Grid (50%) */}
-                <div className="w-1/2 h-full relative">
-                    <div
-                        ref={rightGridRef}
-                        onScroll={checkScroll}
-                        className="w-full h-full overflow-y-auto grid grid-cols-2 gap-2 pr-1 no-scrollbar pb-2"
-                        // Hide scrollbar but keep functionality
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                    >
-                        {secondaryImages.map((img, i) => (
-                            <div
-                                key={i + 1}
-                                onClick={() => openViewer(i + 1)}
-                                className="h-48 w-full bg-cover bg-center cursor-pointer relative group hover:opacity-95 transition"
-                                style={{ backgroundImage: `url('${img}')` }}
-                            >
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition"></div>
-                            </div>
-                        ))}
-
-                        {/* Fill empty slots if very few images to maintain layout structure */}
-                        {secondaryImages.length < 4 && [...Array(4 - secondaryImages.length)].map((_, i) => (
-                            <div key={`empty-${i}`} className="bg-gray-50 h-48 w-full"></div>
-                        ))}
-                    </div>
-
-                    {/* Scroll Indicator (Down Arrow) */}
-                    {showScrollIndicator && (
-                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 pointer-events-none z-10 animate-bounce">
-                            <div className="bg-white/90 backdrop-blur text-gray-800 p-2 rounded-full shadow-lg border border-gray-100">
-                                <MdKeyboardArrowDown size={24} />
-                            </div>
+                {/* Right: Grid (50%) */}
+                <div className="w-1/2 h-full grid grid-cols-2 gap-2">
+                    {subImages.map((img, i) => (
+                        <div
+                            key={i + 1}
+                            onClick={() => openViewer(i + 1)}
+                            className="h-full w-full bg-cover bg-center cursor-pointer relative hover:opacity-95 transition"
+                            style={{ backgroundImage: `url('${img}')` }}
+                        >
+                            <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition"></div>
                         </div>
-                    )}
+                    ))}
 
-                    {/* Shadow gradient at bottom to indicate scroll */}
-                    {showScrollIndicator && (
-                        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-                    )}
+                    {/* Fill empty slots if needed to keep layout clean (optional, but good for structure) */}
+                    {subImages.length < 4 && [...Array(4 - subImages.length)].map((_, i) => (
+                        <div key={`empty-${i}`} className="bg-gray-50 h-full w-full"></div>
+                    ))}
                 </div>
-            </div>
 
-            <style jsx global>{`
-                .no-scrollbar::-webkit-scrollbar {
-                    display: none;
-                }
-            `}</style>
+                {/* 'Show all photos' Button */}
+                <button
+                    onClick={openFullPage}
+                    className="absolute bottom-6 right-6 bg-white text-gray-800 font-bold px-4 py-2 rounded-lg shadow-md border border-gray-200 hover:bg-gray-50 transition flex items-center gap-2 text-sm z-10"
+                >
+                    <MdApps /> すべての写真を表示
+                </button>
+            </div>
         </>
     );
 }

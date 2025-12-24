@@ -1,6 +1,6 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import { Noto_Sans_JP } from "next/font/google";
+import { Inter } from "next/font/google"; // 1. Import Inter
 import "./globals.css";
 
 // 作成したコンポーネントをインポート
@@ -8,10 +8,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProfileGuard from "@/components/ProfileGuard";
 
-const notoSansJP = Noto_Sans_JP({
-  subsets: ["latin"],
-  display: "swap"
-});
+const inter = Inter({ subsets: ["latin"] }); // 2. Init Inter
 
 export const metadata: Metadata = {
   title: "ルームシェア探しならルームシェアmikke",
@@ -34,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={notoSansJP.className}>
+      <body className={inter.className}> {/* 3. Use inter.className */}
         <div className="min-h-screen flex flex-col bg-[#fcfbf7]">
           {/* ProfileGuard: Checks logic and redirects if needed */}
           <ProfileGuard>

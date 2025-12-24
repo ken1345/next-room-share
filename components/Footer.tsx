@@ -1,13 +1,26 @@
 
 import Link from 'next/link';
+import { MdHome } from 'react-icons/md';
 
 export default function Footer() {
   return (
     <footer className="bg-gray-50 text-gray-600 font-sans border-t border-gray-200 mt-auto">
 
       {/* Main Footer Links - Hidden on Mobile */}
-      <div className="hidden md:block container mx-auto px-4 py-12 max-w-4xl">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="hidden md:block container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+
+          {/* Column 1: Brand & Identity */}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2 text-gray-800">
+              <MdHome size={28} className="text-[#bf0000]" />
+              <span className="text-xl font-bold tracking-tight">ルームシェアmikke</span>
+            </div>
+            <p className="text-sm leading-relaxed text-gray-500">
+              日本のルームシェア募集サイト。<br />
+              あなたにぴったりの共同生活がここから始まります。
+            </p>
+          </div>
 
           {/* Column 2: Search */}
           <div>

@@ -60,14 +60,14 @@ export default async function Home() {
               <NavCard icon={<MdHome size={40} />} title="部屋を探す" sub="Rent a Room" />
             </Link>
 
-            {/* 2. Request a Room */}
-            <Link href="/request">
-              <NavCard icon={<MdPersonSearch size={40} />} title="部屋を借りたい" sub="Request a Room" />
-            </Link>
-
-            {/* 3. Host a Room */}
+            {/* 2. Host a Room */}
             <Link href="/host">
               <NavCard icon={<MdVpnKey size={40} />} title="部屋を貸す" sub="Host a Room" />
+            </Link>
+
+            {/* 3. Request a Room */}
+            <Link href="/request">
+              <NavCard icon={<MdPersonSearch size={40} />} title="部屋を借りたい" sub="Request a Room" />
             </Link>
 
             {/* 4. Give Away */}

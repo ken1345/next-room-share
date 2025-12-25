@@ -63,6 +63,16 @@ export default function MessageThreadPage() {
 
             if (msgs) setMessages(msgs);
 
+            // Mark unread messages as read (if I am not the sender)
+            if (session.user.id) {
+                await supabase
+                    .from('messages')
+                    .update({ read_at: new Date().toISOString() }) // Update read_at timestamp
+                    .eq('thread_id', threadId)
+                    .neq('sender_id', session.user.id)
+                    .is('read_at', null); // Check if read_at is null
+            }
+
             setLoading(false);
 
             // Subscribe to new messages

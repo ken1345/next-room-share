@@ -27,6 +27,8 @@ type Thread = {
     } | null;
     last_message_sender_id?: string;
     last_message_content?: string;
+    last_message_created_at?: string;
+    last_message_read_at?: string | null; // Changed from is_read
 };
 
 export default function MessagesListPage() {
@@ -60,11 +62,11 @@ export default function MessagesListPage() {
             if (error) {
                 console.error("Error fetching threads:", error);
             } else if (data) {
-                // Fetch last message for each thread to determine sender/status
-                const threadsWithLastMsg = await Promise.all(data.map(async (t) => {
+                const threadsWithLastMsg = await Promise.all(data.map(async (t: any) => {
+                    // Fetch last message for each thread to determine sender/status
                     const { data: lastMsgs } = await supabase
                         .from('messages')
-                        .select('sender_id, content')
+                        .select('sender_id, content, created_at, read_at') // Fetch read_at
                         .eq('thread_id', t.id)
                         .order('created_at', { ascending: false })
                         .limit(1);
@@ -73,9 +75,19 @@ export default function MessagesListPage() {
                     return {
                         ...t,
                         last_message_sender_id: lastMsg?.sender_id,
-                        last_message_content: lastMsg?.content
+                        last_message_content: lastMsg?.content,
+                        last_message_created_at: lastMsg?.created_at,
+                        last_message_read_at: lastMsg?.read_at // Store read_at
                     };
                 }));
+
+                // Sort by last message created_at (descending)
+                threadsWithLastMsg.sort((a, b) => {
+                    const timeA = a.last_message_created_at ? new Date(a.last_message_created_at).getTime() : new Date(a.updated_at).getTime();
+                    const timeB = b.last_message_created_at ? new Date(b.last_message_created_at).getTime() : new Date(b.updated_at).getTime();
+                    return timeB - timeA;
+                });
+
                 // Cast to expected type or ensure type compatibility implicitly
                 setThreads(threadsWithLastMsg as Thread[]);
             }
@@ -112,6 +124,10 @@ export default function MessagesListPage() {
                         let lastSenderLabel = "";
                         let lastContent = thread.last_message_content || "メッセージなし";
 
+                        // Check Unread Status
+                        // Unread if: Last message is NOT from me AND read_at is null
+                        const isUnread = thread.last_message_sender_id !== user.id && !thread.last_message_read_at;
+
                         if (thread.last_message_sender_id) {
                             if (thread.last_message_sender_id === user.id) {
                                 lastSenderLabel = "あなた";
@@ -120,13 +136,18 @@ export default function MessagesListPage() {
                             }
                         }
 
-                        // Formatting Date
-                        const date = new Date(thread.updated_at);
+
+                        // Formatting Date (Use last message time preferentially)
+                        const targetDate = thread.last_message_created_at ? thread.last_message_created_at : thread.updated_at;
+                        const date = new Date(targetDate);
                         const dateStr = date.toLocaleDateString();
                         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                         return (
-                            <Link href={`/messages/${thread.id}`} key={thread.id} className="block bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition">
+                            <Link href={`/messages/${thread.id}`} key={thread.id} className={`block bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition relative ${isUnread ? 'bg-red-50/30' : ''}`}>
+                                {isUnread && (
+                                    <div className="absolute top-2 left-2 w-3 h-3 bg-[#bf0000] rounded-full shadow-sm z-10"></div>
+                                )}
                                 <div className="flex items-start gap-4">
                                     {/* Icon / Image */}
                                     <div className="shrink-0 w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center border border-gray-100">
@@ -139,8 +160,8 @@ export default function MessagesListPage() {
 
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-baseline mb-1">
-                                            <h3 className="font-bold text-gray-800 truncate pr-2">{counterpartName}</h3>
-                                            <span className="text-xs text-gray-400 shrink-0">{dateStr} {timeStr}</span>
+                                            <h3 className={`font-bold text-gray-800 truncate pr-6 ${isUnread ? 'text-[#bf0000]' : ''}`}>{counterpartName}</h3>
+                                            <span className={`text-xs shrink-0 ${isUnread ? 'text-[#bf0000] font-bold' : 'text-gray-400'}`}>{dateStr} {timeStr}</span>
                                         </div>
                                         <p className="text-sm text-gray-600 font-bold mb-1 truncate">
                                             {thread.listing?.title || "物件名なし"}

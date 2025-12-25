@@ -11,6 +11,10 @@ import ProfileGuard from "@/components/ProfileGuard";
 const inter = Inter({ subsets: ["latin"] }); // 2. Init Inter
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://roommikke.jp"), // Fix for relative URLs
+  alternates: {
+    canonical: "./", // Auto-generates self-referencing canonical
+  },
   title: "ルームシェア探しならルームシェアmikke",
   description: "登録料・手数料無料！ルームミッケは、相性診断で自分に合うルームメイトが見つかる掲示板サイトです。東京エリアを中心に、ペット可、女性専用などこだわりの条件でお部屋探しができます。",
   keywords: "ルームシェア, 部屋探し, 無料, 東京, シェアハウス, ゲストハウス, ルームメイト募集",

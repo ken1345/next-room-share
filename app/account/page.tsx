@@ -397,13 +397,19 @@ export default function AccountPage() {
 
 
 
-                <div className="pt-4 flex justify-center">
+                <div className="pt-4 flex flex-col items-center gap-4">
                     <button
                         onClick={handleSignOut}
                         className="text-gray-400 hover:text-gray-600 font-bold text-sm underline transition"
                     >
                         ログアウト
                     </button>
+                    <Link
+                        href="/account/delete"
+                        className="text-gray-300 hover:text-red-500 font-bold text-xs transition"
+                    >
+                        退会する
+                    </Link>
                 </div>
             </div>
         </div>

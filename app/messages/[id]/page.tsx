@@ -94,6 +94,28 @@ export default function MessageThreadPage() {
         const content = newMessage.trim();
         setNewMessage(''); // Optimistic clear
 
+        // --- AI Content Moderation Check ---
+        try {
+            const modResponse = await fetch('/api/moderation/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: content }),
+            });
+
+            if (modResponse.ok) {
+                const modResult = await modResponse.json();
+                if (modResult.flagged) {
+                    alert(`メッセージ内容に不適切な表現が含まれている可能性があります。\n(理由: ${modResult.categories.join(', ')})`);
+                    setNewMessage(content); // Revert
+                    setSending(false);
+                    return; // Stop submission
+                }
+            }
+        } catch (e) {
+            console.warn("Moderation check failed, proceeding anyway...", e);
+        }
+        // -----------------------------------
+
         const { data: sentMessage, error } = await supabase
             .from('messages')
             .insert({

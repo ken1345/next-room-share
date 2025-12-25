@@ -66,6 +66,27 @@ export default function RequestContactPage() {
 
         setSubmitting(true);
 
+        // --- AI Content Moderation Check ---
+        try {
+            const modResponse = await fetch('/api/moderation/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: form.message }),
+            });
+
+            if (modResponse.ok) {
+                const modResult = await modResponse.json();
+                if (modResult.flagged) {
+                    alert(`メッセージ内容に不適切な表現が含まれている可能性があります。\n(理由: ${modResult.categories.join(', ')})`);
+                    setSubmitting(false);
+                    return; // Stop submission
+                }
+            }
+        } catch (e) {
+            console.warn("Moderation check failed, proceeding anyway...", e);
+        }
+        // -----------------------------------
+
         try {
             // Find existing thread for this request + current user (as host/offerer)
             // Ideally, the person contacting a 'request' is a potential HOST (or just another user).

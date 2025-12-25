@@ -72,6 +72,28 @@ export default function EditProfilePage() {
         setIsLoading(true);
 
         try {
+            // --- AI Content Moderation Check ---
+            try {
+                const textToCheck = `${displayName}\n${occupation}`;
+                const modResponse = await fetch('/api/moderation/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: textToCheck }),
+                });
+
+                if (modResponse.ok) {
+                    const modResult = await modResponse.json();
+                    if (modResult.flagged) {
+                        alert(`プロフィール内容に不適切な表現が含まれている可能性があります。\n(理由: ${modResult.categories.join(', ')})`);
+                        setIsLoading(false);
+                        return; // Stop submission
+                    }
+                }
+            } catch (e) {
+                console.warn("Moderation check failed, proceeding anyway...", e);
+            }
+            // -----------------------------------
+
             let photoURL = currentPhotoURL;
 
             // 1. Upload Image if changed

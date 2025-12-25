@@ -124,6 +124,28 @@ export default function NewGivePage() {
                 uploadedImageUrl = publicUrl;
             }
 
+            // --- AI Content Moderation Check ---
+            try {
+                const textToCheck = `${form.title}\n${form.description}`;
+                const modResponse = await fetch('/api/moderation/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: textToCheck }),
+                });
+
+                if (modResponse.ok) {
+                    const modResult = await modResponse.json();
+                    if (modResult.flagged) {
+                        alert(`投稿内容に不適切な表現が含まれている可能性があります。\n(理由: ${modResult.categories.join(', ')})`);
+                        setLoading(false);
+                        return; // Stop submission
+                    }
+                }
+            } catch (e) {
+                console.warn("Moderation check failed, proceeding anyway...", e);
+            }
+            // -----------------------------------
+
             const { error } = await supabase.from('giveaways').insert({
                 user_id: user.id,
                 title: form.title,

@@ -74,6 +74,27 @@ export default function NewStoryPage() {
             const colors = ['bg-orange-100', 'bg-blue-100', 'bg-green-100', 'bg-purple-100', 'bg-red-100', 'bg-gray-100'];
             const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
+            // --- AI Content Moderation Check ---
+            try {
+                const textToCheck = `${form.title}\n${form.excerpt}\n${form.body}`;
+                const modResponse = await fetch('/api/moderation/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: textToCheck }),
+                });
+
+                if (modResponse.ok) {
+                    const modResult = await modResponse.json();
+                    if (modResult.flagged) {
+                        alert(`投稿内容に不適切な表現が含まれている可能性があります。\n(理由: ${modResult.categories.join(', ')})`);
+                        return; // Stop submission
+                    }
+                }
+            } catch (e) {
+                console.warn("Moderation check failed, proceeding anyway...", e);
+            }
+            // -----------------------------------
+
             // Parse tags
             const tagArray = form.tags.split(',').map(t => t.trim()).filter(t => t.length > 0);
 

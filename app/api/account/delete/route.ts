@@ -2,8 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-// Note: Using auth-helpers or just standard client pattern depending on proj setup. 
+// Removed unused/missing auth-helpers import
+// Note: Using auth-helpers or just standard client pattern depending on proj setup.
 // Assuming standard pattern for getting user first.
 
 export async function DELETE(request: Request) {

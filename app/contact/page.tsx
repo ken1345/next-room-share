@@ -39,24 +39,8 @@ export default function ContactPage() {
             return;
         }
 
-        // --- AI Content Moderation Check ---
-        try {
-            const modResponse = await fetch('/api/moderation/check', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: message }), // Check message
-            });
-
-            if (modResponse.ok) {
-                const modResult = await modResponse.json();
-                if (modResult.flagged) {
-                    alert(`お問い合わせ内容に不適切な表現が含まれている可能性があります。\n(理由: ${modResult.categories.join(', ')})`);
-                    return; // Stop submission
-                }
-            }
-        } catch (e) {
-            console.warn("Moderation check failed, proceeding anyway...", e);
-        }
+        // -----------------------------------
+        // [MODERATION REMOVED BY USER REQUEST]
         // -----------------------------------
 
         try {

@@ -1,17 +1,45 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
 
     try {
         const { name, email, category, message, spamCheck } = await request.json();
 
-        // 0. Spam Verification (Custom)
-        // Check Honeypot (must be empty)
+        // 0. Spam Verification
         if (spamCheck?.honey) {
             console.warn("Honeypot filled by:", email);
             return NextResponse.json({ error: "Spam detected" }, { status: 400 });
         }
+
+        // 1. Save to Database (contacts table)
+        // Use Service Role Key if available to bypass RLS, otherwise Anon Key
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const supabaseKey = serviceRoleKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+        console.log(`[SendEmail] Using ${serviceRoleKey ? 'Service Role Key' : 'Anon Key'} for DB insert.`);
+
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        const { error: dbError } = await supabase
+            .from('contacts')
+            .insert({
+                name,
+                email,
+                category,
+                message
+            });
+
+        if (dbError) {
+            console.error("Database Insert Error:", dbError);
+            return NextResponse.json({
+                error: `Database save failed: ${dbError.message} (Code: ${dbError.code}, Details: ${dbError.details})`
+            }, { status: 500 });
+        }
+
+        // 2. Resend Configuration (Proceed to email)
 
         // Check Math (Removed for smarter UX)
         // if (spamCheck?.mathAnswer !== '8') ...

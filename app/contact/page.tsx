@@ -1,13 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { MdEmail } from 'react-icons/md';
-import { supabase } from '@/lib/supabase';
 
 export default function ContactPage() {
     const [submitted, setSubmitted] = useState(false);
 
     // Custom Anti-Spam: Time Guard
-    // track when the component mounted
     const [mountTime, setMountTime] = useState<number>(0);
 
     useEffect(() => {
@@ -17,50 +15,25 @@ export default function ContactPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // 1. Time Guard Check (Client-side)
-        // Humans take at least a few seconds to fill a form.
-        // Bots often submit immediately.
+        // 1. Time Guard Check
         const timeElapsed = Date.now() - mountTime;
-        if (timeElapsed < 2000) { // 2 seconds threshold
+        if (timeElapsed < 2000) {
             alert("送信が早すぎます。もう一度お試しください。");
             return;
         }
 
-        // Form elements access
         const form = e.target as HTMLFormElement;
         const name = (form.elements.namedItem('name') as HTMLInputElement).value;
         const email = (form.elements.namedItem('email') as HTMLInputElement).value;
         const category = (form.elements.namedItem('category') as HTMLSelectElement).value;
         const message = (form.elements.namedItem('message') as HTMLTextAreaElement).value;
 
-        // 2. Honeypot check (Client-side pre-check)
+        // 2. Honeypot check
         const honey = (form.elements.namedItem('username_check') as HTMLInputElement).value;
-        if (honey) {
-            // Silently fail for bots
-            return;
-        }
-
-        // -----------------------------------
-        // [MODERATION REMOVED BY USER REQUEST]
-        // -----------------------------------
+        if (honey) return;
 
         try {
-            // 1. Save to 'contacts' table
-            const { error: dbError } = await supabase
-                .from('contacts')
-                .insert({
-                    name,
-                    email,
-                    category,
-                    message
-                });
-
-            if (dbError) {
-                console.error("Supabase error:", dbError);
-                throw new Error("データベースへの保存に失敗しました");
-            }
-
-            // 2. Send Email Notification (Resend)
+            // Call API which handles both DB insert and Email sending
             const res = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -73,21 +46,17 @@ export default function ContactPage() {
                 }),
             });
 
-            if (!res.ok) {
+            if (res.ok) {
+                setSubmitted(true);
+                window.scrollTo(0, 0);
+            } else {
                 const data = await res.json();
-                console.error("Email send error:", data);
-                // Note: We might allow success if DB saved but email failed, 
-                // but usually user expects confirmation. 
-                // For now, let's treat DB success as primary, but warn if email fails?
-                // Or just proceed. Let's proceed but log it.
+                console.error("API error:", data);
+                alert(`送信に失敗しました: ${data.error || '不明なエラー'}`);
             }
-
-            setSubmitted(true);
-            window.scrollTo(0, 0);
-
-        } catch (error: any) {
+        } catch (error) {
             console.error("Error sending inquiry:", error);
-            alert(`エラーが発生しました: ${error.message || '不明なエラー'}`);
+            alert("エラーが発生しました。");
         }
     };
 

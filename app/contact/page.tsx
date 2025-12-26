@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { MdEmail } from 'react-icons/md';
+import { supabase } from '@/lib/supabase';
 
 export default function ContactPage() {
     const [submitted, setSubmitted] = useState(false);
@@ -44,6 +45,22 @@ export default function ContactPage() {
         // -----------------------------------
 
         try {
+            // 1. Save to 'contacts' table
+            const { error: dbError } = await supabase
+                .from('contacts')
+                .insert({
+                    name,
+                    email,
+                    category,
+                    message
+                });
+
+            if (dbError) {
+                console.error("Supabase error:", dbError);
+                throw new Error("データベースへの保存に失敗しました");
+            }
+
+            // 2. Send Email Notification (Resend)
             const res = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -52,22 +69,25 @@ export default function ContactPage() {
                     email,
                     category,
                     message,
-                    spamCheck: {
-                        honey
-                    }
+                    spamCheck: { honey }
                 }),
             });
 
-            if (res.ok) {
-                setSubmitted(true);
-                window.scrollTo(0, 0);
-            } else {
+            if (!res.ok) {
                 const data = await res.json();
-                alert(`送信に失敗しました: ${data.error || '不明なエラー'}`);
+                console.error("Email send error:", data);
+                // Note: We might allow success if DB saved but email failed, 
+                // but usually user expects confirmation. 
+                // For now, let's treat DB success as primary, but warn if email fails?
+                // Or just proceed. Let's proceed but log it.
             }
-        } catch (error) {
+
+            setSubmitted(true);
+            window.scrollTo(0, 0);
+
+        } catch (error: any) {
             console.error("Error sending inquiry:", error);
-            alert("エラーが発生しました。");
+            alert(`エラーが発生しました: ${error.message || '不明なエラー'}`);
         }
     };
 

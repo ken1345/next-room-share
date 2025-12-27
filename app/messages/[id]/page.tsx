@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { MdArrowBack, MdSend, MdPerson, MdImage } from 'react-icons/md';
+import { MdArrowBack, MdSend, MdPerson, MdImage, MdBlock, MdMoreVert } from 'react-icons/md';
 
 export default function MessageThreadPage() {
     const params = useParams();
@@ -16,6 +16,12 @@ export default function MessageThreadPage() {
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+
+    // Blocking State
+    const [isBlocked, setIsBlocked] = useState(false); // Blocked mutually or by other? (Strictly speaking, if I blocked them, I can unblock)
+    const [blockedByMe, setBlockedByMe] = useState(false); // Did I block them?
+    const [showMenu, setShowMenu] = useState(false); // For dropdown menu
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -49,10 +55,36 @@ export default function MessageThreadPage() {
 
             if (threadError || !threadData) {
                 console.error("Error fetching thread:", threadError);
-                // Handle error (access denied or not found)
                 return;
             }
             setThread(threadData);
+
+            // Determine Counterpart ID
+            const counterpartId = (session.user.id === threadData.host_id) ? threadData.seeker_id : threadData.host_id;
+
+            // Fetch Block Status
+            // Check if I blocked them
+            const { data: myBlock } = await supabase
+                .from('user_blocks')
+                .select('*')
+                .eq('blocker_id', session.user.id)
+                .eq('blocked_id', counterpartId)
+                .single();
+
+            if (myBlock) setBlockedByMe(true);
+
+            // Check if they blocked me (Optional: strictly speaking we might not know, but if we can't send, we are blocked)
+            // But usually we just check if *any* block relationship exists for disabling UI
+            const { data: theirBlock } = await supabase
+                .from('user_blocks')
+                .select('*')
+                .eq('blocker_id', counterpartId)
+                .eq('blocked_id', session.user.id)
+                .single();
+
+            if (myBlock || theirBlock) {
+                setIsBlocked(true);
+            }
 
             // Fetch Messages
             const { data: msgs, error: msgsError } = await supabase
@@ -67,10 +99,10 @@ export default function MessageThreadPage() {
             if (session.user.id) {
                 await supabase
                     .from('messages')
-                    .update({ read_at: new Date().toISOString() }) // Update read_at timestamp
+                    .update({ read_at: new Date().toISOString() })
                     .eq('thread_id', threadId)
                     .neq('sender_id', session.user.id)
-                    .is('read_at', null); // Check if read_at is null
+                    .is('read_at', null);
             }
 
             setLoading(false);
@@ -98,11 +130,11 @@ export default function MessageThreadPage() {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !user) return;
+        if (!newMessage.trim() || !user || isBlocked) return;
         setSending(true);
 
         const content = newMessage.trim();
-        setNewMessage(''); // Optimistic clear
+        setNewMessage('');
 
         // --- AI Content Moderation Check ---
         try {
@@ -116,15 +148,14 @@ export default function MessageThreadPage() {
                 const modResult = await modResponse.json();
                 if (modResult.flagged) {
                     alert(`メッセージ内容に不適切な表現が含まれている可能性があります。\n(理由: ${modResult.categories.join(', ')})`);
-                    setNewMessage(content); // Revert
+                    setNewMessage(content);
                     setSending(false);
-                    return; // Stop submission
+                    return;
                 }
             }
         } catch (e) {
             console.warn("Moderation check failed, proceeding anyway...", e);
         }
-        // -----------------------------------
 
         const { data: sentMessage, error } = await supabase
             .from('messages')
@@ -137,10 +168,9 @@ export default function MessageThreadPage() {
             .single();
 
         if (error) {
-            alert("送信に失敗しました");
-            setNewMessage(content); // Revert
+            alert("送信に失敗しました（ブロックされている可能性があります）");
+            setNewMessage(content);
         } else {
-            // Manually add to state immediately
             if (sentMessage) {
                 setMessages(prev => [...prev, sentMessage]);
             }
@@ -149,9 +179,6 @@ export default function MessageThreadPage() {
             const sendNotification = async () => {
                 const recipientId = (user.id === thread.host_id) ? thread.seeker_id : thread.host_id;
 
-                // Determine sender name for notification
-                // If I am host, use host display name. If seeker, use seeker display name.
-                // Fallback to auth metadata if unavailable (should not happen if thread is loaded)
                 let senderName = 'ユーザー';
                 if (user.id === thread.host_id) {
                     senderName = thread.host?.display_name || user.user_metadata?.full_name;
@@ -182,7 +209,6 @@ export default function MessageThreadPage() {
             };
             sendNotification();
 
-            // Update thread updated_at (Best effort)
             supabase
                 .from('threads')
                 .update({ updated_at: new Date() })
@@ -194,6 +220,47 @@ export default function MessageThreadPage() {
         setSending(false);
     };
 
+    const toggleBlock = async () => {
+        if (!user || !thread) return;
+        const counterpartId = (user.id === thread.host_id) ? thread.seeker_id : thread.host_id;
+
+        if (blockedByMe) {
+            // Unblock
+            const { error } = await supabase
+                .from('user_blocks')
+                .delete()
+                .eq('blocker_id', user.id)
+                .eq('blocked_id', counterpartId);
+
+            if (error) {
+                alert("解除に失敗しました");
+            } else {
+                setBlockedByMe(false);
+                setIsBlocked(false); // Optimistic (assuming they haven't blocked me too)
+                alert("ブロックを解除しました");
+            }
+        } else {
+            // Block
+            if (!confirm("このユーザーをブロックしますか？\n今後メッセージのやり取りができなくなります。")) return;
+
+            const { error } = await supabase
+                .from('user_blocks')
+                .insert({
+                    blocker_id: user.id,
+                    blocked_id: counterpartId
+                });
+
+            if (error) {
+                alert("ブロックに失敗しました");
+            } else {
+                setBlockedByMe(true);
+                setIsBlocked(true);
+                alert("ブロックしました");
+            }
+        }
+        setShowMenu(false);
+    };
+
     if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     if (!thread) return <div className="min-h-screen flex items-center justify-center">スレッドが見つかりません</div>;
 
@@ -203,7 +270,7 @@ export default function MessageThreadPage() {
     return (
         <div className="flex flex-col h-[100dvh] bg-gray-100 font-sans">
             {/* Header */}
-            <header className="bg-white border-b px-4 py-3 flex items-center gap-4 shadow-sm z-10 shrink-0">
+            <header className="bg-white border-b px-4 py-3 flex items-center gap-4 shadow-sm z-10 shrink-0 sticky top-0">
                 <Link href="/messages" className="text-gray-500 hover:text-gray-800">
                     <MdArrowBack size={24} />
                 </Link>
@@ -211,15 +278,42 @@ export default function MessageThreadPage() {
                     <h1 className="font-bold text-gray-800 truncate">{counterpart?.display_name || 'Unknown'}</h1>
                     <p className="text-xs text-gray-500 truncate font-bold">{thread.listing?.title}</p>
                 </div>
-                {thread.listing && (
-                    <Link href={`/rooms/${thread.listing.id}`} className="shrink-0 w-10 h-10 rounded overflow-hidden border border-gray-200">
-                        {thread.listing.images && thread.listing.images[0] ? (
-                            <img src={thread.listing.images[0]} className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-400"><MdImage /></div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2">
+                    {thread.listing && (
+                        <Link href={`/rooms/${thread.listing.id}`} className="shrink-0 w-10 h-10 rounded overflow-hidden border border-gray-200">
+                            {thread.listing.images && thread.listing.images[0] ? (
+                                <img src={thread.listing.images[0]} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-400"><MdImage /></div>
+                            )}
+                        </Link>
+                    )}
+
+                    {/* Menu Button */}
+                    <div className="relative">
+                        <button onClick={() => setShowMenu(!showMenu)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+                            <MdMoreVert size={24} />
+                        </button>
+
+                        {showMenu && (
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border py-1 z-50">
+                                <button
+                                    onClick={toggleBlock}
+                                    className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                >
+                                    <MdBlock />
+                                    {blockedByMe ? "ブロックを解除" : "このユーザーをブロック"}
+                                </button>
+                            </div>
                         )}
-                    </Link>
-                )}
+                        {/* Overlay to close menu */}
+                        {showMenu && (
+                            <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)}></div>
+                        )}
+                    </div>
+                </div>
             </header>
 
             {/* Messages List */}
@@ -252,28 +346,34 @@ export default function MessageThreadPage() {
 
             {/* Input Area */}
             <div className="bg-white border-t p-3 shrink-0">
-                <form onSubmit={handleSendMessage} className="flex items-end gap-2 max-w-4xl mx-auto">
-                    <textarea
-                        value={newMessage}
-                        onChange={e => setNewMessage(e.target.value)}
-                        placeholder="メッセージを入力..."
-                        rows={1}
-                        className="flex-1 bg-gray-100 rounded-xl p-3 max-h-32 focus:bg-white focus:ring-2 focus:ring-[#bf0000] outline-none resize-none font-bold text-gray-800"
-                        onKeyDown={e => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSendMessage(e);
-                            }
-                        }}
-                    />
-                    <button
-                        type="submit"
-                        disabled={!newMessage.trim() || sending}
-                        className="bg-[#bf0000] text-white p-3 rounded-xl disabled:opacity-50 hover:bg-black transition shrink-0"
-                    >
-                        <MdSend size={20} />
-                    </button>
-                </form>
+                {isBlocked ? (
+                    <div className="text-center text-gray-500 py-4 text-sm font-bold bg-gray-50 rounded-xl">
+                        {blockedByMe ? "このユーザーをブロックしています" : "このユーザーとはメッセージのやり取りができません"}
+                    </div>
+                ) : (
+                    <form onSubmit={handleSendMessage} className="flex items-end gap-2 max-w-4xl mx-auto">
+                        <textarea
+                            value={newMessage}
+                            onChange={e => setNewMessage(e.target.value)}
+                            placeholder="メッセージを入力..."
+                            rows={1}
+                            className="flex-1 bg-gray-100 rounded-xl p-3 max-h-32 focus:bg-white focus:ring-2 focus:ring-[#bf0000] outline-none resize-none font-bold text-gray-800"
+                            onKeyDown={e => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendMessage(e);
+                                }
+                            }}
+                        />
+                        <button
+                            type="submit"
+                            disabled={!newMessage.trim() || sending}
+                            className="bg-[#bf0000] text-white p-3 rounded-xl disabled:opacity-50 hover:bg-black transition shrink-0"
+                        >
+                            <MdSend size={20} />
+                        </button>
+                    </form>
+                )}
             </div>
         </div>
     );

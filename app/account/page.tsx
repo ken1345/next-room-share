@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MdPerson, MdEmail, MdArrowForwardIos, MdEdit, MdPause, MdPlayArrow } from 'react-icons/md';
+import { MdPerson, MdEmail, MdArrowForwardIos, MdEdit, MdPause, MdPlayArrow, MdBlock } from 'react-icons/md';
 import { supabase } from '@/lib/supabase';
 
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
@@ -398,6 +398,10 @@ export default function AccountPage() {
 
 
                 <div className="pt-4 flex flex-col items-center gap-4">
+                    <Link href="/account/blocked" className="text-sm font-bold text-gray-500 hover:text-gray-800 flex items-center gap-1 transition">
+                        <MdBlock /> ブロックしたユーザー一覧
+                    </Link>
+
                     <button
                         onClick={handleSignOut}
                         className="text-gray-400 hover:text-gray-600 font-bold text-sm underline transition"

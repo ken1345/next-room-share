@@ -62,7 +62,28 @@ export default function MessagesListPage() {
             if (error) {
                 console.error("Error fetching threads:", error);
             } else if (data) {
+                // Fetch Blocked Users (Both directions)
+                const { data: blocks } = await supabase
+                    .from('user_blocks')
+                    .select('blocker_id, blocked_id')
+                    .or(`blocker_id.eq.${session.user.id},blocked_id.eq.${session.user.id}`);
+
+                const blockedUserIds = new Set();
+                if (blocks) {
+                    blocks.forEach((b: any) => {
+                        if (b.blocker_id === session.user.id) blockedUserIds.add(b.blocked_id);
+                        if (b.blocked_id === session.user.id) blockedUserIds.add(b.blocker_id);
+                    });
+                }
+
                 const threadsWithLastMsg = await Promise.all(data.map(async (t: any) => {
+                    // Determine counterpart ID
+                    const isHost = session.user.id === t.host_id;
+                    const counterpartId = isHost ? t.seeker_id : t.host_id;
+
+                    // Skip if counterpart is blocked/blocking
+                    if (blockedUserIds.has(counterpartId)) return null;
+
                     // Fetch last message for each thread to determine sender/status
                     const { data: lastMsgs } = await supabase
                         .from('messages')
@@ -81,15 +102,18 @@ export default function MessagesListPage() {
                     };
                 }));
 
+                // Filter out nulls (blocked threads) and generic filtering
+                const validThreads = threadsWithLastMsg.filter(t => t !== null);
+
                 // Sort by last message created_at (descending)
-                threadsWithLastMsg.sort((a, b) => {
+                validThreads.sort((a: any, b: any) => {
                     const timeA = a.last_message_created_at ? new Date(a.last_message_created_at).getTime() : new Date(a.updated_at).getTime();
                     const timeB = b.last_message_created_at ? new Date(b.last_message_created_at).getTime() : new Date(b.updated_at).getTime();
                     return timeB - timeA;
                 });
 
                 // Cast to expected type or ensure type compatibility implicitly
-                setThreads(threadsWithLastMsg as Thread[]);
+                setThreads(validThreads as Thread[]);
             }
             setLoading(false);
         };

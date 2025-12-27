@@ -74,8 +74,8 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                         {/* User Info */}
                         <div className="border-t pt-8">
                             <h3 className="font-bold text-gray-800 mb-4">投稿者</h3>
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden shrink-0">
+                            <Link href={req.user_id ? `/users/${req.user_id}` : '#'} className="flex items-center gap-4 group">
+                                <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden shrink-0 group-hover:opacity-90 transition">
                                     {req.users?.photo_url ? (
                                         <img src={req.users.photo_url} alt={req.users.display_name} className="w-full h-full object-cover" />
                                     ) : (
@@ -85,14 +85,14 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
                                     )}
                                 </div>
                                 <div>
-                                    <p className="font-bold text-gray-800 text-lg">{req.users?.display_name || 'ゲスト'}</p>
+                                    <p className="font-bold text-gray-800 text-lg group-hover:text-[#bf0000] transition">{req.users?.display_name || 'ゲスト'}</p>
                                     <div className="flex gap-3 text-xs text-gray-500 font-bold mt-1">
                                         <span>{req.users?.gender || '性別未設定'}</span>
                                         <span>{req.users?.age ? `${req.users.age}歳` : '年齢未設定'}</span>
                                         <span>{req.users?.occupation || '職業未設定'}</span>
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         </div>
                     </div>
 

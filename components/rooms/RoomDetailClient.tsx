@@ -186,9 +186,9 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
                         {/* Host Info */}
                         <div className="mb-8 pb-6">
                             <h2 className="text-xl font-bold text-gray-800 mb-4">ホストについて</h2>
-                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-center md:items-start gap-6">
+                            <Link href={host?.id ? `/users/${host.id}` : '#'} className="block bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col md:flex-row items-center md:items-start gap-6 group">
                                 <div className="flex flex-col items-center">
-                                    <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 overflow-hidden mb-2">
+                                    <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 overflow-hidden mb-2 group-hover:opacity-90 transition">
                                         {host?.photo_url ? (
                                             <img src={host.photo_url} alt="Host" className="w-full h-full object-cover" />
                                         ) : (
@@ -197,7 +197,7 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
                                     </div>
                                 </div>
                                 <div className="flex-1 w-full text-center md:text-left">
-                                    <p className="font-bold text-xl text-gray-800 mb-4">{host?.display_name || 'Host'}</p>
+                                    <p className="font-bold text-xl text-gray-800 mb-4 group-hover:text-[#bf0000] transition">{host?.display_name || 'Host'}</p>
 
                                     <div className="grid grid-cols-3 gap-2 border-t border-b border-gray-100 py-4 mb-4">
                                         <div className="text-center md:text-left border-r border-gray-100 last:border-0">
@@ -213,10 +213,9 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
                                             <p className="font-bold text-gray-800">{host?.occupation || '-'}</p>
                                         </div>
                                     </div>
-
-
+                                    <p className="text-xs text-right text-[#bf0000] font-bold">プロフィールを見る &gt;</p>
                                 </div>
-                            </div>
+                            </Link>
                         </div>
 
 

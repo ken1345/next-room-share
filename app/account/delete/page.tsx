@@ -16,14 +16,12 @@ export default function DeleteAccountPage() {
         setIsDeleting(true);
 
         try {
-            // 1. Call API to delete user data and auth
-            const res = await fetch('/api/account/delete', {
-                method: 'DELETE',
-            });
+            // 1. Call RPC to delete user data and auth
+            const { error } = await supabase.rpc('delete_own_account');
 
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || '削除に失敗しました');
+            if (error) {
+                console.error("RPC Error:", error);
+                throw new Error(error.message || '削除に失敗しました');
             }
 
             // 2. Sign out client-side to clear session

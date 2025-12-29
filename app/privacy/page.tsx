@@ -10,7 +10,7 @@ export default function PrivacyPage() {
             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-8">
 
                 <div className="text-right text-sm text-gray-500">
-                    最終更新日: 2025年12月26日
+                    最終更新日: 2025年12月29日
                 </div>
 
                 <section>
@@ -61,9 +61,17 @@ export default function PrivacyPage() {
                 </section>
 
                 <section>
-                    <h2 className="text-xl font-bold mb-3 border-b pb-2">6. お問い合わせ窓口</h2>
+                    <h2 className="text-xl font-bold mb-3 border-b pb-2">6. 退会後の情報保持について</h2>
                     <p className="leading-relaxed">
-                        本ポリシーに関するお問い合わせは、アプリ内のお問い合わせフォームよりお願いいたします。
+                        ユーザーが退会した後も、トラブル防止、不正利用の調査、および法的義務の履行を目的として、ユーザーの投稿データ、プロフィール情報、および利用履歴を退会日から最大90日間、非公開のアーカイブとして保持する場合があります。
+                        この期間を経過した後、該当データは速やかに完全に削除されます。
+                    </p>
+                </section>
+
+                <section>
+                    <h2 className="text-xl font-bold mb-3 border-b pb-2">7. お問い合わせ窓口</h2>
+                    <p className="leading-relaxed">
+                        本ポリシーに関するお問い合わせは、お問い合わせフォームよりお願いいたします。
                     </p>
                 </section>
 

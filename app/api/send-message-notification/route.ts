@@ -104,14 +104,30 @@ export async function POST(request: Request) {
             .eq('id', actualRecipientId)
             .single();
 
-        if (recipientError || !recipient || !recipient.email) {
-            console.error("[Notification] Recipient not found or no email:", recipientError);
-            return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
+        let recipientEmail = recipient?.email;
+        let recipientNotification = recipient?.email_notification ?? true;
+
+        if (!recipientEmail) {
+            // Fallback: Try fetching from Auth (auth.users) directly
+            console.log(`[Notification] Email not found in public.users for ${actualRecipientId}. Trying Auth...`);
+            const { data: authUser, error: authUserError } = await adminClient.auth.admin.getUserById(actualRecipientId);
+
+            if (authUser && authUser.user) {
+                recipientEmail = authUser.user.email;
+            } else {
+                console.error("[Notification] Recipient not found in Auth either:", authUserError);
+                return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
+            }
         }
 
-        console.log(`[Notification] Sending to recipient: ${actualRecipientId} (${recipient.email})`);
+        if (!recipientEmail) {
+            console.error("[Notification] Recipient has no email.");
+            return NextResponse.json({ error: "Recipient has no email" }, { status: 404 });
+        }
 
-        const shouldSend = recipient.email_notification ?? true;
+        console.log(`[Notification] Sending to recipient: ${actualRecipientId} (${recipientEmail})`);
+
+        const shouldSend = recipientNotification;
         if (!shouldSend) {
             console.log(`[Notification] Skipped. User disabled notifications.`);
             return NextResponse.json({ skipped: true });
@@ -123,14 +139,14 @@ export async function POST(request: Request) {
         const ownerEmail = 'dfofox@gmail.com';
         const isVerifiedDomain = process.env.RESEND_VERIFIED_DOMAIN === 'true';
 
-        let toEmail = recipient.email;
+        let toEmail = recipientEmail;
         let subjectPrefix = "";
         let debugInfo = "";
 
         if (!isVerifiedDomain) {
             toEmail = ownerEmail;
             subjectPrefix = "[TEST] ";
-            debugInfo = `\n\n(Test Mode: Originally sent to ${recipient.email})`;
+            debugInfo = `\n\n(Test Mode: Originally sent to ${recipientEmail})`;
             console.log(`[Notification] Test mode active. Redirecting to ${toEmail}`);
         }
 

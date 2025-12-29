@@ -261,6 +261,16 @@ export default function MessageThreadPage() {
         setShowMenu(false);
     };
 
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Auto-resize textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    }, [newMessage]);
+
     if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     if (!thread) return <div className="min-h-screen flex items-center justify-center">スレッドが見つかりません</div>;
 
@@ -353,11 +363,12 @@ export default function MessageThreadPage() {
                 ) : (
                     <form onSubmit={handleSendMessage} className="flex items-end gap-2 max-w-4xl mx-auto">
                         <textarea
+                            ref={textareaRef}
                             value={newMessage}
                             onChange={e => setNewMessage(e.target.value)}
                             placeholder="メッセージを入力..."
                             rows={1}
-                            className="flex-1 bg-gray-100 rounded-xl p-3 max-h-32 focus:bg-white focus:ring-2 focus:ring-[#bf0000] outline-none resize-none font-bold text-gray-800"
+                            className="flex-1 bg-gray-100 rounded-xl p-3 max-h-64 focus:bg-white focus:ring-2 focus:ring-[#bf0000] outline-none resize-y font-bold text-gray-800 min-h-[44px]"
                             onKeyDown={e => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault();
@@ -368,7 +379,7 @@ export default function MessageThreadPage() {
                         <button
                             type="submit"
                             disabled={!newMessage.trim() || sending}
-                            className="bg-[#bf0000] text-white p-3 rounded-xl disabled:opacity-50 hover:bg-black transition shrink-0"
+                            className="bg-[#bf0000] text-white p-3 rounded-xl disabled:opacity-50 hover:bg-black transition shrink-0 h-[48px] flex items-center justify-center"
                         >
                             <MdSend size={20} />
                         </button>

@@ -1,0 +1,14 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "com.roomshare.mikke",
+            "sha256_cert_fingerprints": [
+                "58:83:D5:28:1D:50:DD:60:4E:82:02:59:C7:36:65:60:F1:4E:A2:4A:E9:9D:25:3E:76:F4:79:11:08:EC:8D:F9"
+            ]
+        }
+    }
+]

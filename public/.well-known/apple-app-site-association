@@ -1,0 +1,14 @@
+{
+    "applinks": {
+        "apps": [],
+        "details": [
+            {
+                "appID": "HPS639N42K.jp.roommikke.webapp",
+                "paths": [
+                    "/auth/*",
+                    "/"
+                ]
+            }
+        ]
+    }
+}

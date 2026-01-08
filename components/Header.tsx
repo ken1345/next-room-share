@@ -76,7 +76,7 @@ export default function Header() {
               // Logged Out
               <>
                 <Link href="/signup" className="hover:text-[#bf0000] transition">新規登録</Link>
-                <Link href="/login" className="bg-[#bf0000] text-white px-4 py-2 rounded-full hover:bg-black transition">ログイン</Link>
+                <Link href="/login" className="bg-[#bf0000] text-white px-4 py-2 rounded-full hover:bg-[#990000] transition">ログイン</Link>
               </>
             )}
           </div>

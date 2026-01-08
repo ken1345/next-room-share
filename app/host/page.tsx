@@ -509,7 +509,7 @@ function HostPageContent() {
                                 物件を確認する
                             </Link>
                         )}
-                        <Link href="/" className="bg-[#bf0000] text-white font-bold py-3 px-8 rounded-full shadow-md hover:bg-black transition">
+                        <Link href="/" className="bg-[#bf0000] text-white font-bold py-3 px-8 rounded-full shadow-md hover:opacity-80 transition">
                             トップに戻る
                         </Link>
                     </div>
@@ -672,7 +672,7 @@ function HostPageContent() {
                                 <button
                                     onClick={handleFinalSubmit}
                                     disabled={isSubmitting}
-                                    className="flex-1 bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-black transition text-lg flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    className="flex-1 bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-lg hover:opacity-80 transition text-lg flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     {isSubmitting ? '送信中...' : <><MdCheck /> この内容で掲載</>}
                                 </button>
@@ -1010,7 +1010,7 @@ function HostPageContent() {
                                             type="button"
                                             onClick={() => moveImage(idx, 'right')}
                                             disabled={idx === images.length - 1}
-                                            className="bg-black/50 text-white p-1 rounded hover:bg-black/70 disabled:opacity-30 disabled:hover:bg-black/50"
+                                            className="bg-black/50 text-white p-1 rounded hover:opacity-80/70 disabled:opacity-30 disabled:hover:opacity-80/50"
                                         >
                                             <MdChevronRight size={20} />
                                         </button>
@@ -1043,7 +1043,7 @@ function HostPageContent() {
                     </div>
 
                     <div className="pt-4">
-                        <button type="submit" className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-black transition text-lg flex items-center justify-center gap-2">
+                        <button type="submit" className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-lg hover:opacity-80 transition text-lg flex items-center justify-center gap-2">
                             確認画面へ進む
                         </button>
                     </div>

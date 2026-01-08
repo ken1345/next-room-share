@@ -238,7 +238,7 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
                                         window.location.href = `/rooms/${property.id}/contact`;
                                     }
                                 }}
-                                className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition text-lg flex items-center justify-center gap-2 mb-3"
+                                className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-[#990000] transition text-lg flex items-center justify-center gap-2 mb-3"
                             >
                                 <MdEmail /> 空室確認・問い合わせ
                             </button>

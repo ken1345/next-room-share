@@ -138,7 +138,7 @@ export default function EditGivePage() {
                         />
                     </div>
 
-                    <button type="submit" disabled={saving} className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition">
+                    <button type="submit" disabled={saving} className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:opacity-80 transition">
                         {saving ? '保存中...' : '保存する'}
                     </button>
                 </form>

@@ -190,7 +190,7 @@ export default function GiveContactPage() {
                         <Honeypot onChange={setHoneypot} />
                     </div>
 
-                    <button type="submit" disabled={submitting} className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition flex items-center justify-center gap-2">
+                    <button type="submit" disabled={submitting} className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:opacity-80 transition flex items-center justify-center gap-2">
                         <MdEmail /> {submitting ? '送信中...' : '送信する'}
                     </button>
                 </form>

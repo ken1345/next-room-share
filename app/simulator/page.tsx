@@ -103,7 +103,7 @@ export default function SimulatorPage() {
                                 </div>
                             </div>
 
-                            <Link href="/search" className="block w-full bg-[#bf0000] text-white text-center font-bold py-4 rounded-xl shadow-md hover:bg-black transition mt-8">
+                            <Link href="/search" className="block w-full bg-[#bf0000] text-white text-center font-bold py-4 rounded-xl shadow-md hover:opacity-80 transition mt-8">
                                 この予算で物件を探す
                             </Link>
                         </div>

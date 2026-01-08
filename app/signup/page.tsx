@@ -152,7 +152,7 @@ function SignupForm() {
                     <div className="space-y-4">
                         <Link
                             href={`/login${searchParams.get('redirect') ? `?redirect=${encodeURIComponent(searchParams.get('redirect')!)}` : ''}`}
-                            className="block w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl hover:bg-black transition shadow-md"
+                            className="block w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl hover:bg-[#990000] transition shadow-md"
                         >
                             ログインページへ
                         </Link>
@@ -318,7 +318,7 @@ function SignupForm() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-[#990000] transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {isLoading ? '登録処理中...' : 'アカウントを作成'}
                         </button>

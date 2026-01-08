@@ -177,7 +177,7 @@ function LoginForm() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full bg-[#bf0000] text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-[#990000] transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {isLoading ? '処理中...' : 'ログイン'}
                         </button>

@@ -188,7 +188,7 @@ export default function DiagnosisPage() {
                         </p>
                         <button
                             onClick={handleStart}
-                            className="bg-[#bf0000] text-white font-bold text-xl px-12 py-4 rounded-full shadow-lg hover:bg-black hover:scale-105 transition flex items-center gap-2"
+                            className="bg-[#bf0000] text-white font-bold text-xl px-12 py-4 rounded-full shadow-lg hover:opacity-80 hover:scale-105 transition flex items-center gap-2"
                         >
                             診断スタート <MdArrowForward />
                         </button>
@@ -238,7 +238,7 @@ export default function DiagnosisPage() {
 
                         <button
                             onClick={handleBdaySubmit}
-                            className="bg-[#bf0000] text-white font-bold text-lg px-10 py-3 rounded-full shadow-md hover:bg-black transition"
+                            className="bg-[#bf0000] text-white font-bold text-lg px-10 py-3 rounded-full shadow-md hover:opacity-80 transition"
                         >
                             診断する
                         </button>
@@ -265,7 +265,7 @@ export default function DiagnosisPage() {
 
                         <button
                             onClick={handleToQuestions}
-                            className="bg-[#bf0000] text-white font-bold text-lg px-10 py-3 rounded-full shadow-md hover:bg-black transition"
+                            className="bg-[#bf0000] text-white font-bold text-lg px-10 py-3 rounded-full shadow-md hover:opacity-80 transition"
                         >
                             質問へ進む <MdArrowForward />
                         </button>
@@ -326,7 +326,7 @@ export default function DiagnosisPage() {
                         </div>
 
                         <div className="flex flex-col gap-3 w-full">
-                            <Link href="/search" className="bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition block w-full text-center">
+                            <Link href="/search" className="bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:opacity-80 transition block w-full text-center">
                                 おすすめの物件を探す
                             </Link>
                             <button

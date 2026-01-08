@@ -99,7 +99,7 @@ export default async function GiveDetailPage({ params }: { params: Promise<{ id:
 
                     {/* Action Footer */}
                     <div className="bg-gray-50 p-6 border-t border-gray-100 flex justify-center">
-                        <Link href={`/give/${item.id}/contact`} className="w-full md:w-auto bg-[#bf0000] text-white font-bold px-8 py-4 rounded-xl shadow-md hover:bg-black transition flex items-center justify-center gap-2">
+                        <Link href={`/give/${item.id}/contact`} className="w-full md:w-auto bg-[#bf0000] text-white font-bold px-8 py-4 rounded-xl shadow-md hover:opacity-80 transition flex items-center justify-center gap-2">
                             <MdEmail size={20} /> 譲ってほしいと連絡する
                         </Link>
                     </div>

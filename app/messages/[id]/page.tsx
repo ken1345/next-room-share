@@ -379,7 +379,7 @@ export default function MessageThreadPage() {
                         <button
                             type="submit"
                             disabled={!newMessage.trim() || sending}
-                            className="bg-[#bf0000] text-white p-3 rounded-xl disabled:opacity-50 hover:bg-black transition shrink-0 h-[48px] flex items-center justify-center"
+                            className="bg-[#bf0000] text-white p-3 rounded-xl disabled:opacity-50 hover:opacity-80 transition shrink-0 h-[48px] flex items-center justify-center"
                         >
                             <MdSend size={20} />
                         </button>

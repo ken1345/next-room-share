@@ -233,7 +233,7 @@ ${form.message}
                         <Link href={`/rooms/${id}`} className="flex-1 bg-gray-100 text-gray-800 font-bold py-3 rounded-xl hover:bg-gray-200 transition">
                             物件に戻る
                         </Link>
-                        <Link href="/search" className="flex-1 bg-[#bf0000] text-white font-bold py-3 rounded-xl hover:bg-black transition">
+                        <Link href="/search" className="flex-1 bg-[#bf0000] text-white font-bold py-3 rounded-xl hover:opacity-80 transition">
                             トップへ戻る
                         </Link>
                     </div>
@@ -424,7 +424,7 @@ ${form.message}
                     </div>
 
                     <div className="pt-4">
-                        <button type="submit" disabled={submitting} className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:bg-black transition text-lg flex items-center justify-center gap-2 disabled:opacity-50">
+                        <button type="submit" disabled={submitting} className="w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-md hover:opacity-80 transition text-lg flex items-center justify-center gap-2 disabled:opacity-50">
                             <MdEmail /> {submitting ? '送信中...' : '送信する'}
                         </button>
                     </div>

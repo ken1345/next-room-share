@@ -158,7 +158,7 @@ export default function ReportPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 bg-[#bf0000] text-white font-bold py-3 rounded-lg hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="flex-1 bg-[#bf0000] text-white font-bold py-3 rounded-lg hover:opacity-80 transition flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                             {loading ? '送信中...' : '報告する'}
                         </button>

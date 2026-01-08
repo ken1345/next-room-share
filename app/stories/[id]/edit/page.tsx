@@ -180,7 +180,7 @@ export default function EditStoryPage({ params }: { params: Promise<{ id: string
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className={`w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl hover:bg-black transition flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            className={`w-full bg-[#bf0000] text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl hover:opacity-80 transition flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
                             {isLoading ? '保存中...' : <>変更を保存 <MdSave /></>}
                         </button>

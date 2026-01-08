@@ -74,7 +74,7 @@ export default function ChecklistPage() {
                     <Link href="/" className="text-gray-500 hover:text-[#bf0000] flex items-center gap-1 font-bold">
                         <MdHome size={20} /> ホームに戻る
                     </Link>
-                    <button onClick={handlePrint} className="flex items-center gap-2 bg-gray-800 text-white font-bold px-4 py-2 rounded-lg hover:bg-black transition">
+                    <button onClick={handlePrint} className="flex items-center gap-2 bg-gray-800 text-white font-bold px-4 py-2 rounded-lg hover:opacity-80 transition">
                         <MdPrint /> 印刷する
                     </button>
                 </div>

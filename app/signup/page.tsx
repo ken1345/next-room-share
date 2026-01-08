@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MdArrowBack, MdPerson, MdEmail, MdLock } from 'react-icons/md';
 import { FcGoogle } from 'react-icons/fc';
-import { FaApple } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
 
 import { Suspense } from 'react';
@@ -49,25 +48,7 @@ function SignupForm() {
         }
     };
 
-    const handleAppleSignup = async () => {
-        setIsLoading(true);
-        try {
-            const origin = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : '';
-            const finalRedirectUrl = `${origin}${redirectPath}`;
 
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'apple',
-                options: {
-                    redirectTo: finalRedirectUrl,
-                }
-            });
-            if (error) throw error;
-        } catch (error: any) {
-            console.error(error);
-            alert("Appleサインアップに失敗しました。" + error.message);
-            setIsLoading(false);
-        }
-    };
 
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -179,14 +160,7 @@ function SignupForm() {
                     >
                         <FcGoogle size={22} /> Googleで登録
                     </button>
-                    <button
-                        onClick={handleAppleSignup}
-                        type="button"
-                        disabled={isLoading}
-                        className="w-full bg-black text-white font-bold py-3.5 rounded-xl hover:bg-gray-800 transition flex items-center justify-center gap-2 mt-3"
-                    >
-                        <FaApple size={22} /> Appleで登録
-                    </button>
+
 
                     <div className="relative flex py-2 items-center">
                         <div className="flex-grow border-t border-gray-200"></div>

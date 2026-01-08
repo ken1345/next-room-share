@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MdArrowBack, MdEmail, MdLock } from 'react-icons/md';
 import { FcGoogle } from 'react-icons/fc';
-import { FaApple } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
 
 function LoginForm() {
@@ -80,26 +79,7 @@ function LoginForm() {
         }
     };
 
-    const handleAppleLogin = async () => {
-        setIsLoading(true);
-        try {
-            const origin = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : '';
-            // コールバックページを経由するように変更
-            const callbackUrl = `${origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`;
 
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'apple',
-                options: {
-                    redirectTo: callbackUrl,
-                }
-            });
-            if (error) throw error;
-        } catch (error: any) {
-            console.error(error);
-            alert("Appleログインに失敗しました。" + error.message);
-            setIsLoading(false);
-        }
-    };
 
 
     return (
@@ -119,14 +99,7 @@ function LoginForm() {
                     >
                         <FcGoogle size={22} /> Googleでログイン
                     </button>
-                    <button
-                        onClick={handleAppleLogin}
-                        type="button"
-                        disabled={isLoading}
-                        className="w-full bg-black text-white font-bold py-3.5 rounded-xl hover:bg-gray-800 transition flex items-center justify-center gap-2 mt-3"
-                    >
-                        <FaApple size={22} /> Appleでログイン
-                    </button>
+
 
                     <div className="relative flex py-2 items-center">
                         <div className="flex-grow border-t border-gray-200"></div>

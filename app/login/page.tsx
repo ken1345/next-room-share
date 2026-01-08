@@ -62,12 +62,13 @@ function LoginForm() {
         setIsLoading(true);
         try {
             const origin = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : '';
-            const finalRedirectUrl = `${origin}${redirectPath}`;
+            // コールバックページを経由するように変更
+            const callbackUrl = `${origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`;
 
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: finalRedirectUrl,
+                    redirectTo: callbackUrl,
                 }
             });
             if (error) throw error;
@@ -83,12 +84,13 @@ function LoginForm() {
         setIsLoading(true);
         try {
             const origin = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : '';
-            const finalRedirectUrl = `${origin}${redirectPath}`;
+            // コールバックページを経由するように変更
+            const callbackUrl = `${origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`;
 
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'apple',
                 options: {
-                    redirectTo: finalRedirectUrl,
+                    redirectTo: callbackUrl,
                 }
             });
             if (error) throw error;

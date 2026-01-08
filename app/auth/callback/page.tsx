@@ -10,17 +10,41 @@ function AuthCallback() {
     const next = searchParams.get('next') || '/';
 
     useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) {
-                // セッションが確立されたらリダイレクト
+        const handleAuth = async () => {
+            // 1. Check for errors in URL
+            const error = searchParams.get('error');
+            const error_description = searchParams.get('error_description');
+            if (error) {
+                console.error("Auth Error:", error, error_description);
+                alert(`ログインエラー: ${error_description || error}`);
+                router.replace('/login'); // Return to login
+                return;
+            }
+
+            // 2. Setup listener
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+                console.log("Auth Event:", event, session);
+                if (event === 'SIGNED_IN' && session) {
+                    console.log("Session established, redirecting to:", next);
+                    router.replace(next);
+                }
+            });
+
+            // 3. Explicitly check session (in case event fired before listener)
+            const { data: { session } } = await supabase.auth.getSession();
+            console.log("Current Session:", session);
+            if (session) {
+                console.log("Session exists, redirecting to:", next);
                 router.replace(next);
             }
-        });
 
-        return () => {
-            subscription.unsubscribe();
+            return () => {
+                subscription.unsubscribe();
+            };
         };
-    }, [router, next]);
+
+        handleAuth();
+    }, [router, next, searchParams]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">

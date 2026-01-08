@@ -10,7 +10,7 @@ export default async function ListingGalleryServer() {
         .from('listings')
         .select('*')
         .eq('is_public', true)
-        .order('created_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .limit(8);
 
     if (error) {

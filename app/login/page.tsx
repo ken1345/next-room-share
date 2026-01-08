@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MdArrowBack, MdEmail, MdLock } from 'react-icons/md';
 import { FcGoogle } from 'react-icons/fc';
+import { FaApple } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
 
 function LoginForm() {
@@ -78,6 +79,27 @@ function LoginForm() {
         }
     };
 
+    const handleAppleLogin = async () => {
+        setIsLoading(true);
+        try {
+            const origin = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : '';
+            const finalRedirectUrl = `${origin}${redirectPath}`;
+
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'apple',
+                options: {
+                    redirectTo: finalRedirectUrl,
+                }
+            });
+            if (error) throw error;
+        } catch (error: any) {
+            console.error(error);
+            alert("Appleログインに失敗しました。" + error.message);
+            setIsLoading(false);
+        }
+    };
+
+
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-sans">
             <div className="bg-white p-8 md:p-10 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
@@ -94,6 +116,14 @@ function LoginForm() {
                         className="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3.5 rounded-xl hover:bg-gray-50 transition flex items-center justify-center gap-2"
                     >
                         <FcGoogle size={22} /> Googleでログイン
+                    </button>
+                    <button
+                        onClick={handleAppleLogin}
+                        type="button"
+                        disabled={isLoading}
+                        className="w-full bg-black text-white font-bold py-3.5 rounded-xl hover:bg-gray-800 transition flex items-center justify-center gap-2 mt-3"
+                    >
+                        <FaApple size={22} /> Appleでログイン
                     </button>
 
                     <div className="relative flex py-2 items-center">

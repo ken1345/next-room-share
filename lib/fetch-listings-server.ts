@@ -41,7 +41,7 @@ export const fetchListingsServer = async (searchParams: SearchParams) => {
         .from('listings')
         .select('*', { count: 'exact' })
         .eq('is_public', true)
-        .order('created_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
     // 1. Keyword Filter (Applied partially on server if possible, or we fetch all and filter client side? 
     // Supabase 'textSearch' or 'ilike' can work. 

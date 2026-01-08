@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MdPerson, MdEmail, MdArrowForwardIos, MdEdit, MdPause, MdPlayArrow, MdBlock } from 'react-icons/md';
+import { MdPerson, MdEmail, MdArrowForwardIos, MdEdit, MdPause, MdPlayArrow, MdBlock, MdVerticalAlignTop } from 'react-icons/md';
 import { supabase } from '@/lib/supabase';
 
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
@@ -53,7 +53,7 @@ export default function AccountPage() {
                         .from('listings')
                         .select('*')
                         .eq('host_id', session.user.id)
-                        .order('created_at', { ascending: false });
+                        .order('updated_at', { ascending: false });
 
                     if (listingsData) {
                         setMyListings(listingsData);
@@ -166,6 +166,38 @@ export default function AccountPage() {
         }
     };
 
+    const handleBump = async (id: any, updatedAt: string) => {
+        const lastUpdated = new Date(updatedAt).getTime();
+        const now = new Date().getTime();
+        const diffDays = (now - lastUpdated) / (1000 * 60 * 60 * 24);
+
+        if (diffDays < 3) {
+            const diffHours = (now - lastUpdated) / (1000 * 60 * 60);
+            alert(`前回の更新から72時間経過していないため、まだ実行できません。\nあと${Math.ceil(72 - diffHours)}時間お待ちください。`);
+            return;
+        }
+
+        if (!window.confirm("この投稿を新着（先頭）に表示しますか？\n※一度実行すると、次回まで72時間空ける必要があります。")) return;
+
+        const { error } = await supabase
+            .from('listings')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('id', id);
+
+        if (error) {
+            alert("更新に失敗しました: " + error.message);
+        } else {
+            alert("投稿を先頭に移動しました！");
+            setMyListings(prev => {
+                const newDate = new Date().toISOString();
+                const updated = prev.map(item => item.id === id ? { ...item, updated_at: newDate } : item);
+                return updated.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+            });
+        }
+    };
+
+
+
     const handleToggleVisibility = async (id: number, currentStatus: boolean) => {
         const newStatus = !currentStatus;
         const confirmMsg = newStatus
@@ -186,6 +218,20 @@ export default function AccountPage() {
                 item.id === id ? { ...item, is_public: newStatus } : item
             ));
         }
+    };
+
+    const getRemainingTime = (dateStr: string) => {
+        const lastUpdated = new Date(dateStr).getTime();
+        const now = new Date().getTime();
+        const cooldownMs = 72 * 60 * 60 * 1000;
+        const diffMs = (lastUpdated + cooldownMs) - now;
+
+        if (diffMs <= 0) return "00:00";
+
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     };
 
     if (loading) {
@@ -267,7 +313,23 @@ export default function AccountPage() {
                                         <button onClick={() => handleDelete(l.id)} className="flex-1 text-center text-xs font-bold text-red-500 bg-white py-2 rounded border border-red-100 hover:bg-red-50 hover:border-red-500 transition">
                                             削除
                                         </button>
+                                        <button
+                                            onClick={() => handleBump(l.id, l.updated_at || l.created_at)}
+                                            disabled={(new Date().getTime() - new Date(l.updated_at || l.created_at).getTime()) / (1000 * 60 * 60 * 24) < 3}
+                                            className={`flex-1 text-center text-xs font-bold py-2 rounded border transition flex items-center justify-center gap-1
+                                                ${(new Date().getTime() - new Date(l.updated_at || l.created_at).getTime()) / (1000 * 60 * 60 * 24) < 3
+                                                    ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                                    : 'text-blue-500 bg-white border-blue-100 hover:bg-blue-50 hover:border-blue-500'}`}
+                                        >
+                                            <MdVerticalAlignTop />
+                                            {(new Date().getTime() - new Date(l.updated_at || l.created_at).getTime()) / (1000 * 60 * 60 * 24) < 3
+                                                ? `あと${getRemainingTime(l.updated_at || l.created_at)}`
+                                                : '上へ'}
+                                        </button>
+
                                     </div>
+
+
                                     {/* Visibility Toggle */}
                                     <div className="px-2 pb-2">
                                         <button

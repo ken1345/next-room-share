@@ -5,8 +5,11 @@ import { supabase } from '@/lib/supabase';
 // Revalidate occasionally to update profile info
 export const revalidate = 60;
 
-export default async function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function UserProfilePage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ backUrl?: string }> }) {
     const { id } = await params;
+    const { backUrl } = await searchParams;
+    const targetUrl = backUrl || '/';
+    const linkText = backUrl ? '戻る' : 'トップページ';
 
     // Fetch user profile
     const { data: user, error } = await supabase
@@ -19,8 +22,8 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
                 <h1 className="text-2xl font-bold text-gray-800 mb-4">ユーザーが見つかりませんでした</h1>
-                <Link href="/" className="text-[#bf0000] font-bold hover:underline flex items-center gap-1">
-                    <MdArrowBack /> トップに戻る
+                <Link href={targetUrl} className="text-[#bf0000] font-bold hover:underline flex items-center gap-1">
+                    <MdArrowBack /> {linkText}
                 </Link>
             </div>
         );
@@ -34,8 +37,8 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
             {/* Header */}
             <div className="bg-white border-b sticky top-0 z-10">
                 <div className="container mx-auto px-4 h-16 flex items-center">
-                    <Link href="/" className="text-gray-500 hover:text-gray-800 font-bold flex items-center gap-1 text-sm">
-                        <MdArrowBack /> トップページ
+                    <Link href={targetUrl} className="text-gray-500 hover:text-gray-800 font-bold flex items-center gap-1 text-sm">
+                        <MdArrowBack /> {linkText}
                     </Link>
                 </div>
             </div>

@@ -186,7 +186,7 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
                         {/* Host Info */}
                         <div className="mb-8 pb-6">
                             <h2 className="text-xl font-bold text-gray-800 mb-4">ホストについて</h2>
-                            <Link href={host?.id ? `/users/${host.id}` : '#'} className="block bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col md:flex-row items-center md:items-start gap-6 group">
+                            <Link href={host?.id ? `/users/${host.id}?backUrl=/rooms/${property.id}` : '#'} className="block bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col md:flex-row items-center md:items-start gap-6 group">
                                 <div className="flex flex-col items-center">
                                     <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 overflow-hidden mb-2 group-hover:opacity-90 transition">
                                         {host?.photo_url ? (

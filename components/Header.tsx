@@ -50,8 +50,8 @@ export default function Header() {
         {/* Desktop Navigation */}
         {!loading && (
           <div className="hidden md:flex gap-4 text-sm font-bold text-gray-600 items-center">
-            <a href={iosAppUrl} target="_blank" rel="noopener noreferrer" className="hover:text-[#bf0000] transition flex items-center gap-1">
-              <MdPhoneIphone size={18} /> iOSアプリ
+            <a href={iosAppUrl} target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition flex items-center h-10 w-auto">
+              <img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/white/ja-jp?releaseDate=1768089600" alt="Download on the App Store" className="h-full w-auto object-contain" />
             </a>
             <Link href="/search" className="hover:text-[#bf0000] transition">部屋を探す</Link>
             <Link href="/host" className="hover:text-[#bf0000] transition">部屋を貸す</Link>
@@ -91,8 +91,8 @@ export default function Header() {
       {/* Mobile Navigation Overlay */}
       {isMobileMenuOpen && !loading && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white border-b shadow-lg flex flex-col p-4 gap-4 font-bold text-gray-700 animate-in slide-in-from-top-2">
-          <a href={iosAppUrl} target="_blank" rel="noopener noreferrer" className="block py-2 border-b border-gray-100 hover:text-[#bf0000] flex items-center gap-2" onClick={closeMobileMenu}>
-            <MdPhoneIphone size={20} /> iOSアプリ
+          <a href={iosAppUrl} target="_blank" rel="noopener noreferrer" className="block py-2 border-b border-gray-100 hover:opacity-80 flex items-center h-12 w-auto" onClick={closeMobileMenu}>
+            <img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/white/ja-jp?releaseDate=1768089600" alt="Download on the App Store" className="h-full w-auto object-contain" />
           </a>
           <Link href="/search" className="block py-2 border-b border-gray-100 hover:text-[#bf0000]" onClick={closeMobileMenu}>
             部屋を探す

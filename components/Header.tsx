@@ -30,6 +30,7 @@ export default function Header() {
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const iosAppUrl = "https://apps.apple.com/jp/app/%E3%83%AB%E3%83%BC%E3%83%A0%E3%82%B7%E3%82%A7%E3%82%A2mikke-%E7%90%86%E6%83%B3%E3%81%AE%E3%82%B7%E3%82%A7%E3%82%A2%E3%83%A9%E3%82%A4%E3%83%95%E3%82%92%E8%A6%8B%E3%81%A4%E3%81%91%E3%82%88%E3%81%86/id6757091934";
+  const androidAppUrl = "https://play.google.com/store/apps/details?id=com.roomshare.mikke&pcampaignid=web_share";
 
   return (
     <header className="bg-white border-b py-0 relative z-50">
@@ -50,6 +51,9 @@ export default function Header() {
         {/* Desktop Navigation */}
         {!loading && (
           <div className="hidden md:flex gap-4 text-sm font-bold text-gray-600 items-center">
+            <a href={androidAppUrl} target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition flex items-center h-10 w-auto">
+              <img src="/GetItOnGooglePlay_Badge_Web_color_Japanese.png" alt="Get it on Google Play" className="h-full w-auto object-contain" />
+            </a>
             <a href={iosAppUrl} target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition flex items-center h-10 w-auto">
               <img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/white/ja-jp?releaseDate=1768089600" alt="Download on the App Store" className="h-full w-auto object-contain" />
             </a>
@@ -91,6 +95,9 @@ export default function Header() {
       {/* Mobile Navigation Overlay */}
       {isMobileMenuOpen && !loading && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white border-b shadow-lg flex flex-col p-4 gap-4 font-bold text-gray-700 animate-in slide-in-from-top-2">
+          <a href={androidAppUrl} target="_blank" rel="noopener noreferrer" className="block py-2 border-b border-gray-100 hover:opacity-80 flex items-center h-12 w-auto" onClick={closeMobileMenu}>
+            <img src="/GetItOnGooglePlay_Badge_Web_color_Japanese.png" alt="Get it on Google Play" className="h-full w-auto object-contain" />
+          </a>
           <a href={iosAppUrl} target="_blank" rel="noopener noreferrer" className="block py-2 border-b border-gray-100 hover:opacity-80 flex items-center h-12 w-auto" onClick={closeMobileMenu}>
             <img src="https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/white/ja-jp?releaseDate=1768089600" alt="Download on the App Store" className="h-full w-auto object-contain" />
           </a>

@@ -8,7 +8,7 @@ export default function SiteIntroduction() {
                 <div className="max-w-5xl mx-auto text-center">
                     {/* Main Headline */}
 
-                    <div className="space-y-6 text-gray-600 font-medium leading-loose text-base md:text-lg mb-0 text-left">
+                    <div className="space-y-6 text-gray-600 font-medium leading-loose text-sm md:text-base mb-0 text-left">
                         <p>
                             「ルームシェアmikke」は、ルームシェアをしたい人と、空き部屋を貸したい人を繋ぐマッチングプラットフォームです。<br className="hidden md:block" />
                             登録料・手数料は<span className="text-[#bf0000] font-bold">完全無料</span>。仲介業者を挟まないから、初期費用も家賃も抑えられます。

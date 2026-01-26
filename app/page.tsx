@@ -14,6 +14,7 @@ import ListingGalleryServer from '@/components/home/ListingGalleryServer';
 import RequestsGalleryServer from '@/components/home/RequestsGalleryServer';
 import GiveawaysGalleryServer from '@/components/home/GiveawaysGalleryServer';
 import BeforeAfterGalleryServer from '@/components/home/BeforeAfterGalleryServer';
+import SiteIntroduction from '@/components/home/SiteIntroduction';
 import ScrollToTop from '@/components/ScrollToTop';
 
 import { supabase } from '@/lib/supabase';
@@ -51,28 +52,30 @@ export default async function Home() {
   return (
     <div className="text-gray-700 font-sans pb-20">
 
+      <SiteIntroduction />
+
       {/* 1. Main Nav */}
       <section className="bg-white py-8 border-b">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {/* 1. Find a Room */}
             <Link href="/search">
-              <NavCard icon={<MdHome size={40} />} title="部屋を探す" sub="Rent a Room" />
+              <NavCard icon={<MdHome size={40} />} title="部屋を探す" sub="全国の募集物件を検索" />
             </Link>
 
             {/* 2. Host a Room */}
             <Link href="/host">
-              <NavCard icon={<MdVpnKey size={40} />} title="部屋を貸す" sub="Host a Room" />
+              <NavCard icon={<MdVpnKey size={40} />} title="部屋を貸す" sub="空き部屋・シェア募集" />
             </Link>
 
             {/* 3. Request a Room */}
             <Link href="/request">
-              <NavCard icon={<MdPersonSearch size={40} />} title="部屋を借りたい" sub="Request a Room" />
+              <NavCard icon={<MdPersonSearch size={40} />} title="部屋を借りたい" sub="希望条件を掲示板へ" />
             </Link>
 
             {/* 4. Give Away */}
             <Link href="/give">
-              <NavCard icon={<MdCardGiftcard size={40} />} title="あげたい" sub="Give Away" />
+              <NavCard icon={<MdCardGiftcard size={40} />} title="あげたい" sub="家具・家電の譲渡" />
             </Link>
           </div>
         </div>
@@ -117,7 +120,7 @@ export default async function Home() {
                 <h2 className="text-2xl md:text-4xl font-bold mb-2 flex items-center justify-center md:justify-start gap-3">
                   <MdPsychology /> ルームシェア相性診断
                 </h2>
-                <p className="text-pink-100 font-bold text-lg">たった1分で判明！あなたに合うシェアメイトのタイプは？</p>
+                <p className="text-pink-100 font-bold text-lg">たった1分で判明！生活習慣や価値観から、あなたに合う最高のシェアメイトのタイプを診断します。</p>
               </div>
               <button className="bg-white text-pink-600 font-bold px-8 py-3 rounded-full shadow-lg hover:bg-gray-100 transition whitespace-nowrap">
                 今すぐ診断する ▶
@@ -131,14 +134,14 @@ export default async function Home() {
 
       {/* 4. Living Tools */}
       <section className="container mx-auto px-4 mt-10">
-        <SectionTitle title="暮らしの便利ツール" subtitle="物件がなくても役立つ！失敗しないための準備ツール" />
+        <SectionTitle title="暮らしの便利ツール・お役立ち情報" subtitle="物件探しだけじゃない！シェアハウス生活を失敗させないための必須準備ツール" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link href="/simulator">
             <ToolCard
               color="bg-green-50 border-green-200 text-green-700"
               icon={<MdCalculate size={32} />}
               title="生活費シミュレーター"
-              desc="家賃＋光熱費＋消耗品… 月々いくらかかる？"
+              desc="家賃＋光熱費＋消耗品… 月々いくらかかる？一人暮らしと比較してシミュレーション"
             />
           </Link>
           <Link href="/checklist">
@@ -146,7 +149,7 @@ export default async function Home() {
               color="bg-blue-50 border-blue-200 text-blue-700"
               icon={<MdPlaylistAddCheck size={32} />}
               title="内見チェックリスト"
-              desc="騒音は？水回りは？見落としがちなポイント30選"
+              desc="騒音は？水回りは？コンセントの位置は？内見時に見落としがちな重要ポイント30選"
             />
           </Link>
           <Link href="/timeline">
@@ -154,7 +157,7 @@ export default async function Home() {
               color="bg-orange-50 border-orange-200 text-orange-700"
               icon={<MdTimeline size={32} />}
               title="引越しタイムライン"
-              desc="物件探しから入居当日まで。やるべきことを時系列で"
+              desc="物件探しから契約、入居当日まで。いつ何をするべき？時系列でわかるやることリスト"
             />
           </Link>
         </div>
@@ -162,7 +165,7 @@ export default async function Home() {
 
       {/* 5. Features Search */}
       <section className="container mx-auto px-4 mt-10">
-        <SectionTitle title="こだわり条件から探す" subtitle="あなたのライフスタイルに合う部屋は？" />
+        <SectionTitle title="こだわり条件から部屋を探す" subtitle="あなたのライフスタイルや希望条件にぴったりの部屋は見つかりましたか？" />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <Link href="/search?feature=pet"><FeatureCard color="bg-orange-50" icon={<MdPets className="text-orange-500" />} title="ペット可" /></Link>
           <Link href="/search?feature=wifi"><FeatureCard color="bg-blue-50" icon={<MdWifi className="text-blue-500" />} title="ネット高速" /></Link>
@@ -177,7 +180,7 @@ export default async function Home() {
       <section className="bg-white py-10 mt-10 border-t border-b">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-end mb-6">
-            <SectionTitle title="シェアハウス体験談" subtitle="先輩たちのリアルな暮らし・失敗談" />
+            <SectionTitle title="みんなのシェアハウス体験談" subtitle="実際に住んでみた先輩たちのリアルな暮らし・成功談・失敗談をご紹介" />
             <Link href="/stories" className="text-[#bf0000] text-sm font-bold hover:underline mb-6">もっと見る ▶</Link>
           </div>
 
@@ -225,7 +228,7 @@ export default async function Home() {
 
       {/* 7. Concepts (Functional Links) */}
       <section className="container mx-auto px-4 py-10">
-        <SectionTitle title="趣味・コンセプトで選ぶ" subtitle="同じ趣味の仲間と暮らす楽しさ" />
+        <SectionTitle title="趣味・目的・コンセプトで選ぶ" subtitle="ただ住むだけじゃない。同じ趣味や志を持つ仲間と暮らす楽しさを体験しよう" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <Link href="/search?feature=foreigner"><ConceptCard icon={<MdPublic />} title="国際交流" desc="英語が飛び交う日常" /></Link>
           <Link href="/search?feature=pet"><ConceptCard icon={<MdPets />} title="ペット共生" desc="動物好きが集まる家" /></Link>

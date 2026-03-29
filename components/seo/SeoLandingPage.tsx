@@ -26,9 +26,6 @@ export default function SeoLandingPage({ data }: SeoLandingPageProps) {
 
                     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
                         <div>
-                            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.14em] text-[#bf0000]">
-                                SEO Landing Page
-                            </p>
                             <h1 className="text-3xl font-bold text-stone-900 md:text-4xl">{data.h1}</h1>
                             <div className="mt-4 space-y-3 text-base leading-7 text-stone-700">
                                 {data.intro.map((paragraph) => (

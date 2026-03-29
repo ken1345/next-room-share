@@ -71,11 +71,15 @@ export default function SeoLandingPage({ data }: SeoLandingPageProps) {
                             horizontal
                             id={listing.id}
                             title={listing.title}
-                            description={listing.description}
+                            description={listing.description ?? undefined}
                             price={listing.price}
                             equipment={listing.equipment || []}
                             personalEquipment={listing.personal_equipment || []}
-                            station={listing.station_name ? `${listing.station_name} ${listing.minutes_to_station}分` : listing.address}
+                            station={
+                                listing.station_name
+                                    ? `${listing.station_name} ${listing.minutes_to_station ?? ''}分`
+                                    : (listing.address ?? '')
+                            }
                             badges={[
                                 listing.room_type === 'private'
                                     ? '個室'
@@ -89,10 +93,10 @@ export default function SeoLandingPage({ data }: SeoLandingPageProps) {
                             viewCount={listing.view_count || 0}
                             favoritesCount={listing.favorites_count || 0}
                             inquiryCount={listing.inquiry_count || 0}
-                            prefecture={listing.prefecture}
-                            city={listing.city}
-                            slug={listing.slug}
-                            createdAt={listing.created_at}
+                            prefecture={listing.prefecture ?? undefined}
+                            city={listing.city ?? undefined}
+                            slug={listing.slug ?? undefined}
+                            createdAt={listing.created_at ?? undefined}
                         />
                     ))}
                 </div>

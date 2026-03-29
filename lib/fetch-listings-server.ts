@@ -28,8 +28,23 @@ type FetchListingsOptions = {
     itemsPerPage?: number;
 };
 
-type ListingRecord = {
+export type ListingRecord = {
     id: string;
+    title: string;
+    price: number;
+    description?: string | null;
+    equipment?: string[] | null;
+    personal_equipment?: string[] | null;
+    station_name?: string | null;
+    minutes_to_station?: number | null;
+    address?: string | null;
+    room_type?: string | null;
+    amenities?: string[] | null;
+    images?: string[] | null;
+    view_count?: number | null;
+    favorites_count?: number | null;
+    inquiry_count?: number | null;
+    created_at?: string | null;
     slug?: string | null;
     prefecture?: string | null;
     city?: string | null;

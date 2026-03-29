@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { fetchListingsCount, fetchListingsServer, type SearchParams } from '@/lib/fetch-listings-server';
+import { fetchListingsCount, fetchListingsServer, type ListingRecord, type SearchParams } from '@/lib/fetch-listings-server';
 import {
     DEFAULT_FEATURE_LINKS,
     SEO_AREAS,
@@ -49,27 +49,7 @@ export type SeoPageData = {
     relatedSections: Array<{ title: string; links: SeoVisibleLink[] }>;
 };
 
-export type SeoListing = {
-    id: string;
-    title: string;
-    description?: string | null;
-    price: number;
-    equipment?: string[] | null;
-    personal_equipment?: string[] | null;
-    station_name?: string | null;
-    minutes_to_station?: number | null;
-    address?: string | null;
-    room_type?: string | null;
-    amenities?: string[] | null;
-    images?: string[] | null;
-    view_count?: number | null;
-    favorites_count?: number | null;
-    inquiry_count?: number | null;
-    prefecture?: string | null;
-    city?: string | null;
-    slug?: string | null;
-    created_at?: string | null;
-};
+export type SeoListing = ListingRecord;
 
 function withTrailingSlash(path: string) {
     return path.endsWith('/') ? path : `${path}/`;

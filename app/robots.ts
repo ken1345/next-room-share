@@ -1,14 +1,13 @@
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next';
+import { getSitemapIndexUrls } from '@/lib/seo/sitemap';
 
 export default function robots(): MetadataRoute.Robots {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://roommikke.jp';
-
     return {
         rules: {
             userAgent: '*',
             allow: '/',
             disallow: ['/account/', '/admin/', '/api/'],
         },
-        sitemap: `${baseUrl}/sitemap.xml`,
+        sitemap: getSitemapIndexUrls(),
     };
 }

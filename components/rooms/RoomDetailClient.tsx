@@ -95,6 +95,9 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
     const amenities = property.amenities || [];
     const equipment = property.equipment || [];
     const images = property.images || [];
+    const stationLabel = property.station_name
+        ? `${property.station_name}${property.minutes_to_station != null ? ` ${property.minutes_to_station}分` : ''}`
+        : '最寄駅未設定';
 
     const buildingTypeLabel: { [key: string]: string } = {
         'detached': '一戸建て',
@@ -129,7 +132,7 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 leading-tight mb-4">{property.title}</h1>
                             <div className="flex flex-wrap gap-4 text-sm font-bold text-gray-500">
                                 <span className="flex items-center gap-1"><MdLocationOn className="text-[#bf0000]" /> {property.address}</span>
-                                <span className="flex items-center gap-1"><MdTrain className="text-gray-400" /> 最寄駅未設定</span>
+                                <span className="flex items-center gap-1"><MdTrain className="text-gray-400" /> {stationLabel}</span>
                                 <span className="flex items-center gap-1 bg-gray-100 px-2 rounded text-gray-600 border border-gray-200">{buildingTypeName}</span>
                                 {property.updated_at && (
                                     <span className="text-xs font-normal text-gray-400 self-center ml-auto">

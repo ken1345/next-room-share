@@ -23,14 +23,21 @@ export default function MessageThreadPage() {
     const [showMenu, setShowMenu] = useState(false); // For dropdown menu
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const hasScrolledToInitialBottom = useRef(false);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+        messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
     };
 
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        if (loading) return;
+
+        const behavior = hasScrolledToInitialBottom.current ? "smooth" : "auto";
+        requestAnimationFrame(() => {
+            scrollToBottom(behavior);
+            hasScrolledToInitialBottom.current = true;
+        });
+    }, [messages, loading]);
 
     useEffect(() => {
         const init = async () => {

@@ -159,11 +159,9 @@ serve(async (req) => {
         const isVerifiedDomain = Deno.env.get('RESEND_VERIFIED_DOMAIN') === 'true';
 
         let toEmail = recipientEmail;
-        let debugInfo = "";
 
         if (!isVerifiedDomain) {
             toEmail = ownerEmail;
-            debugInfo = `\n\n(Test Mode: Originally sent to ${recipientEmail})`;
             console.log(`Test mode active. Redirecting to ${toEmail}`);
         }
 
@@ -191,7 +189,6 @@ ${messageContent}
 ${messageUrl}
 
 ※このメールは自動送信されています。
-${debugInfo}
       `,
         });
 

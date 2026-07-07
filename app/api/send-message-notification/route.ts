@@ -135,16 +135,14 @@ export async function POST(request: Request) {
 
         const resend = new Resend(resendApiKey);
 
-        // Test Mode Logic
+        // Redirect to owner address until Resend domain sending is enabled.
         const ownerEmail = 'dfofox@gmail.com';
         const isVerifiedDomain = process.env.RESEND_VERIFIED_DOMAIN === 'true';
 
         let toEmail = recipientEmail;
-        let debugInfo = "";
 
         if (!isVerifiedDomain) {
             toEmail = ownerEmail;
-            debugInfo = `\n\n(Test Mode: Originally sent to ${recipientEmail})`;
             console.log(`[Notification] Test mode active. Redirecting to ${toEmail}`);
         }
 
@@ -174,7 +172,6 @@ ${messageContent}
 ${messageUrl}
 
 ※このメールは自動送信されています。
-${debugInfo}
       `,
         });
 

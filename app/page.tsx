@@ -14,6 +14,7 @@ import ListingGalleryServer from '@/components/home/ListingGalleryServer';
 import RequestsGalleryServer from '@/components/home/RequestsGalleryServer';
 import GiveawaysGalleryServer from '@/components/home/GiveawaysGalleryServer';
 import BeforeAfterGalleryServer from '@/components/home/BeforeAfterGalleryServer';
+import BlogSection from '@/components/home/BlogSection';
 import SiteIntroduction from '@/components/home/SiteIntroduction';
 import ScrollToTop from '@/components/ScrollToTop';
 
@@ -240,6 +241,10 @@ export default async function Home() {
       {/* 9.5. Before After Gallery (Server Component) */}
       <Suspense fallback={<div className="py-20 text-center text-gray-500">読み込み中...</div>}>
         <BeforeAfterGalleryServer />
+      </Suspense>
+
+      <Suspense fallback={<div className="py-20 text-center text-gray-500">ブログ記事を読み込み中...</div>}>
+        <BlogSection />
       </Suspense>
 
       {/* Scroll To Top Button (Client Component) */}

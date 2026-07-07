@@ -25,7 +25,7 @@ serve(async (req) => {
         // In Edge Functions, these are set by default or by `supabase secrets set`.
         const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
         const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-        const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+        const supabaseServiceRoleKey = Deno.env.get('SERVICE_ROLE_KEY') ?? '';
 
         if (!supabaseUrl || !supabaseServiceRoleKey) {
             console.error("Missing DB configuration");
@@ -159,12 +159,10 @@ serve(async (req) => {
         const isVerifiedDomain = Deno.env.get('RESEND_VERIFIED_DOMAIN') === 'true';
 
         let toEmail = recipientEmail;
-        let subjectPrefix = "";
         let debugInfo = "";
 
         if (!isVerifiedDomain) {
             toEmail = ownerEmail;
-            subjectPrefix = "[TEST] ";
             debugInfo = `\n\n(Test Mode: Originally sent to ${recipientEmail})`;
             console.log(`Test mode active. Redirecting to ${toEmail}`);
         }
@@ -174,11 +172,13 @@ serve(async (req) => {
         const listingTitle = listingTitleStr ? `(${listingTitleStr})` : "";
 
         const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'ルームシェアmikke <onboarding@resend.dev>';
+        const siteUrl = (Deno.env.get('NEXT_PUBLIC_SITE_URL') || Deno.env.get('NEXT_PUBLIC_BASE_URL') || 'https://roommikke.jp').replace(/\/$/, '');
+        const messageUrl = `${siteUrl}/messages/${threadId}`;
 
         const { data: emailData, error: resendError } = await resend.emails.send({
             from: fromEmail,
             to: toEmail,
-            subject: `${subjectPrefix}【ルームシェアmikke】${senderName}さんからメッセージが届きました`,
+            subject: `【ルームシェアmikke】${senderName}さんからメッセージが届きました`,
             text: `
 ${senderName}さんから新しいメッセージが届きました。
 ${listingTitle}
@@ -188,7 +188,7 @@ ${messageContent}
 --------------------------------------------------
 
 メッセージの確認・返信はこちら:
-${Deno.env.get('NEXT_PUBLIC_BASE_URL') || 'http://localhost:3000'}/messages/${threadId}
+${messageUrl}
 
 ※このメールは自動送信されています。
 ${debugInfo}

@@ -140,12 +140,10 @@ export async function POST(request: Request) {
         const isVerifiedDomain = process.env.RESEND_VERIFIED_DOMAIN === 'true';
 
         let toEmail = recipientEmail;
-        let subjectPrefix = "";
         let debugInfo = "";
 
         if (!isVerifiedDomain) {
             toEmail = ownerEmail;
-            subjectPrefix = "[TEST] ";
             debugInfo = `\n\n(Test Mode: Originally sent to ${recipientEmail})`;
             console.log(`[Notification] Test mode active. Redirecting to ${toEmail}`);
         }
@@ -156,12 +154,14 @@ export async function POST(request: Request) {
         const listingTitle = listingTitleStr ? `(${listingTitleStr})` : "";
 
         const fromEmail = process.env.RESEND_FROM_EMAIL || 'ルームシェアmikke <onboarding@resend.dev>';
+        const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://roommikke.jp').replace(/\/$/, '');
+        const messageUrl = `${siteUrl}/messages/${threadId}`;
         console.log(`[Notification] Sending email from ${fromEmail} to ${toEmail}`);
 
         const { data, error: resendError } = await resend.emails.send({
             from: fromEmail,
             to: toEmail,
-            subject: `${subjectPrefix}【ルームシェアmikke】${senderName}さんからメッセージが届きました`,
+            subject: `【ルームシェアmikke】${senderName}さんからメッセージが届きました`,
             text: `
 ${senderName}さんから新しいメッセージが届きました。
 ${listingTitle}
@@ -171,7 +171,7 @@ ${messageContent}
 --------------------------------------------------
 
 メッセージの確認・返信はこちら:
-${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/messages/${threadId}
+${messageUrl}
 
 ※このメールは自動送信されています。
 ${debugInfo}

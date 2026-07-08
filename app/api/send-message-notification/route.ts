@@ -135,17 +135,6 @@ export async function POST(request: Request) {
 
         const resend = new Resend(resendApiKey);
 
-        // Redirect to owner address until Resend domain sending is enabled.
-        const ownerEmail = 'dfofox@gmail.com';
-        const isVerifiedDomain = process.env.RESEND_VERIFIED_DOMAIN === 'true';
-
-        let toEmail = recipientEmail;
-
-        if (!isVerifiedDomain) {
-            toEmail = ownerEmail;
-            console.log(`[Notification] Test mode active. Redirecting to ${toEmail}`);
-        }
-
         // Supabase/PostgREST might return listing as an array depending on inference
         const listingData: any = thread.listing;
         const listingTitleStr = Array.isArray(listingData) ? listingData[0]?.title : listingData?.title;
@@ -154,11 +143,11 @@ export async function POST(request: Request) {
         const fromEmail = process.env.RESEND_FROM_EMAIL || 'ルームシェアmikke <onboarding@resend.dev>';
         const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://roommikke.jp').replace(/\/$/, '');
         const messageUrl = `${siteUrl}/messages/${threadId}`;
-        console.log(`[Notification] Sending email from ${fromEmail} to ${toEmail}`);
+        console.log(`[Notification] Sending email from ${fromEmail} to ${recipientEmail}`);
 
         const { data, error: resendError } = await resend.emails.send({
             from: fromEmail,
-            to: toEmail,
+            to: recipientEmail,
             subject: `【ルームシェアmikke】${senderName}さんからメッセージが届きました`,
             text: `
 ${senderName}さんから新しいメッセージが届きました。

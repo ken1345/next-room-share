@@ -155,16 +155,6 @@ serve(async (req) => {
         // 7. Send Email
         const resend = new Resend(resendApiKey);
 
-        const ownerEmail = 'dfofox@gmail.com';
-        const isVerifiedDomain = Deno.env.get('RESEND_VERIFIED_DOMAIN') === 'true';
-
-        let toEmail = recipientEmail;
-
-        if (!isVerifiedDomain) {
-            toEmail = ownerEmail;
-            console.log(`Test mode active. Redirecting to ${toEmail}`);
-        }
-
         const listingData: any = thread.listing;
         const listingTitleStr = Array.isArray(listingData) ? listingData[0]?.title : listingData?.title;
         const listingTitle = listingTitleStr ? `(${listingTitleStr})` : "";
@@ -175,7 +165,7 @@ serve(async (req) => {
 
         const { data: emailData, error: resendError } = await resend.emails.send({
             from: fromEmail,
-            to: toEmail,
+            to: recipientEmail,
             subject: `【ルームシェアmikke】${senderName}さんからメッセージが届きました`,
             text: `
 ${senderName}さんから新しいメッセージが届きました。

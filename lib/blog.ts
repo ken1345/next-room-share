@@ -17,12 +17,13 @@ export type BlogPost = {
   headings: string[];
   keyPoints: string[];
   eyecatchImage: string | null;
-  updatedAt: string;
+  publishedAt: string;
   readingMinutes: number;
 };
 
 const EYE_CATCH_BY_SLUG: Record<string, string> = {
   '1': '/blog/b1a.png',
+  '2': '/blog/b2a.png',
 };
 
 function normalizeLine(line: string) {
@@ -95,9 +96,24 @@ async function readBlogFile(filename: string): Promise<BlogPost> {
     fs.stat(filePath),
   ]);
 
-  const lines = content.split('\n').map(normalizeLine).filter(Boolean);
-  const [title, ...rest] = lines;
-  const body = rest.join('\n\n');
+  const contentLines = content.replace(/\r/g, '').split('\n');
+  const titleIndex = contentLines.findIndex((line) => normalizeLine(line));
+  const title = normalizeLine(contentLines[titleIndex] ?? filename);
+  let bodyStartIndex = titleIndex + 1;
+
+  while (bodyStartIndex < contentLines.length && !normalizeLine(contentLines[bodyStartIndex])) {
+    bodyStartIndex++;
+  }
+
+  const publishedAtLine = normalizeLine(contentLines[bodyStartIndex] ?? '').match(
+    /^公開日[：:]\s*(\d{4}-\d{2}-\d{2})$/
+  );
+
+  if (publishedAtLine) {
+    bodyStartIndex++;
+  }
+
+  const body = contentLines.slice(bodyStartIndex).join('\n').trim();
   const paragraphs = body
     .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
@@ -125,11 +141,12 @@ async function readBlogFile(filename: string): Promise<BlogPost> {
     headings,
     keyPoints,
     eyecatchImage: EYE_CATCH_BY_SLUG[slug] ?? null,
-    updatedAt: new Intl.DateTimeFormat('ja-JP', {
+    publishedAt: new Intl.DateTimeFormat('ja-JP', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    }).format(stats.mtime),
+      timeZone: 'Asia/Tokyo',
+    }).format(publishedAtLine ? new Date(`${publishedAtLine[1]}T00:00:00+09:00`) : stats.mtime),
     readingMinutes: Math.max(1, Math.ceil(plainText.length / 500)),
   };
 }

@@ -85,7 +85,7 @@ export default async function BlogSection() {
                   </div>
 
                   <div className="mt-4 flex items-center justify-between text-xs font-bold text-stone-500">
-                    <span className="truncate pr-2">{post.updatedAt}</span>
+                    <span className="truncate pr-2">{post.publishedAt}</span>
                     <span className="inline-flex items-center gap-1 text-[#416b9c] shrink-0">
                       続きを読む
                       <MdArrowForward className="transition group-hover:translate-x-1" />

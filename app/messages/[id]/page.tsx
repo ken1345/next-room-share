@@ -22,11 +22,17 @@ export default function MessageThreadPage() {
     const [blockedByMe, setBlockedByMe] = useState(false); // Did I block them?
     const [showMenu, setShowMenu] = useState(false); // For dropdown menu
 
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
     const hasScrolledToInitialBottom = useRef(false);
 
     const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
-        messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
+        const container = messagesContainerRef.current;
+        if (!container) return;
+
+        container.scrollTo({
+            top: container.scrollHeight,
+            behavior,
+        });
     };
 
     useEffect(() => {
@@ -285,7 +291,7 @@ export default function MessageThreadPage() {
     const counterpart = isHost ? thread.seeker : thread.host;
 
     return (
-        <div className="flex flex-col h-[100dvh] bg-gray-100 font-sans">
+        <div className="flex min-h-0 h-[calc(100dvh-5rem)] md:h-[calc(100dvh-6rem)] flex-col bg-gray-100 font-sans">
             {/* Header */}
             <header className="bg-white border-b px-4 py-3 flex items-center gap-4 shadow-sm z-10 shrink-0 sticky top-0">
                 <Link href="/messages" className="text-gray-500 hover:text-gray-800">
@@ -334,7 +340,7 @@ export default function MessageThreadPage() {
             </header>
 
             {/* Messages List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div ref={messagesContainerRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
                 {messages.map((msg, i) => {
                     const isMe = msg.sender_id === user.id;
                     const showDate = i === 0 || new Date(messages[i - 1].created_at).toDateString() !== new Date(msg.created_at).toDateString();
@@ -358,7 +364,6 @@ export default function MessageThreadPage() {
                         </div>
                     );
                 })}
-                <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area */}

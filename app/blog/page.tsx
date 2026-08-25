@@ -88,7 +88,7 @@ export default async function BlogIndexPage() {
                   </div>
 
                   <div className="flex items-center justify-between text-sm font-bold">
-                    <span className="text-stone-400">{post.updatedAt}</span>
+                    <span className="text-stone-400">{post.publishedAt}</span>
                     <span className="inline-flex items-center gap-2 rounded-full bg-[#4f7db3] px-4 py-2 text-white shadow-[0_10px_22px_-12px_rgba(79,125,179,0.95)]">
                       記事を読む
                       <MdArrowForward className="transition group-hover:translate-x-1" />

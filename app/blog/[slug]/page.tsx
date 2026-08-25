@@ -83,7 +83,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                 <MdSchedule />
                 {post.readingMinutes}分で読めます
               </span>
-              <span className="text-xs font-bold text-stone-400">{post.updatedAt} 更新</span>
+              <span className="text-xs font-bold text-stone-400">{post.publishedAt} 公開</span>
             </div>
 
             <h1 className="text-3xl md:text-[2.9rem] font-bold text-[#24313d] leading-[1.55] mb-6">

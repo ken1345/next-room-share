@@ -146,6 +146,11 @@ export async function POST(request: Request) {
 
         const fromEmail = process.env.RESEND_FROM_EMAIL || 'ルームシェアmikke <onboarding@resend.dev>';
         const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://roommikke.jp').replace(/\/$/, '');
+        const hostname = new URL(siteUrl).hostname.replace(/\.$/, '');
+        if (hostname === 'localhost' || hostname.endsWith('.localhost') || hostname.startsWith('127.') || hostname === '[::1]') {
+            console.log('[Notification] Skipped email because the reply link points to localhost.');
+            return NextResponse.json({ skipped: true, reason: 'local_reply_url' });
+        }
         const messageUrl = `${siteUrl}/messages/${threadId}`;
         console.log(`[Notification] Sending email from ${fromEmail} to ${recipientEmail}`);
 

@@ -161,6 +161,13 @@ serve(async (req) => {
 
         const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'ルームシェアmikke <onboarding@resend.dev>';
         const siteUrl = (Deno.env.get('NEXT_PUBLIC_SITE_URL') || Deno.env.get('NEXT_PUBLIC_BASE_URL') || 'https://roommikke.jp').replace(/\/$/, '');
+        const hostname = new URL(siteUrl).hostname.replace(/\.$/, '');
+        if (hostname === 'localhost' || hostname.endsWith('.localhost') || hostname.startsWith('127.') || hostname === '[::1]') {
+            console.log('[Notification] Skipped email because the reply link points to localhost.');
+            return new Response(JSON.stringify({ skipped: true, reason: 'local_reply_url' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
         const messageUrl = `${siteUrl}/messages/${threadId}`;
 
         const { data: emailData, error: resendError } = await resend.emails.send({

@@ -5,6 +5,13 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { MdArrowBack, MdSend, MdPerson, MdImage, MdBlock, MdMoreVert } from 'react-icons/md';
 
+function appendMessage<T extends { id: string }>(messages: T[], message: T): T[] {
+    if (messages.some(existingMessage => existingMessage.id === message.id)) {
+        return messages;
+    }
+    return [...messages, message];
+}
+
 export default function MessageThreadPage() {
     const params = useParams();
     const router = useRouter();
@@ -129,7 +136,7 @@ export default function MessageThreadPage() {
                     table: 'messages',
                     filter: `thread_id=eq.${threadId}`
                 }, (payload) => {
-                    setMessages(prev => [...prev, payload.new]);
+                    setMessages(prev => appendMessage(prev, payload.new));
                 })
                 .subscribe();
 
@@ -185,7 +192,7 @@ export default function MessageThreadPage() {
             setNewMessage(content);
         } else {
             if (sentMessage) {
-                setMessages(prev => [...prev, sentMessage]);
+                setMessages(prev => appendMessage(prev, sentMessage));
             }
 
             // Send Email Notification (Non-blocking)

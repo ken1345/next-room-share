@@ -38,7 +38,7 @@ function authorization(environment: Device["environment"], config: APNsCredentia
     return value;
 }
 
-function send(device: Device, threadID: string, credential: string): Promise<{ status: number; reason?: string }> {
+function send(device: Device, threadID: string, credential: string): Promise<{ status: number; reason?: string; apnsID?: string }> {
     const host = device.environment === "development" ? "api.sandbox.push.apple.com" : "api.push.apple.com";
     const client = connect(`https://${host}`);
     return new Promise((resolve, reject) => {
@@ -55,9 +55,14 @@ function send(device: Device, threadID: string, credential: string): Promise<{ s
             "content-type": "application/json",
         });
         let status = 0;
+        let apnsID: string | undefined;
         let body = "";
         stream.setEncoding("utf8");
-        stream.on("response", headers => { status = Number(headers[":status"]); });
+        stream.on("response", headers => {
+            status = Number(headers[":status"]);
+            const id = headers["apns-id"];
+            if (typeof id === "string") apnsID = id;
+        });
         stream.on("data", chunk => { body += chunk; });
         stream.once("error", error => {
             client.destroy();
@@ -67,7 +72,7 @@ function send(device: Device, threadID: string, credential: string): Promise<{ s
             client.close();
             let reason: string | undefined;
             try { if (body) reason = JSON.parse(body).reason; } catch { /* Response body is optional. */ }
-            resolve({ status, reason });
+            resolve({ status, reason, apnsID });
         });
         stream.end(JSON.stringify({
             aps: { alert: { title: "ルームシェアMikke", body: "新しいメッセージが届きました。" }, sound: "default" },
@@ -113,12 +118,19 @@ export async function sendMessagePush(admin: SupabaseClient, sender: string, rec
 
         try {
             const result = await send(device, threadID, authorization(device.environment, config));
-            if (result.status === 200) return;
+            const outcome = {
+                messageId: messageID, environment: device.environment,
+                status: result.status, apnsId: result.apnsID, reason: result.reason,
+            };
+            if (result.status === 200) {
+                console.info("[APNs] Accepted", outcome);
+                return;
+            }
             if (result.status === 410) {
                 await admin.from("ios_push_devices").delete().eq("installation_id", device.installation_id)
                     .eq("updated_at", device.updated_at);
             }
-            console.warn("[APNs] Delivery rejected", result.status, result.reason);
+            console.warn("[APNs] Delivery rejected", outcome);
         } catch {
             console.warn("[APNs] Delivery connection failed");
         }

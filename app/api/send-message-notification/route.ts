@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
+import { sendMessagePush } from "@/lib/apns";
+
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
     try {
         const { threadId, messageContent } = await request.json();
@@ -84,6 +88,12 @@ export async function POST(request: Request) {
 
         if (senderProfileError) {
             console.error('[Notification] Sender profile lookup failed:', senderProfileError.code);
+        }
+
+        if (!process.env.MESSAGE_PUSH_WEBHOOK_SECRET && typeof messageContent === "string") {
+            await sendMessagePush(adminClient, user.id, actualRecipientId, threadId, { content: messageContent }).catch(() => {
+                console.warn("[APNs] Could not process message notification");
+            });
         }
 
         const senderName = [

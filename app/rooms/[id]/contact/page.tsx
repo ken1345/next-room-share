@@ -164,8 +164,6 @@ ${form.message}
             const token = session?.access_token;
 
             // Construct notification payload
-            const recipientId = property.host_id; // Host is the recipient
-            const senderName = form.name || user.user_metadata?.full_name || 'ユーザー';
             const messageContent = `
 【お問い合わせ内容】
 名前: ${form.name}
@@ -186,8 +184,6 @@ ${form.message}
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        recipientId,
-                        senderName, // API will ignore this now and refetch, but keeping for compatibility if needed or removed
                         messageContent,
                         threadId
                     })

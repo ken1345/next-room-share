@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
     try {
-        const { recipientId, threadId, messageContent, senderName: providedSenderName } = await request.json();
+        const { threadId, messageContent } = await request.json();
 
         // 1. Auth Check: Verify the caller
         const authHeader = request.headers.get('Authorization');
@@ -76,18 +76,22 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Too Many Requests" }, { status: 429 });
         }
 
-        // 5. Fetch Sender Name (Securely but prioritize UX)
-        let senderName = providedSenderName;
+        const { data: senderProfile, error: senderProfileError } = await adminClient
+            .from('users')
+            .select('display_name')
+            .eq('id', user.id)
+            .maybeSingle();
 
-        if (!senderName) {
-            const { data: senderProfile } = await adminClient
-                .from('users')
-                .select('display_name, email, name')
-                .eq('id', user.id)
-                .single();
-
-            senderName = senderProfile?.display_name || senderProfile?.name || user.email?.split('@')[0] || 'ユーザー';
+        if (senderProfileError) {
+            console.error('[Notification] Sender profile lookup failed:', senderProfileError.code);
         }
+
+        const senderName = [
+            senderProfile?.display_name,
+            user.user_metadata?.display_name,
+            user.user_metadata?.full_name,
+        ].find((name): name is string => typeof name === 'string' && name.trim().length > 0)
+            ?.trim() || 'ユーザー';
 
         // --- End Security Checks, proceed to Send Email ---
 

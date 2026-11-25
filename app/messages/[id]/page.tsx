@@ -190,17 +190,6 @@ export default function MessageThreadPage() {
 
             // Send Email Notification (Non-blocking)
             const sendNotification = async () => {
-                const recipientId = (user.id === thread.host_id) ? thread.seeker_id : thread.host_id;
-
-                let senderName = 'ユーザー';
-                if (user.id === thread.host_id) {
-                    senderName = thread.host?.display_name || user.user_metadata?.full_name;
-                } else if (user.id === thread.seeker_id) {
-                    senderName = thread.seeker?.display_name || user.user_metadata?.full_name;
-                }
-
-                if (!senderName) senderName = user.email?.split('@')[0] || 'ユーザー';
-
                 const { data: { session } } = await supabase.auth.getSession();
                 const token = session?.access_token;
 
@@ -212,8 +201,6 @@ export default function MessageThreadPage() {
                             'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify({
-                            recipientId,
-                            senderName,
                             messageContent: content,
                             threadId
                         })

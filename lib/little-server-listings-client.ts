@@ -22,3 +22,7 @@ export async function requestLittleServerListings<T>(query: URLSearchParams, opt
     }
     return response.json() as Promise<T>;
 }
+
+export async function ensureLittleServerListingReference(id: string) {
+    await requestLittleServerListings(new URLSearchParams({ id, reference: '1' }), { method: 'POST' });
+}

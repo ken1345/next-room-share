@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { requestLittleServerListings, useLittleServerListings } from '@/lib/little-server-listings-client';
+import { ensureLittleServerListingReference, requestLittleServerListings, useLittleServerListings } from '@/lib/little-server-listings-client';
 import { MdArrowBack, MdCheck, MdEmail, MdPerson } from 'react-icons/md';
 
 export default function ContactPage() {
@@ -128,6 +128,7 @@ export default function ContactPage() {
             if (existingThreads) {
                 threadId = existingThreads.id;
             } else {
+                if (useLittleServerListings) await ensureLittleServerListingReference(id);
                 // Create Thread
                 const { data: newThread, error: threadError } = await supabase
                     .from('threads')

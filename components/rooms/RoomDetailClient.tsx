@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import ImageGallery from '@/components/ImageGallery';
 import { listingPhotosPending } from '@/lib/little-server-listing-photos';
+import { ensureLittleServerListingReference, useLittleServerListings } from '@/lib/little-server-listings-client';
 
 // Using functional component with props
 interface RoomDetailClientProps {
@@ -81,6 +82,14 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
             if (!error) setIsLiked(false);
         } else {
             // Like
+            if (useLittleServerListings) {
+                try {
+                    await ensureLittleServerListingReference(property.id);
+                } catch (error) {
+                    alert(error instanceof Error ? error.message : 'ウォッチリストに登録できませんでした。');
+                    return;
+                }
+            }
             const { error } = await supabase
                 .from('favorites')
                 .insert({

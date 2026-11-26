@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { requestLittleServerListings, useLittleServerListings } from '@/lib/little-server-listings-client';
+import { isLittleServerListingPhoto } from '@/lib/little-server-listing-photos';
 import { MdCloudUpload, MdHome, MdAttachMoney, MdTrain, MdInfo, MdCheck, MdArrowBack, MdEdit, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
 import TRAIN_DATA_JSON from '@/data/pref_line_station_full.json';
@@ -27,6 +28,11 @@ function HostPageContent() {
     // Flow State: 'input' | 'confirm' | 'complete'
     const [step, setStep] = useState<'input' | 'confirm' | 'complete'>('input');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const previewPhoto = (image: { type: string; url: string }) =>
+        useLittleServerListings && image.type === 'existing' && !isLittleServerListingPhoto(image.url)
+            ? '/nophoto-text.webp'
+            : image.url;
 
     // Form State
     const [form, setForm] = useState({
@@ -674,7 +680,7 @@ function HostPageContent() {
                                         <dd className="col-span-2 text-gray-800">
                                             <div className="flex gap-2 bg-gray-50 p-2 rounded overflow-x-auto">
                                                 {images.map((img, i) => (
-                                                    <img key={i} src={img.url} className="h-16 w-16 object-cover rounded" />
+                                                    <img key={i} src={previewPhoto(img)} alt="物件写真のプレビュー" className="h-16 w-16 object-cover rounded" />
                                                 ))}
                                                 {images.length === 0 && <span className="text-gray-400 text-xs">なし</span>}
                                             </div>
@@ -1003,7 +1009,7 @@ function HostPageContent() {
                                     onDragOver={(e) => handleSortDragOver(e, idx)}
                                     onDrop={(e) => handleSortDrop(e, idx)}
                                 >
-                                    <img src={img.url} alt="preview" className="w-full h-full object-cover pointer-events-none" />
+                                    <img src={previewPhoto(img)} alt="物件写真のプレビュー" className="w-full h-full object-cover pointer-events-none" />
 
                                     {/* Remove Button */}
                                     <button

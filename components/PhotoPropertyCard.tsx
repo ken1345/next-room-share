@@ -3,6 +3,7 @@ import { MdTrain, MdVisibility, MdEmail, MdStar } from "react-icons/md";
 import Link from "next/link";
 
 import { getRoomUrl } from "@/lib/url-utils";
+import { isLittleServerListingPhoto, listingPhotosPending } from '@/lib/little-server-listing-photos';
 
 interface PhotoPropertyCardProps {
     id?: string | number;
@@ -28,6 +29,7 @@ interface PhotoPropertyCardProps {
 }
 
 export default function PhotoPropertyCard({ id, image, imageUrl, price, station, badges, title, description, viewCount, favoritesCount, inquiryCount, prefecture, city, slug, horizontal = false, equipment = [], personalEquipment = [], createdAt }: PhotoPropertyCardProps) {
+    const photo = !listingPhotosPending || (imageUrl && isLittleServerListingPhoto(imageUrl)) ? imageUrl : undefined;
     // Format price: If raw value (>100), convert to Man-yen units (e.g. 12000 -> 1.2)
     // If small value (<100), assume already formatted.
     let displayPrice = price;
@@ -50,10 +52,14 @@ export default function PhotoPropertyCard({ id, image, imageUrl, price, station,
             {/* 写真エリア */}
             <div className={`relative flex-shrink-0 ${horizontal ? 'w-48 h-48' : 'h-36 w-full'} ${image || 'bg-gray-100'} overflow-hidden`}>
                 {/* Background Image with Zoom Effect */}
-                <div
+                {listingPhotosPending && !photo ? (
+                    <div className="absolute inset-0 grid place-items-center bg-gray-100 px-4 text-center text-sm font-medium text-gray-600">
+                        写真は準備中です
+                    </div>
+                ) : <div
                     className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-110"
-                    style={{ backgroundImage: imageUrl ? `url('${imageUrl}')` : `url('/nophoto-text.webp')` }}
-                />
+                    style={{ backgroundImage: photo ? `url('${photo}')` : `url('/nophoto-text.webp')` }}
+                />}
 
                 {/* NEWバッジ */}
                 {isNew && (

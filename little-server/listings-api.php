@@ -17,10 +17,17 @@ function validId(mixed $id): bool
     return is_string($id) && preg_match('/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/D', $id) === 1;
 }
 
-function listingResponse(array $listing): array
+function listingResponse(array $listing, bool $ownerView): array
 {
     foreach (['amenities', 'equipment', 'personal_equipment', 'images'] as $field) {
         $listing[$field] = $listing[$field] === null ? null : json_decode($listing[$field], true, 512, JSON_THROW_ON_ERROR);
+    }
+    if (!$ownerView) {
+        $listing['images'] = array_values(array_filter(
+            $listing['images'] ?? [],
+            static fn ($url): bool => is_string($url)
+                && preg_match('~^https://dfofox\.lsv\.jp/roommikke-listing-images/[a-f0-9]{48}\.(?:jpg|png|webp)$~D', $url) === 1,
+        ));
     }
     foreach (['created_at', 'updated_at'] as $field) {
         if ($listing[$field] !== null) {
@@ -146,7 +153,8 @@ try {
         $query = $db->prepare('SELECT * FROM listings WHERE ' . $criteria
             . ' ORDER BY updated_at DESC, id LIMIT 100 OFFSET ' . $offset);
         $query->execute($args);
-        respond(200, ['listings' => array_map('listingResponse', $query->fetchAll(PDO::FETCH_ASSOC))]);
+        $listings = array_map(static fn (array $listing) => listingResponse($listing, $owner !== null), $query->fetchAll(PDO::FETCH_ASSOC));
+        respond(200, ['listings' => $listings]);
     }
 
     if ($owner === null) {

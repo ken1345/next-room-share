@@ -93,27 +93,38 @@ function listingValues(array $input): array
     return $values;
 }
 
-function saveListingPhoto(string $mediaFolder): never
+function saveListingPhoto(string $mediaFolder, string $privateDirectory): never
 {
     $limit = 3 * 1024 * 1024;
     $contents = file_get_contents('php://input', false, null, 0, $limit + 1);
     if ($contents === false || strlen($contents) > $limit) {
         respond(413, ['error' => 'Image is too large']);
     }
-    $image = @getimagesizefromstring($contents);
-    $extensions = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_WEBP => 'webp'];
-    $extension = $extensions[$image[2] ?? 0] ?? null;
-    if ($extension === null || $image[0] > 8000 || $image[1] > 8000) {
-        respond(400, ['error' => 'Invalid image']);
-    }
-
     $directory = dirname(__DIR__) . '/' . $mediaFolder;
     if (!is_dir($directory) && !mkdir($directory, 0755) && !is_dir($directory)) {
         throw new RuntimeException('Listing image storage unavailable');
     }
-    $filename = bin2hex(random_bytes(24)) . '.' . $extension;
-    if (file_put_contents($directory . '/' . $filename, $contents, LOCK_EX) !== strlen($contents)) {
-        throw new RuntimeException('Could not save image');
+    require $privateDirectory . '/listing-migration/listing-image.php';
+    $input = tempnam($privateDirectory, 'upload-');
+    $output = tempnam($privateDirectory, 'webp-');
+    $filename = bin2hex(random_bytes(24)) . '.webp';
+    try {
+        if ($input === false || $output === false || file_put_contents($input, $contents) !== strlen($contents)) {
+            throw new RuntimeException('Could not stage image');
+        }
+        $converted = encodeListingPhotoAsWebp($input, $output);
+        if ($converted && (!chmod($output, 0644) || !rename($output, $directory . '/' . $filename))) {
+            throw new RuntimeException('Could not save WebP image');
+        }
+    } finally {
+        foreach ([$input, $output] as $path) {
+            if ($path !== false && is_file($path)) {
+                unlink($path);
+            }
+        }
+    }
+    if (!$converted) {
+        respond(400, ['error' => 'Invalid image']);
     }
     respond(201, ['url' => 'https://dfofox.lsv.jp/' . $mediaFolder . '/' . $filename]);
 }
@@ -164,7 +175,7 @@ try {
     }
 
     if ($method === 'POST' && ($_GET['upload'] ?? null) === '1') {
-        saveListingPhoto($mediaFolder);
+        saveListingPhoto($mediaFolder, $privateDirectory);
     }
 
     if ($method === 'DELETE' && $id !== null) {

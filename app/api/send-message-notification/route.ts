@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
-import { sendMessagePush } from '@/lib/apns';
+
+import { sendMessagePush } from "@/lib/apns";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
     try {
-        const { threadId, messageContent, senderName: providedSenderName } = await request.json();
-        if (typeof threadId !== "string" || typeof messageContent !== "string") {
-            return NextResponse.json({ error: "Invalid notification request" }, { status: 400 });
-        }
+        const { threadId, messageContent } = await request.json();
 
         // 1. Auth Check: Verify the caller
         const authHeader = request.headers.get('Authorization');
@@ -82,23 +80,28 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Too Many Requests" }, { status: 429 });
         }
 
-        // Push uses its own preference and can succeed even if email is disabled.
-        await sendMessagePush(adminClient, user.id, actualRecipientId, threadId, { content: messageContent }).catch(() => {
-            console.warn("[APNs] Could not process message notification");
-        });
+        const { data: senderProfile, error: senderProfileError } = await adminClient
+            .from('users')
+            .select('display_name')
+            .eq('id', user.id)
+            .maybeSingle();
 
-        // 5. Fetch Sender Name (Securely but prioritize UX)
-        let senderName = providedSenderName;
-
-        if (!senderName) {
-            const { data: senderProfile } = await adminClient
-                .from('users')
-                .select('display_name, email, name')
-                .eq('id', user.id)
-                .single();
-
-            senderName = senderProfile?.display_name || senderProfile?.name || user.email?.split('@')[0] || 'ユーザー';
+        if (senderProfileError) {
+            console.error('[Notification] Sender profile lookup failed:', senderProfileError.code);
         }
+
+        if (!process.env.MESSAGE_PUSH_WEBHOOK_SECRET && typeof messageContent === "string") {
+            await sendMessagePush(adminClient, user.id, actualRecipientId, threadId, { content: messageContent }).catch(() => {
+                console.warn("[APNs] Could not process message notification");
+            });
+        }
+
+        const senderName = [
+            senderProfile?.display_name,
+            user.user_metadata?.display_name,
+            user.user_metadata?.full_name,
+        ].find((name): name is string => typeof name === 'string' && name.trim().length > 0)
+            ?.trim() || 'ユーザー';
 
         // --- End Security Checks, proceed to Send Email ---
 
@@ -111,37 +114,24 @@ export async function POST(request: Request) {
         // Fetch Recipient Email
         const { data: recipient, error: recipientError } = await adminClient
             .from('users')
-            .select('email, email_notification')
+            .select('email_notification')
             .eq('id', actualRecipientId)
-            .single();
-
-        let recipientEmail = recipient?.email;
-        let recipientNotification = recipient?.email_notification ?? true;
-
-        if (!recipientEmail) {
-            // Fallback: Try fetching from Auth (auth.users) directly
-            console.log(`[Notification] Email not found in public.users for ${actualRecipientId}. Trying Auth...`);
-            const { data: authUser, error: authUserError } = await adminClient.auth.admin.getUserById(actualRecipientId);
-
-            if (authUser && authUser.user) {
-                recipientEmail = authUser.user.email;
-            } else {
-                console.error("[Notification] Recipient not found in Auth either:", authUserError);
-                return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
-            }
+            .maybeSingle();
+        if (recipientError) {
+            console.error('[Notification] Recipient preferences lookup failed:', recipientError.code);
+            return NextResponse.json({ error: 'Notification unavailable' }, { status: 500 });
         }
 
-        if (!recipientEmail) {
-            console.error("[Notification] Recipient has no email.");
-            return NextResponse.json({ error: "Recipient has no email" }, { status: 404 });
-        }
-
-        console.log(`[Notification] Sending to recipient: ${actualRecipientId} (${recipientEmail})`);
-
-        const shouldSend = recipientNotification;
-        if (!shouldSend) {
+        if (recipient?.email_notification === false) {
             console.log(`[Notification] Skipped. User disabled notifications.`);
             return NextResponse.json({ skipped: true });
+        }
+
+        const { data: authUser, error: authUserError } = await adminClient.auth.admin.getUserById(actualRecipientId);
+        const recipientEmail = authUser?.user?.email;
+        if (authUserError || !recipientEmail) {
+            console.error('[Notification] Recipient email unavailable:', authUserError?.code);
+            return NextResponse.json({ error: 'Notification unavailable' }, { status: 500 });
         }
 
         const resend = new Resend(resendApiKey);
@@ -153,8 +143,12 @@ export async function POST(request: Request) {
 
         const fromEmail = process.env.RESEND_FROM_EMAIL || 'ルームシェアmikke <onboarding@resend.dev>';
         const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://roommikke.jp').replace(/\/$/, '');
+        const hostname = new URL(siteUrl).hostname.replace(/\.$/, '');
+        if (hostname === 'localhost' || hostname.endsWith('.localhost') || hostname.startsWith('127.') || hostname === '[::1]') {
+            console.log('[Notification] Skipped email because the reply link points to localhost.');
+            return NextResponse.json({ skipped: true, reason: 'local_reply_url' });
+        }
         const messageUrl = `${siteUrl}/messages/${threadId}`;
-        console.log(`[Notification] Sending email from ${fromEmail} to ${recipientEmail}`);
 
         const { data, error: resendError } = await resend.emails.send({
             from: fromEmail,
@@ -176,15 +170,15 @@ ${messageUrl}
         });
 
         if (resendError) {
-            console.error("[Notification] Resend API error:", resendError);
-            return NextResponse.json({ error: resendError.message }, { status: 500 });
+            console.error("[Notification] Resend API error:", resendError.name);
+            return NextResponse.json({ error: 'Notification unavailable' }, { status: 500 });
         }
 
         console.log("[Notification] Email sent successfully:", data);
 
         return NextResponse.json({ success: true, data });
-    } catch (error: any) {
-        console.error("[Notification] Uncaught error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch {
+        console.error("[Notification] Unexpected error.");
+        return NextResponse.json({ error: 'Notification unavailable' }, { status: 500 });
     }
 }

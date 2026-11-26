@@ -5,6 +5,13 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { MdArrowBack, MdSend, MdPerson, MdImage, MdBlock, MdMoreVert } from 'react-icons/md';
 
+function appendMessage<T extends { id: string }>(messages: T[], message: T): T[] {
+    if (messages.some(existingMessage => existingMessage.id === message.id)) {
+        return messages;
+    }
+    return [...messages, message];
+}
+
 export default function MessageThreadPage() {
     const params = useParams();
     const router = useRouter();
@@ -129,7 +136,7 @@ export default function MessageThreadPage() {
                     table: 'messages',
                     filter: `thread_id=eq.${threadId}`
                 }, (payload) => {
-                    setMessages(prev => [...prev, payload.new]);
+                    setMessages(prev => appendMessage(prev, payload.new));
                 })
                 .subscribe();
 
@@ -185,22 +192,11 @@ export default function MessageThreadPage() {
             setNewMessage(content);
         } else {
             if (sentMessage) {
-                setMessages(prev => [...prev, sentMessage]);
+                setMessages(prev => appendMessage(prev, sentMessage));
             }
 
             // Send Email Notification (Non-blocking)
             const sendNotification = async () => {
-                const recipientId = (user.id === thread.host_id) ? thread.seeker_id : thread.host_id;
-
-                let senderName = 'ユーザー';
-                if (user.id === thread.host_id) {
-                    senderName = thread.host?.display_name || user.user_metadata?.full_name;
-                } else if (user.id === thread.seeker_id) {
-                    senderName = thread.seeker?.display_name || user.user_metadata?.full_name;
-                }
-
-                if (!senderName) senderName = user.email?.split('@')[0] || 'ユーザー';
-
                 const { data: { session } } = await supabase.auth.getSession();
                 const token = session?.access_token;
 
@@ -212,8 +208,6 @@ export default function MessageThreadPage() {
                             'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify({
-                            recipientId,
-                            senderName,
                             messageContent: content,
                             threadId
                         })

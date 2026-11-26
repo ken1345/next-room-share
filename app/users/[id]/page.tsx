@@ -14,7 +14,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
     // Fetch user profile
     const { data: user, error } = await supabase
         .from('users')
-        .select('*')
+        .select('display_name, photo_url, gender, age, occupation')
         .eq('id', id)
         .single();
 

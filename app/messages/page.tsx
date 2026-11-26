@@ -18,12 +18,10 @@ type Thread = {
     host: {
         display_name: string;
         photo_url: string;
-        email: string;
     } | null;
     seeker: {
         display_name: string;
         photo_url: string;
-        email: string;
     } | null;
     last_message_sender_id?: string;
     last_message_content?: string;
@@ -53,8 +51,8 @@ export default function MessagesListPage() {
                 .select(`
                     *,
                     listing:listings(title, images),
-                    host:host_id(display_name, photo_url, email),
-                    seeker:seeker_id(display_name, photo_url, email)
+                    host:host_id(display_name, photo_url),
+                    seeker:seeker_id(display_name, photo_url)
                 `)
                 .or(`host_id.eq.${session.user.id},seeker_id.eq.${session.user.id}`)
                 .order('updated_at', { ascending: false });
@@ -142,7 +140,7 @@ export default function MessagesListPage() {
                     {threads.map(thread => {
                         const isHost = user.id === thread.host_id;
                         const counterpart = isHost ? thread.seeker : thread.host;
-                        const counterpartName = counterpart?.display_name || counterpart?.email?.split('@')[0] || 'ユーザー';
+                        const counterpartName = counterpart?.display_name || 'ユーザー';
                         const counterpartImage = counterpart?.photo_url;
 
                         let lastSenderLabel = "";

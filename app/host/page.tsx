@@ -338,7 +338,6 @@ function HostPageContent() {
                 console.log("Creating missing public profile on host page...");
                 const { error: createError } = await supabase.from('users').insert({
                     id: user.id,
-                    email: user.email,
                     display_name: user.user_metadata?.full_name || 'User',
                     photo_url: user.user_metadata?.avatar_url || null,
                 });

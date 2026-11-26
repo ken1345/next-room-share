@@ -35,7 +35,11 @@ export default function EditProfilePage() {
             setUser(currentUser);
 
             // Try to fetch from public.users first
-            const { data: profile } = await supabase.from('users').select('*').eq('id', currentUser.id).single();
+            const { data: profile } = await supabase
+                .from('users')
+                .select('display_name, gender, age, occupation, photo_url')
+                .eq('id', currentUser.id)
+                .single();
 
             if (profile) {
                 setDisplayName(profile.display_name || '');
@@ -134,7 +138,6 @@ export default function EditProfilePage() {
                     id: user.id,
                     display_name: displayName,
                     photo_url: photoURL,
-                    email: user.email, // Ensure email is in sync or handled by trigger
                     gender: gender,
                     age: age ? Number(age) : null,
                     occupation: occupation

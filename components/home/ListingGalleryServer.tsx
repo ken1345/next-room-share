@@ -3,9 +3,11 @@ import { unstable_noStore as noStore } from 'next/cache';
 import { supabase } from "@/lib/supabase";
 import PhotoPropertyCard from "@/components/PhotoPropertyCard";
 import SectionTitle from "@/components/SectionTitle";
+import { readPublicLittleServerListings, useLittleServerListings } from '@/lib/little-server-listings';
 
-export default async function ListingGalleryServer() {
-    noStore();
+async function readGallery() {
+    if (useLittleServerListings) return (await readPublicLittleServerListings()).slice(0, 8);
+
     const { data: listings, error } = await supabase
         .from('listings')
         .select('*')
@@ -18,7 +20,12 @@ export default async function ListingGalleryServer() {
         // Continue with empty list or show error? Empty list is safer for Partial Rendering.
     }
 
-    const items = listings || [];
+    return listings || [];
+}
+
+export default async function ListingGalleryServer() {
+    noStore();
+    const items = await readGallery();
 
     return (
         <section className="bg-gray-50 py-12 border-t">

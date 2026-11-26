@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { requestLittleServerListings, useLittleServerListings } from '@/lib/little-server-listings-client';
 import { MdArrowBack, MdCheck, MdEmail, MdPerson } from 'react-icons/md';
 
 export default function ContactPage() {
@@ -58,7 +59,11 @@ export default function ContactPage() {
             }
 
             // 2. Get Property
-            const { data, error } = await supabase
+            const { data, error } = useLittleServerListings
+                ? await requestLittleServerListings<{ listings: any[] }>(new URLSearchParams({ id }), undefined, false)
+                    .then(({ listings }) => ({ data: listings[0] ?? null, error: null }))
+                    .catch(error => ({ data: null, error }))
+                : await supabase
                 .from('listings')
                 .select('*, host_id') // Ensure we get host_id
                 .eq('id', id)

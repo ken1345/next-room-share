@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { requestLittleServerListings, useLittleServerListings } from '@/lib/little-server-listings-client';
 import { MdCloudUpload, MdHome, MdAttachMoney, MdTrain, MdInfo, MdCheck, MdArrowBack, MdEdit, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
 import TRAIN_DATA_JSON from '@/data/pref_line_station_full.json';
@@ -155,7 +156,11 @@ function HostPageContent() {
     useEffect(() => {
         if (!editId) return;
         const fetchListing = async () => {
-            const { data, error } = await supabase
+            const { data, error } = useLittleServerListings
+                ? await requestLittleServerListings<{ listings: any[] }>(new URLSearchParams({ id: editId, mine: '1' }))
+                    .then(({ listings }) => ({ data: listings[0], error: null }))
+                    .catch(error => ({ data: null, error }))
+                : await supabase
                 .from('listings')
                 .select('*')
                 .eq('id', editId)
@@ -375,6 +380,13 @@ function HostPageContent() {
                 } else {
                     // Upload new file
                     const file = img.file;
+                    if (useLittleServerListings) {
+                        const { url } = await requestLittleServerListings<{ url: string }>(
+                            new URLSearchParams({ upload: '1' }), { method: 'POST', body: file },
+                        );
+                        uploadedImageUrls.push(url);
+                        continue;
+                    }
                     const fileExt = file.name.split('.').pop() || 'webp';
                     const randomId = Math.random().toString(36).substring(2, 12);
                     const safeFileName = `${Date.now()}_${randomId}.${fileExt}`;
@@ -421,7 +433,6 @@ function HostPageContent() {
                 equipment: form.equipment,
                 personal_equipment: form.personalEquipment,
                 images: uploadedImageUrls,
-                host_id: user.id,
             };
 
             // Generate Slug via API
@@ -451,10 +462,18 @@ function HostPageContent() {
             }
 
             let error;
-            if (editId) {
+            if (useLittleServerListings) {
+                const id = editId || crypto.randomUUID();
+                await requestLittleServerListings(new URLSearchParams({ id }), {
+                    method: editId ? 'PATCH' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                setCompletedId(id);
+            } else if (editId) {
                 const { data: updatedData, error: updateError } = await supabase
                     .from('listings')
-                    .update(payload)
+                    .update({ ...payload, host_id: user.id })
                     .eq('id', editId)
                     .select(); // Return the updated row
 
@@ -466,7 +485,7 @@ function HostPageContent() {
             } else {
                 const { data: insertedData, error: insertError } = await supabase
                     .from('listings')
-                    .insert(payload)
+                    .insert({ ...payload, host_id: user.id })
                     .select();
 
                 if (insertedData && insertedData.length > 0) {

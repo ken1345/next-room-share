@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { toRomaji, slugify } from '@/lib/romaji';
 import regionMapping from '@/data/region-mapping.json';
+import { readPublicLittleServerListings, useLittleServerListings, type LittleServerListing } from './little-server-listings';
 
 export type SearchParams = {
     tab?: string;
@@ -229,7 +230,67 @@ async function withListingSlugs(listings: ListingRecord[]) {
     );
 }
 
+function matchesLittleServerFeature(listing: LittleServerListing, feature?: string) {
+    const amenities = listing.amenities ?? [];
+    const equipment = listing.equipment ?? [];
+    const hasFiber = amenities.includes('高速インターネット(光回線)');
+    switch (feature) {
+        case 'pet': case 'pet-friendly': return amenities.includes('ペット相談可');
+        case 'wifi': case 'gamer': return hasFiber;
+        case 'foreigner': case 'foreigners-welcome': return amenities.includes('外国人歓迎');
+        case 'female': return listing.gender_restriction === 'female';
+        case 'cheap': case 'low-initial-cost': return listing.price <= 50000;
+        case 'private-room': return listing.room_type === 'private';
+        case 'furnished': return ['冷蔵庫', '電子レンジ', 'エアコン', 'ベッド'].some(item => equipment.includes(item));
+        case 'work-from-home': return hasFiber || ['Wifi', 'デスク', 'エアコン'].some(item => equipment.includes(item));
+        case 'diy': return amenities.includes('DIY可');
+        case 'new': return amenities.includes('新築') || amenities.includes('リノベ');
+        default: return true;
+    }
+}
+
+async function filterLittleServerListings(params: SearchParams) {
+    const requestedTypes = params.types?.split(',') ?? [];
+    const typeCodes = [
+        ...(requestedTypes.includes('個室') ? ['private'] : []),
+        ...(requestedTypes.includes('半個室') ? ['semi'] : []),
+        ...(requestedTypes.includes('ドミトリー') || requestedTypes.includes('シェアハウス') ? ['shared'] : []),
+    ];
+    const regionPrefectures = Object.entries(regionMapping)
+        .filter(([, region]) => region === params.region).map(([prefecture]) => prefecture);
+    const contains = (value: string | null | undefined, query: string) => value?.toLowerCase().includes(query.toLowerCase());
+    const includesAll = (values: string[] | null | undefined, requested?: string) =>
+        !requested || requested.split(',').every(value => values?.includes(value));
+
+    return (await readPublicLittleServerListings()).filter(listing => {
+        if (params.q && ![listing.title, listing.description, listing.address, listing.prefecture,
+            listing.city, listing.station_name, listing.station_line].some(value => contains(value, params.q!))) return false;
+
+        if (!params.tab || params.tab === 'area') {
+            if (params.pref && listing.prefecture !== params.pref) return false;
+            if (!params.pref && regionPrefectures.length && !regionPrefectures.includes(listing.prefecture ?? '')) return false;
+            if (params.city && listing.city !== params.city) return false;
+        }
+        if (params.tab === 'station') {
+            if (params.station_pref && listing.prefecture !== params.station_pref) return false;
+            if (params.line && !contains(listing.station_line, params.line)) return false;
+            if (params.station && !contains(listing.station_name, params.station)) return false;
+        }
+        if (typeCodes.length && !typeCodes.includes(listing.room_type ?? '')) return false;
+        if (params.min_rent && !(listing.price >= Number(params.min_rent) * 10000)) return false;
+        if (params.max_rent && !(listing.price <= Number(params.max_rent) * 10000)) return false;
+        if (params.walk && (listing.minutes_to_station == null || !(listing.minutes_to_station <= Number(params.walk)))) return false;
+        if (params.gender && params.gender !== 'all' && listing.gender_restriction !== params.gender) return false;
+        return includesAll(listing.amenities, params.amenities) &&
+            includesAll(listing.equipment, params.equipment) &&
+            includesAll(listing.personal_equipment, params.personal_equipment) &&
+            matchesLittleServerFeature(listing, params.feature);
+    });
+}
+
 export async function fetchListingsCount(searchParams: SearchParams) {
+    if (useLittleServerListings) return (await filterLittleServerListings(searchParams)).length;
+
     const { count, error } = await buildListingsQuery(searchParams, true);
 
     if (error) {
@@ -245,6 +306,11 @@ export async function fetchListingsServer(searchParams: SearchParams, options: F
     const currentPage = options.page ?? (Number(searchParams.page) > 0 ? Number(searchParams.page) : 1);
     const from = (currentPage - 1) * itemsPerPage;
     const to = from + itemsPerPage - 1;
+
+    if (useLittleServerListings) {
+        const listings = await filterLittleServerListings(searchParams);
+        return { listings: await withListingSlugs(listings.slice(from, to + 1)), count: listings.length };
+    }
 
     const { data, count, error } = await buildListingsQuery(searchParams).range(from, to);
 

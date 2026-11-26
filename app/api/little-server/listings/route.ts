@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'node:crypto';
+import { revalidateTag } from 'next/cache';
 import type { NextRequest } from 'next/server';
-
-const listingEndpoint = 'https://dfofox.lsv.jp/roommikke-api/listings.php';
+import { littleServerListingsEndpoint } from '@/lib/little-server-listings';
 const maxListingBytes = 131072;
 
 async function authenticatedOwner(request: NextRequest) {
@@ -25,10 +25,13 @@ async function proxyListings(request: NextRequest) {
     const token = process.env.LITTLE_SERVER_LISTINGS_TOKEN;
     if (!token) return Response.json({ error: 'Listing service unavailable' }, { status: 503 });
 
-    const url = new URL(listingEndpoint);
+    const url = new URL(littleServerListingsEndpoint);
     const params = request.nextUrl.searchParams;
+    const isUpload = request.method === 'POST' && params.get('upload') === '1';
     const id = params.get('id') ?? (request.method === 'POST' ? randomUUID() : null);
     if (id !== null) url.searchParams.set('id', id);
+    if (isUpload) url.searchParams.set('upload', '1');
+    if (request.method === 'PATCH' && params.get('bump') === '1') url.searchParams.set('bump', '1');
     const page = params.get('page');
     if (page !== null) url.searchParams.set('page', page);
 
@@ -42,14 +45,15 @@ async function proxyListings(request: NextRequest) {
 
         let body: ArrayBuffer | undefined;
         if (request.method === 'POST' || request.method === 'PATCH') {
-            if (Number(request.headers.get('content-length')) > maxListingBytes) {
+            const limit = isUpload ? 3 * 1024 * 1024 : maxListingBytes;
+            if (Number(request.headers.get('content-length')) > limit) {
                 return Response.json({ error: 'Listing data too large' }, { status: 413 });
             }
             body = await request.arrayBuffer();
-            if (body.byteLength > maxListingBytes) {
+            if (body.byteLength > limit) {
                 return Response.json({ error: 'Listing data too large' }, { status: 413 });
             }
-            headers.set('Content-Type', 'application/json');
+            headers.set('Content-Type', isUpload ? 'application/octet-stream' : 'application/json');
         }
 
         const result = await fetch(url, {
@@ -63,6 +67,9 @@ async function proxyListings(request: NextRequest) {
         if (result.status === 401 || result.status >= 500 ||
             !result.headers.get('content-type')?.startsWith('application/json')) {
             throw new Error('Listing service response unavailable');
+        }
+        if (request.method !== 'GET' && !isUpload && result.ok) {
+            revalidateTag('little-server-listings', { expire: 0 });
         }
         return new Response(result.body, {
             status: result.status,

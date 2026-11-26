@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MdPerson, MdEmail, MdArrowForwardIos, MdEdit, MdPause, MdPlayArrow, MdBlock, MdVerticalAlignTop } from 'react-icons/md';
 import { supabase } from '@/lib/supabase';
+import { requestLittleServerListings, useLittleServerListings } from '@/lib/little-server-listings-client';
 
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
 
@@ -48,7 +49,14 @@ export default function AccountPage() {
                     }
 
                     // Fetch My Listings with Thread Count
-                    const { data: listingsData, error: listingsError } = await supabase
+                    const { data: listingsData } = useLittleServerListings
+                        ? await requestLittleServerListings<{ listings: any[] }>(new URLSearchParams({ mine: '1' }))
+                            .then(({ listings }) => ({ data: listings }))
+                            .catch(error => {
+                                console.error('Error fetching own listings:', error);
+                                return { data: null };
+                            })
+                        : await supabase
                         .from('listings')
                         .select('*')
                         .eq('host_id', session.user.id)
@@ -112,8 +120,18 @@ export default function AccountPage() {
         router.push('/login');
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!window.confirm("本当に削除しますか？\n※この操作は取り消せません。")) return;
+
+        if (useLittleServerListings) {
+            try {
+                await requestLittleServerListings(new URLSearchParams({ id }), { method: 'DELETE' });
+                setMyListings(prev => prev.filter(item => item.id !== id));
+            } catch (error) {
+                alert(error instanceof Error ? error.message : '削除できませんでした。');
+            }
+            return;
+        }
 
         const { data, error } = await supabase
             .from('listings')
@@ -178,7 +196,10 @@ export default function AccountPage() {
 
         if (!window.confirm("この投稿を新着（先頭）に表示しますか？\n※一度実行すると、次回まで72時間空ける必要があります。")) return;
 
-        const { error } = await supabase
+        const { error } = useLittleServerListings
+            ? await requestLittleServerListings(new URLSearchParams({ id: String(id), bump: '1' }), { method: 'PATCH' })
+                .then(() => ({ error: null })).catch(error => ({ error }))
+            : await supabase
             .from('listings')
             .update({ updated_at: new Date().toISOString() })
             .eq('id', id);
@@ -197,7 +218,7 @@ export default function AccountPage() {
 
 
 
-    const handleToggleVisibility = async (id: number, currentStatus: boolean) => {
+    const handleToggleVisibility = async (id: string, currentStatus: boolean) => {
         const newStatus = !currentStatus;
         const confirmMsg = newStatus
             ? "この物件の募集を再開しますか？\n公開ページに表示されるようになります。"
@@ -205,7 +226,13 @@ export default function AccountPage() {
 
         if (!window.confirm(confirmMsg)) return;
 
-        const { error } = await supabase
+        const { error } = useLittleServerListings
+            ? await requestLittleServerListings(new URLSearchParams({ id }), {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_public: newStatus }),
+            }).then(() => ({ error: null })).catch(error => ({ error }))
+            : await supabase
             .from('listings')
             .update({ is_public: newStatus })
             .eq('id', id);

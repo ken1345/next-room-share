@@ -1,4 +1,5 @@
 import { fetchListingsCount, type SearchParams } from '@/lib/fetch-listings-server';
+import { readPublicLittleServerListings, useLittleServerListings } from '@/lib/little-server-listings';
 import { supabase } from '@/lib/supabase';
 import {
     SEO_AREAS,
@@ -130,6 +131,10 @@ export async function getPropertySitemapItems() {
 }
 
 async function fetchListingsForSitemap() {
+    if (useLittleServerListings) {
+        return { listings: (await readPublicLittleServerListings()).slice(0, 5000) };
+    }
+
     const { data, error } = await supabase
         .from('listings')
         .select('id, slug, updated_at')

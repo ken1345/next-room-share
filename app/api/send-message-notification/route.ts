@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
+import { sendMessagePush } from '@/lib/apns';
+
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
     try {
-        const { recipientId, threadId, messageContent, senderName: providedSenderName } = await request.json();
+        const { threadId, messageContent, senderName: providedSenderName } = await request.json();
+        if (typeof threadId !== "string" || typeof messageContent !== "string") {
+            return NextResponse.json({ error: "Invalid notification request" }, { status: 400 });
+        }
 
         // 1. Auth Check: Verify the caller
         const authHeader = request.headers.get('Authorization');
@@ -75,6 +81,11 @@ export async function POST(request: Request) {
             console.warn(`[Notification] Rate limit exceeded for user ${user.id}`);
             return NextResponse.json({ error: "Too Many Requests" }, { status: 429 });
         }
+
+        // Push uses its own preference and can succeed even if email is disabled.
+        await sendMessagePush(adminClient, user.id, actualRecipientId, threadId, { content: messageContent }).catch(() => {
+            console.warn("[APNs] Could not process message notification");
+        });
 
         // 5. Fetch Sender Name (Securely but prioritize UX)
         let senderName = providedSenderName;

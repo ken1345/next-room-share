@@ -25,7 +25,7 @@ async function getListing(idSlug: string) {
 async function getHost(hostId: string) {
     const { data: host, error } = await supabase
         .from('users')
-        .select('*')
+        .select('id, display_name, photo_url, gender, age, occupation')
         .eq('id', hostId)
         .single();
 

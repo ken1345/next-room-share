@@ -26,7 +26,7 @@ export default function AccountPage() {
                 try {
                     const { data: profile } = await supabase
                         .from('users')
-                        .select('*')
+                        .select('display_name, photo_url')
                         .eq('id', session.user.id)
                         .single();
 
@@ -39,11 +39,10 @@ export default function AccountPage() {
                             .from('users')
                             .insert({
                                 id: session.user.id,
-                                email: session.user.email,
                                 display_name: session.user.user_metadata?.full_name || 'User',
                                 photo_url: session.user.user_metadata?.avatar_url || null,
                             })
-                            .select()
+                            .select('display_name, photo_url')
                             .single();
                         if (!insertError) setUserData(newProfile);
                     }
@@ -242,7 +241,7 @@ export default function AccountPage() {
 
     // Determine values to display (prefer Public Profile table, fallback to Auth metadata)
     const displayName = userData?.display_name || user.user_metadata?.full_name || user.user_metadata?.display_name || 'Guest User';
-    const email = userData?.email || user.email;
+    const email = user.email;
     const photoURL = userData?.photo_url || user.user_metadata?.avatar_url || user.user_metadata?.picture;
 
     return (

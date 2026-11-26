@@ -15,7 +15,7 @@ serve(async (req) => {
     }
 
     try {
-        const { recipientId, threadId, messageContent, senderName: providedSenderName } = await req.json();
+        const { threadId, messageContent } = await req.json();
 
         // 1. Auth Check - Supabase Edge Functions automatically parse Authorization header if using supabase-js client correctly
         // But we can check for custom logic.
@@ -93,15 +93,17 @@ serve(async (req) => {
         // let's keep it simple for stability.
 
         // 5. Fetch Sender Name
-        let senderName = providedSenderName;
-        if (!senderName) {
-            const { data: senderProfile } = await adminClient
-                .from('users')
-                .select('display_name, email, name')
-                .eq('id', user.id)
-                .single();
-            senderName = senderProfile?.display_name || senderProfile?.name || user.email?.split('@')[0] || 'ユーザー';
-        }
+        const { data: senderProfile } = await adminClient
+            .from('users')
+            .select('display_name')
+            .eq('id', user.id)
+            .maybeSingle();
+        const senderName = [
+            senderProfile?.display_name,
+            user.user_metadata?.display_name,
+            user.user_metadata?.full_name,
+        ].find((name): name is string => typeof name === 'string' && name.trim().length > 0)
+            ?.trim() || 'ユーザー';
 
         // 6. Recipient Email Logic (The Fix)
         const resendApiKey = Deno.env.get('RESEND_API_KEY');
@@ -115,39 +117,30 @@ serve(async (req) => {
 
         const { data: recipient, error: recipientError } = await adminClient
             .from('users')
-            .select('email, email_notification')
+            .select('email_notification')
             .eq('id', actualRecipientId)
-            .single();
-
-        let recipientEmail = recipient?.email;
-        let recipientNotification = recipient?.email_notification ?? true;
-
-        // *** FIX: Fallback to Auth ***
-        if (!recipientEmail) {
-            console.log(`Email not found in public.users for ${actualRecipientId}. Trying Auth...`);
-            const { data: authUser, error: authUserError } = await adminClient.auth.admin.getUserById(actualRecipientId);
-
-            if (authUser && authUser.user) {
-                recipientEmail = authUser.user.email;
-            } else {
-                console.error("Recipient not found in Auth either:", authUserError);
-                return new Response(JSON.stringify({ error: "Recipient not found" }), {
-                    status: 404,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-                });
-            }
-        }
-
-        if (!recipientEmail) {
-            return new Response(JSON.stringify({ error: "Recipient has no email" }), {
-                status: 404,
+            .maybeSingle();
+        if (recipientError) {
+            console.error('Recipient preferences lookup failed:', recipientError.code);
+            return new Response(JSON.stringify({ error: 'Notification unavailable' }), {
+                status: 500,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }
 
-        if (!recipientNotification) {
+        if (recipient?.email_notification === false) {
             console.log("Skipped. User disabled notifications.");
             return new Response(JSON.stringify({ skipped: true }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+
+        const { data: authUser, error: authUserError } = await adminClient.auth.admin.getUserById(actualRecipientId);
+        const recipientEmail = authUser?.user?.email;
+        if (authUserError || !recipientEmail) {
+            console.error('Recipient email unavailable:', authUserError?.code);
+            return new Response(JSON.stringify({ error: 'Notification unavailable' }), {
+                status: 500,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }
@@ -190,8 +183,8 @@ ${messageUrl}
         });
 
         if (resendError) {
-            console.error("Resend API error:", resendError);
-            return new Response(JSON.stringify({ error: resendError.message }), {
+            console.error("Resend API error:", resendError.name);
+            return new Response(JSON.stringify({ error: 'Notification unavailable' }), {
                 status: 500,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
@@ -201,9 +194,9 @@ ${messageUrl}
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
 
-    } catch (error: any) {
-        console.error("Uncaught error:", error);
-        return new Response(JSON.stringify({ error: error.message }), {
+    } catch {
+        console.error("Unexpected notification error.");
+        return new Response(JSON.stringify({ error: 'Notification unavailable' }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });

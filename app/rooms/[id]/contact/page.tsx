@@ -42,7 +42,7 @@ export default function ContactPage() {
             // Fetch User Profile for pre-fill
             const { data: profile } = await supabase
                 .from('users')
-                .select('*')
+                .select('display_name, age, gender, occupation')
                 .eq('id', session.user.id)
                 .single();
 

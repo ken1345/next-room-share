@@ -80,7 +80,7 @@ function AccountSetupForm() {
                 // If update failed (e.g. no row), try insert (though trigger usually creates it)
                 const { error: insertError } = await supabase
                     .from('users')
-                    .insert({ id: user.id, email: user.email, ...updates });
+                    .insert({ id: user.id, ...updates });
 
                 if (insertError) throw insertError;
             }

@@ -23,11 +23,10 @@ function LoginForm() {
     const handleLoginSuccess = async (user: any) => {
         // Check if user doc exists (public profile) and create if missing (sync)
         if (user) {
-            const { data: profile } = await supabase.from('users').select().eq('id', user.id).single();
+            const { data: profile } = await supabase.from('users').select('id').eq('id', user.id).single();
             if (!profile) {
                 await supabase.from('users').insert({
                     id: user.id,
-                    email: user.email,
                     display_name: user.user_metadata?.full_name || 'User',
                     photo_url: user.user_metadata?.avatar_url || null,
                 });

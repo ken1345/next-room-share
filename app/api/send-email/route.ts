@@ -9,19 +9,18 @@ export async function POST(request: Request) {
 
         // 0. Spam Verification
         if (spamCheck?.honey) {
-            console.warn("Honeypot filled by:", email);
+            console.warn("Contact form honeypot filled.");
             return NextResponse.json({ error: "Spam detected" }, { status: 400 });
         }
 
         // 1. Save to Database (contacts table)
-        // Use Service Role Key if available to bypass RLS, otherwise Anon Key
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
         const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        const supabaseKey = serviceRoleKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-        console.log(`[SendEmail] Using ${serviceRoleKey ? 'Service Role Key' : 'Anon Key'} for DB insert.`);
-
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        if (!serviceRoleKey) {
+            console.error('[SendEmail] Missing SUPABASE_SERVICE_ROLE_KEY');
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
+        const supabase = createClient(supabaseUrl, serviceRoleKey);
 
         const { error: dbError } = await supabase
             .from('contacts')
@@ -33,10 +32,8 @@ export async function POST(request: Request) {
             });
 
         if (dbError) {
-            console.error("Database Insert Error:", dbError);
-            return NextResponse.json({
-                error: `Database save failed: ${dbError.message} (Code: ${dbError.code}, Details: ${dbError.details})`
-            }, { status: 500 });
+            console.error("Database Insert Error:", dbError.code);
+            return NextResponse.json({ error: 'Database save failed' }, { status: 500 });
         }
 
         // 2. Resend Configuration (Proceed to email)
@@ -110,8 +107,8 @@ ${debugInfo}
         });
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
-        console.error("Email send error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch {
+        console.error("Unexpected contact form error.");
+        return NextResponse.json({ error: 'Contact form unavailable' }, { status: 500 });
     }
 }

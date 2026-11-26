@@ -114,37 +114,24 @@ export async function POST(request: Request) {
         // Fetch Recipient Email
         const { data: recipient, error: recipientError } = await adminClient
             .from('users')
-            .select('email, email_notification')
+            .select('email_notification')
             .eq('id', actualRecipientId)
-            .single();
-
-        let recipientEmail = recipient?.email;
-        let recipientNotification = recipient?.email_notification ?? true;
-
-        if (!recipientEmail) {
-            // Fallback: Try fetching from Auth (auth.users) directly
-            console.log(`[Notification] Email not found in public.users for ${actualRecipientId}. Trying Auth...`);
-            const { data: authUser, error: authUserError } = await adminClient.auth.admin.getUserById(actualRecipientId);
-
-            if (authUser && authUser.user) {
-                recipientEmail = authUser.user.email;
-            } else {
-                console.error("[Notification] Recipient not found in Auth either:", authUserError);
-                return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
-            }
+            .maybeSingle();
+        if (recipientError) {
+            console.error('[Notification] Recipient preferences lookup failed:', recipientError.code);
+            return NextResponse.json({ error: 'Notification unavailable' }, { status: 500 });
         }
 
-        if (!recipientEmail) {
-            console.error("[Notification] Recipient has no email.");
-            return NextResponse.json({ error: "Recipient has no email" }, { status: 404 });
-        }
-
-        console.log(`[Notification] Sending to recipient: ${actualRecipientId} (${recipientEmail})`);
-
-        const shouldSend = recipientNotification;
-        if (!shouldSend) {
+        if (recipient?.email_notification === false) {
             console.log(`[Notification] Skipped. User disabled notifications.`);
             return NextResponse.json({ skipped: true });
+        }
+
+        const { data: authUser, error: authUserError } = await adminClient.auth.admin.getUserById(actualRecipientId);
+        const recipientEmail = authUser?.user?.email;
+        if (authUserError || !recipientEmail) {
+            console.error('[Notification] Recipient email unavailable:', authUserError?.code);
+            return NextResponse.json({ error: 'Notification unavailable' }, { status: 500 });
         }
 
         const resend = new Resend(resendApiKey);
@@ -162,7 +149,6 @@ export async function POST(request: Request) {
             return NextResponse.json({ skipped: true, reason: 'local_reply_url' });
         }
         const messageUrl = `${siteUrl}/messages/${threadId}`;
-        console.log(`[Notification] Sending email from ${fromEmail} to ${recipientEmail}`);
 
         const { data, error: resendError } = await resend.emails.send({
             from: fromEmail,
@@ -184,15 +170,15 @@ ${messageUrl}
         });
 
         if (resendError) {
-            console.error("[Notification] Resend API error:", resendError);
-            return NextResponse.json({ error: resendError.message }, { status: 500 });
+            console.error("[Notification] Resend API error:", resendError.name);
+            return NextResponse.json({ error: 'Notification unavailable' }, { status: 500 });
         }
 
         console.log("[Notification] Email sent successfully:", data);
 
         return NextResponse.json({ success: true, data });
-    } catch (error: any) {
-        console.error("[Notification] Uncaught error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch {
+        console.error("[Notification] Unexpected error.");
+        return NextResponse.json({ error: 'Notification unavailable' }, { status: 500 });
     }
 }

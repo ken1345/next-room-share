@@ -1,6 +1,7 @@
 import 'server-only';
 import { cache } from 'react';
 import type { ListingRecord } from './fetch-listings-server';
+import { isLittleServerListingPhoto } from './little-server-listing-photos';
 
 export const littleServerListingsEndpoint = 'https://dfofox.lsv.jp/roommikke-api/listings.php';
 export const useLittleServerListings = process.env.NEXT_PUBLIC_LISTINGS_BACKEND === 'little-server';
@@ -30,7 +31,10 @@ const readPage = cache(async (page: number, id?: string): Promise<LittleServerLi
     });
     if (!response.ok) throw new Error('Little Server listing service unavailable');
     const { listings } = await response.json() as { listings: LittleServerListing[] };
-    return listings;
+    return listings.map(listing => ({
+        ...listing,
+        images: (listing.images ?? []).filter(isLittleServerListingPhoto),
+    }));
 });
 
 export const readPublicLittleServerListings = cache(async () => {

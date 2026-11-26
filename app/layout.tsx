@@ -37,7 +37,7 @@ export default function RootLayout({
     <html lang="ja">
       <body className={inter.className}> {/* 3. Use inter.className */}
         <div className="min-h-screen flex flex-col bg-[#fcfbf7]">
-          {process.env.SITE_MAINTENANCE_MODE !== "off" && (
+          {process.env.SITE_MAINTENANCE_MODE === "on" && (
             <aside aria-label="サービスのお知らせ" className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
               <div className="mx-auto flex max-w-6xl flex-wrap items-baseline gap-x-3 gap-y-1">
                 <strong>ただいまメンテナンス中です</strong>

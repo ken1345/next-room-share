@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS listing_retired_hosts (
+    host_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+    retired_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
+) ENGINE=InnoDB;

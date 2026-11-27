@@ -178,6 +178,19 @@ try {
         respond(401, ['error' => 'Unauthorized']);
     }
 
+    $retireOwner = !$deviceTest && $method === 'POST' && ($_GET['retire_owner'] ?? null) === '1' && $id === null;
+    if ($retireOwner || $projectLegacyCatalog) {
+        require $privateDirectory . '/listing-migration/retire-listing-owner.php';
+        lockListingOwner($db, $owner);
+        if ($retireOwner) {
+            retireListingOwner($db, $owner);
+            respond(200, ['retired' => true]);
+        }
+        if (isRetiredListingOwner($db, $owner)) {
+            respond(403, ['error' => 'Listing owner account has been withdrawn']);
+        }
+    }
+
     if ($method === 'POST' && ($_GET['upload'] ?? null) === '1') {
         saveListingPhoto($mediaFolder, $privateDirectory);
     }

@@ -4,10 +4,11 @@ import { revalidateTag } from 'next/cache';
 import type { NextRequest } from 'next/server';
 import { littleServerListingsEndpoint } from '@/lib/little-server-listings-endpoint';
 import { handleSupabaseListings } from '@/lib/supabase-listings-transition';
+import { excludeRetiredListingOwners } from '@/lib/little-server-retired-owners';
 const maxListingBytes = 131072;
 const listingIdPattern = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/;
 
-type ListingCounts = { id: string; favorites_count: number | null; inquiry_count: number | null };
+type ListingCounts = { id: string; host_id: string; favorites_count: number | null; inquiry_count: number | null };
 
 async function withCurrentListingCounts(data: { listings: ListingCounts[] }) {
     if (data.listings.length === 0) return data;
@@ -193,8 +194,10 @@ export async function handleListings(request: NextRequest, deviceTest = false) {
             throw new Error('Legacy listing projection was not confirmed');
         }
         if (request.method === 'GET' && result.ok) {
-            const data = await withCurrentListingCounts(await result.json());
-            return Response.json(data, { headers: { 'Cache-Control': 'no-store' } });
+            const data = await result.json() as { listings: ListingCounts[] };
+            if (!deviceTest) data.listings = await excludeRetiredListingOwners(data.listings);
+            const counted = await withCurrentListingCounts(data);
+            return Response.json(counted, { headers: { 'Cache-Control': 'no-store' } });
         }
         if (request.method !== 'GET' && !isUpload && result.ok) {
             revalidateTag('little-server-listings', { expire: 0 });

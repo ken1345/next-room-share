@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { retireLittleServerListingOwner } from '@/lib/little-server-retired-owners';
 
 export async function POST(request: Request) {
     try {
@@ -32,7 +33,14 @@ export async function POST(request: Request) {
 
         // Withdrawal Actions (Anonymization)
 
-        // 1. Delete Listings
+        // 1. Retire the active catalog before removing the legacy listing references.
+        if (process.env.LITTLE_SERVER_LISTINGS_MODE === 'little-server') {
+            const { error: retirementError } = await supabaseAdmin.from('listing_retired_hosts')
+                .upsert({ host_id: user.id }, { onConflict: 'host_id', ignoreDuplicates: true });
+            if (retirementError) throw retirementError;
+            await retireLittleServerListingOwner(user.id);
+        }
+
         const { error: listingsError } = await supabaseAdmin.from('listings').delete().eq('host_id', user.id);
         if (listingsError) throw listingsError;
 

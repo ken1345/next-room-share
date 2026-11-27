@@ -5,6 +5,8 @@ import { MdTrain, MdLocationOn, MdArrowBack, MdCheck, MdPerson, MdEmail, MdFavor
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import ImageGallery from '@/components/ImageGallery';
+import { listingPhotosPending } from '@/lib/little-server-listing-photos';
+import { ensureLittleServerListingReference, useLittleServerListings } from '@/lib/little-server-listings-client';
 
 // Using functional component with props
 interface RoomDetailClientProps {
@@ -80,6 +82,14 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
             if (!error) setIsLiked(false);
         } else {
             // Like
+            if (useLittleServerListings) {
+                try {
+                    await ensureLittleServerListingReference(property.id);
+                } catch (error) {
+                    alert(error instanceof Error ? error.message : 'ウォッチリストに登録できませんでした。');
+                    return;
+                }
+            }
             const { error } = await supabase
                 .from('favorites')
                 .insert({
@@ -120,7 +130,7 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
             <div className="container mx-auto max-w-5xl">
                 {/* Hero Section (Boxed Layout) */}
                 <div className="mt-4 md:mt-6 mx-0 md:mx-4 lg:mx-0">
-                    <ImageGallery images={images} title={property.title} />
+                    <ImageGallery images={images} title={property.title} emptyMessage={listingPhotosPending ? '写真は準備中です' : undefined} />
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-8 mt-6 px-4 md:px-0">

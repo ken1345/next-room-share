@@ -108,6 +108,12 @@ async function ensureListingReference(id: string, token: string, deviceTestOwner
 }
 
 export async function handleListings(request: NextRequest, deviceTest = false) {
+    if (!deviceTest && process.env.LITTLE_SERVER_LISTINGS_MODE === 'frozen' && request.method !== 'GET') {
+        return Response.json({ error: '物件の更新を一時停止しています。しばらくしてからお試しください。' }, {
+            status: 503,
+            headers: { 'Cache-Control': 'no-store', 'Retry-After': '60' },
+        });
+    }
     const deviceTestOwners = deviceTest
         ? new Set((process.env.LITTLE_SERVER_DEVICE_TEST_ACCOUNTS ?? '').split(',').map(value => value.trim()).filter(Boolean))
         : undefined;

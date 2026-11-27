@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import RoomDetailClient from '@/components/rooms/RoomDetailClient';
 
 import { extractIdFromSlug } from '@/lib/url-utils';
+import { readPublicLittleServerListing, useLittleServerListings } from '@/lib/little-server-listings';
 
 type PageProps = {
     params: Promise<{ id: string }>;
@@ -12,6 +13,8 @@ type PageProps = {
 
 async function getListing(idSlug: string) {
     const id = extractIdFromSlug(idSlug);
+    if (useLittleServerListings) return readPublicLittleServerListing(id);
+
     const { data: listing, error } = await supabase
         .from('listings')
         .select('*')

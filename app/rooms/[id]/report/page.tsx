@@ -2,6 +2,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { ensureLittleServerListingReference, useLittleServerListings } from '@/lib/little-server-listings-client';
 import { MdFlag, MdArrowBack, MdCheckCircle, MdError } from 'react-icons/md';
 import Link from 'next/link';
 
@@ -62,6 +63,16 @@ export default function ReportPage() {
             const lastTime = new Date(recentReports[0].created_at).getTime();
             if (Date.now() - lastTime < 5 * 60 * 1000) {
                 alert('投稿間隔が短すぎます。しばらく待ってから再度お試しください。');
+                setLoading(false);
+                return;
+            }
+        }
+
+        if (useLittleServerListings) {
+            try {
+                await ensureLittleServerListingReference(id);
+            } catch (error) {
+                alert(error instanceof Error ? error.message : '通報の送信に失敗しました。');
                 setLoading(false);
                 return;
             }

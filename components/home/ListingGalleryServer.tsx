@@ -4,9 +4,10 @@ import { supabase } from "@/lib/supabase";
 import PhotoPropertyCard from "@/components/PhotoPropertyCard";
 import SectionTitle from "@/components/SectionTitle";
 import { readPublicLittleServerListings, useLittleServerListings } from '@/lib/little-server-listings';
+import { withCurrentListingCounts } from '@/lib/listing-counts';
 
 async function readGallery() {
-    if (useLittleServerListings) return (await readPublicLittleServerListings()).slice(0, 8);
+    if (useLittleServerListings) return withCurrentListingCounts((await readPublicLittleServerListings()).slice(0, 8));
 
     const { data: listings, error } = await supabase
         .from('listings')

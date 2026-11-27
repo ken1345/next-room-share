@@ -5,41 +5,9 @@ import type { NextRequest } from 'next/server';
 import { littleServerListingsEndpoint } from '@/lib/little-server-listings-endpoint';
 import { handleSupabaseListings } from '@/lib/supabase-listings-transition';
 import { excludeRetiredListingOwners } from '@/lib/little-server-retired-owners';
+import { withCurrentListingCounts } from '@/lib/listing-counts';
 const maxListingBytes = 131072;
 const listingIdPattern = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/;
-
-type ListingCounts = { id: string; host_id: string; favorites_count: number | null; inquiry_count: number | null };
-
-async function withCurrentListingCounts(data: { listings: ListingCounts[] }) {
-    if (data.listings.length === 0) return data;
-
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) {
-        console.error('[Listing counts] Supabase configuration unavailable');
-        return data;
-    }
-    const admin = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-    const ids = data.listings.map(listing => listing.id);
-    // Supabase maintains these totals from favorites and threads, respectively.
-    const { data: counters, error } = await admin.from('listings')
-        .select('id, favorites_count, inquiry_count')
-        .in('id', ids)
-        .abortSignal(AbortSignal.timeout(5000));
-    if (error) {
-        console.error('[Listing counts] Supabase lookup failed:', error.code);
-        return data;
-    }
-
-    const countersById = new Map(counters.map(row => [row.id, row]));
-    return {
-        listings: data.listings.map(listing => ({
-            ...listing,
-            favorites_count: countersById.get(listing.id)?.favorites_count ?? 0,
-            inquiry_count: countersById.get(listing.id)?.inquiry_count ?? 0,
-        })),
-    };
-}
 
 async function authenticatedOwner(request: NextRequest) {
     const bearer = request.headers.get('authorization')?.match(/^Bearer (\S+)$/i)?.[1];
@@ -200,10 +168,10 @@ export async function handleListings(request: NextRequest, deviceTest = false) {
             throw new Error('Legacy listing projection was not confirmed');
         }
         if (request.method === 'GET' && result.ok) {
-            const data = await result.json() as { listings: ListingCounts[] };
-            if (!deviceTest) data.listings = await excludeRetiredListingOwners(data.listings);
-            const counted = await withCurrentListingCounts(data);
-            return Response.json(counted, { headers: { 'Cache-Control': 'no-store' } });
+            const data = await result.json() as { listings: { id: string; host_id: string }[] };
+            const visible = deviceTest ? data.listings : await excludeRetiredListingOwners(data.listings);
+            const listings = await withCurrentListingCounts(visible);
+            return Response.json({ listings }, { headers: { 'Cache-Control': 'no-store' } });
         }
         if (request.method !== 'GET' && !isUpload && result.ok) {
             revalidateTag('little-server-listings', { expire: 0 });

@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { toRomaji, slugify } from '@/lib/romaji';
 import regionMapping from '@/data/region-mapping.json';
 import { readPublicLittleServerListings, useLittleServerListings, type LittleServerListing } from './little-server-listings';
+import { withCurrentListingCounts } from './listing-counts';
 
 export type SearchParams = {
     tab?: string;
@@ -309,7 +310,8 @@ export async function fetchListingsServer(searchParams: SearchParams, options: F
 
     if (useLittleServerListings) {
         const listings = await filterLittleServerListings(searchParams);
-        return { listings: await withListingSlugs(listings.slice(from, to + 1)), count: listings.length };
+        const page = await withCurrentListingCounts(listings.slice(from, to + 1));
+        return { listings: await withListingSlugs(page), count: listings.length };
     }
 
     const { data, count, error } = await buildListingsQuery(searchParams).range(from, to);

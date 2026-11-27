@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { MdTrain, MdLocationOn, MdArrowBack, MdCheck, MdPerson, MdEmail, MdFavoriteBorder, MdFavorite, MdFlag, MdStar, MdStarBorder } from 'react-icons/md';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import ImageGallery from '@/components/ImageGallery';
 import { listingPhotosPending } from '@/lib/little-server-listing-photos';
@@ -23,6 +23,16 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
 
     const [isLiked, setIsLiked] = useState(false);
     const [backUrl, setBackUrl] = useState('/search');
+    const countedListingId = useRef<string | null>(null);
+    const listingId = property?.id;
+
+    useEffect(() => {
+        if (!listingId || countedListingId.current === listingId) return;
+        countedListingId.current = listingId;
+        void supabase.rpc('increment_view_count', { listing_id: listingId }).then(({ error }) => {
+            if (error) console.error('[Listing view] Could not record view:', error.code);
+        });
+    }, [listingId]);
 
     useEffect(() => {
         // Fetch User if not provided
@@ -39,15 +49,6 @@ export default function RoomDetailClient({ property, host, currentUser: initialU
         if (lastUrl) {
             setBackUrl(lastUrl);
         }
-
-        // Increment View Count
-        // ... (rest of logic)
-        const incrementView = async () => {
-            if (property?.id) {
-                await supabase.rpc('increment_view_count', { listing_id: property.id });
-            }
-        };
-        incrementView();
 
         // Check Like Status
         const checkLikeStatus = async () => {

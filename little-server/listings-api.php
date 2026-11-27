@@ -139,6 +139,7 @@ if (!$deviceTest && ($secret === false || strlen($secret) < 32 || !hash_equals($
 }
 $table = $deviceTest ? 'listings_device_test' : 'listings';
 $mediaFolder = $deviceTest ? 'roommikke-device-test-images' : 'roommikke-listing-images';
+$projectLegacyCatalog = !$deviceTest && ($_SERVER['HTTP_X_ROOMMIKKE_PROJECT_LEGACY'] ?? '') === '1';
 
 $id = $_GET['id'] ?? null;
 $owner = $_SERVER['HTTP_X_ROOMMIKKE_OWNER'] ?? null;
@@ -149,6 +150,9 @@ if (($id !== null && !validId($id)) || ($owner !== null && !validId($owner))) {
 try {
     require $privateDirectory . '/listing-migration/listing-database.php';
     $db = listingDatabase();
+    if ($projectLegacyCatalog) {
+        require $privateDirectory . '/listing-migration/listing-projection.php';
+    }
     $method = $_SERVER['REQUEST_METHOD'];
 
     if ($method === 'GET') {
@@ -179,15 +183,35 @@ try {
     }
 
     if ($method === 'DELETE' && $id !== null) {
+        if ($projectLegacyCatalog) {
+            $db->beginTransaction();
+            $lock = $db->prepare("SELECT id FROM $table WHERE id = ? AND host_id = ? FOR UPDATE");
+            $lock->execute([$id, $owner]);
+            if ($lock->fetchColumn() === false) {
+                $db->rollBack();
+                respond(404, ['deleted' => false]);
+            }
+            publishLegacyListing($db, $providedToken, $id, $owner, true);
+        }
         $delete = $db->prepare("DELETE FROM $table WHERE id = ? AND host_id = ?");
         $delete->execute([$id, $owner]);
+        if ($projectLegacyCatalog) {
+            $db->commit();
+            header('X-Roommikke-Legacy-Projected: 1');
+        }
         respond($delete->rowCount() === 1 ? 200 : 404, ['deleted' => $delete->rowCount() === 1]);
     }
 
     if ($method === 'PATCH' && $id !== null && ($_GET['bump'] ?? null) === '1') {
+        if ($projectLegacyCatalog) $db->beginTransaction();
         $bump = $db->prepare("UPDATE $table SET updated_at = UTC_TIMESTAMP(6)
             WHERE id = ? AND host_id = ? AND (updated_at IS NULL OR updated_at <= UTC_TIMESTAMP(6) - INTERVAL 72 HOUR)");
         $bump->execute([$id, $owner]);
+        if ($projectLegacyCatalog) {
+            if ($bump->rowCount() === 1) publishLegacyListing($db, $providedToken, $id, $owner);
+            $db->commit();
+            header('X-Roommikke-Legacy-Projected: 1');
+        }
         respond($bump->rowCount() === 1 ? 200 : 409, ['id' => $id]);
     }
 
@@ -212,21 +236,35 @@ try {
         $parameters = implode(', ', array_fill(0, count($values), '?'));
         $insert = $db->prepare("INSERT INTO $table (id, host_id, created_at, updated_at, $fields)
             VALUES (?, ?, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6), $parameters)");
+        if ($projectLegacyCatalog) $db->beginTransaction();
         $insert->execute([$id, $owner, ...array_values($values)]);
+        if ($projectLegacyCatalog) {
+            publishLegacyListing($db, $providedToken, $id, $owner);
+            $db->commit();
+            header('X-Roommikke-Legacy-Projected: 1');
+        }
         respond(201, ['id' => $id]);
     }
 
     $assignments = implode(', ', array_map(static fn (string $field): string => $field . ' = ?', array_keys($values)));
     $update = $db->prepare("UPDATE $table SET $assignments, updated_at = UTC_TIMESTAMP(6) WHERE id = ? AND host_id = ?");
+    if ($projectLegacyCatalog) $db->beginTransaction();
     $update->execute([...array_values($values), $id, $owner]);
+    if ($projectLegacyCatalog) {
+        if ($update->rowCount() === 1) publishLegacyListing($db, $providedToken, $id, $owner);
+        $db->commit();
+        header('X-Roommikke-Legacy-Projected: 1');
+    }
     respond($update->rowCount() === 1 ? 200 : 404, ['id' => $id]);
 } catch (PDOException $error) {
+    if (isset($db) && $db->inTransaction()) $db->rollBack();
     if ($error->getCode() === '23000') {
         respond(409, ['error' => 'Listing already exists']);
     }
     error_log('Roommikke listing database operation failed');
     respond(503, ['error' => 'Listing service unavailable']);
 } catch (Throwable $error) {
+    if (isset($db) && $db->inTransaction()) $db->rollBack();
     error_log('Roommikke listing service failed');
     respond(503, ['error' => 'Listing service unavailable']);
 }

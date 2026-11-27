@@ -171,17 +171,26 @@ export async function handleListings(request: NextRequest, deviceTest = false) {
         }
         if (!token) throw new Error('Listing service unavailable');
         headers.set('X-Roommikke-Token', token);
+        if (!deviceTest && process.env.VERCEL_ENV === 'production' &&
+            process.env.LITTLE_SERVER_LISTINGS_MODE === 'little-server' &&
+            request.method !== 'GET' && !isUpload) {
+            headers.set('X-Roommikke-Project-Legacy', '1');
+        }
         const result = await fetch(url, {
             method: request.method,
             headers,
             body,
             redirect: 'error',
             cache: 'no-store',
-            signal: AbortSignal.timeout(8000),
+            signal: AbortSignal.timeout(headers.has('X-Roommikke-Project-Legacy') ? 14000 : 8000),
         });
         if (result.status === 401 || result.status >= 500 ||
             !result.headers.get('content-type')?.startsWith('application/json')) {
             throw new Error('Listing service response unavailable');
+        }
+        if (result.ok && headers.has('X-Roommikke-Project-Legacy') &&
+            result.headers.get('X-Roommikke-Legacy-Projected') !== '1') {
+            throw new Error('Legacy listing projection was not confirmed');
         }
         if (request.method === 'GET' && result.ok) {
             const data = await withCurrentListingCounts(await result.json());

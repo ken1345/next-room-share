@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { fetchListingThumbnails, useLittleServerListings } from '@/lib/little-server-listings-client';
 import { MdPerson, MdImage } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
 
@@ -32,6 +33,7 @@ type Thread = {
 export default function MessagesListPage() {
     const [user, setUser] = useState<any>(null);
     const [threads, setThreads] = useState<Thread[]>([]);
+    const [thumbnails, setThumbnails] = useState<Map<string, string | undefined>>(new Map());
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -112,6 +114,9 @@ export default function MessagesListPage() {
 
                 // Cast to expected type or ensure type compatibility implicitly
                 setThreads(validThreads as Thread[]);
+                if (useLittleServerListings) {
+                    void fetchListingThumbnails(validThreads.map(thread => thread.listing_id)).then(setThumbnails);
+                }
             }
             setLoading(false);
         };
@@ -204,9 +209,9 @@ export default function MessagesListPage() {
                                     </div>
 
                                     {/* Listing Thumbnail (Small) */}
-                                    {thread.listing?.images?.[0] && (
+                                    {(useLittleServerListings ? thumbnails.get(thread.listing_id) : thread.listing?.images?.[0]) && (
                                         <div className="shrink-0 w-16 h-16 rounded-md overflow-hidden bg-gray-100">
-                                            <img src={thread.listing.images[0]} className="w-full h-full object-cover" />
+                                            <img src={useLittleServerListings ? thumbnails.get(thread.listing_id) : thread.listing?.images?.[0]} className="w-full h-full object-cover" />
                                         </div>
                                     )}
                                 </div>

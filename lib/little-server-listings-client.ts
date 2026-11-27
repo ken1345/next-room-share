@@ -26,3 +26,17 @@ export async function requestLittleServerListings<T>(query: URLSearchParams, opt
 export async function ensureLittleServerListingReference(id: string) {
     await requestLittleServerListings(new URLSearchParams({ id, reference: '1' }), { method: 'POST' });
 }
+
+export async function fetchListingThumbnails(ids: string[]): Promise<Map<string, string | undefined>> {
+    const entries = await Promise.all([...new Set(ids)].map(async id => {
+        try {
+            const { listings } = await requestLittleServerListings<{ listings: { id: string; images?: string[] }[] }>(
+                new URLSearchParams({ id }), { signal: AbortSignal.timeout(5000) }, false,
+            );
+            return [id, listings.find(listing => listing.id === id)?.images?.[0]] as const;
+        } catch {
+            return [id, undefined] as const;
+        }
+    }));
+    return new Map(entries);
+}

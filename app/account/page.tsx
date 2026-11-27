@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MdPerson, MdEmail, MdArrowForwardIos, MdEdit, MdPause, MdPlayArrow, MdBlock, MdVerticalAlignTop } from 'react-icons/md';
 import { supabase } from '@/lib/supabase';
-import { requestLittleServerListings, useLittleServerListings } from '@/lib/little-server-listings-client';
+import { fetchListingThumbnails, requestLittleServerListings, useLittleServerListings } from '@/lib/little-server-listings-client';
 
 import PhotoPropertyCard from '@/components/PhotoPropertyCard';
 
@@ -92,10 +92,22 @@ export default function AccountPage() {
                             listing:listings(*)
                         `)
                         .eq('user_id', session.user.id)
-                        .order('created_at', { ascending: false });
+                        .order('created_at', { ascending: false })
+                        .returns<{ listing: { id: string } | null }[]>();
 
                     if (favoritesData) {
-                        setFavorites(favoritesData.map(f => f.listing));
+                        const listings = favoritesData.map(f => f.listing).filter(listing => listing !== null);
+                        if (useLittleServerListings) {
+                            setFavorites(listings.map(listing => ({ ...listing, images: [] })));
+                            void fetchListingThumbnails(listings.map(listing => listing.id)).then(thumbnails => {
+                                setFavorites(listings.map(listing => ({
+                                    ...listing,
+                                    images: [thumbnails.get(listing.id)].filter(Boolean),
+                                })));
+                            });
+                        } else {
+                            setFavorites(listings);
+                        }
                     }
                 } catch (error) {
                     console.error("Error fetching data:", error);

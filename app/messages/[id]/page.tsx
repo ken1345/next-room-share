@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { fetchListingThumbnails, useLittleServerListings } from '@/lib/little-server-listings-client';
 import { MdArrowBack, MdSend, MdPerson, MdImage, MdBlock, MdMoreVert } from 'react-icons/md';
 
 function appendMessage<T extends { id: string }>(messages: T[], message: T): T[] {
@@ -19,6 +20,8 @@ export default function MessageThreadPage() {
 
     const [user, setUser] = useState<any>(null);
     const [thread, setThread] = useState<any>(null);
+    const [thumbnails, setThumbnails] = useState<Map<string, string | undefined>>(new Map());
+    const thumbnail = useLittleServerListings ? thumbnails.get(thread?.listing_id) : thread?.listing?.images?.[0];
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
@@ -78,6 +81,9 @@ export default function MessageThreadPage() {
                 return;
             }
             setThread(threadData);
+            if (useLittleServerListings && threadData.listing_id) {
+                void fetchListingThumbnails([threadData.listing_id]).then(setThumbnails);
+            }
 
             // Determine Counterpart ID
             const counterpartId = (session.user.id === threadData.host_id) ? threadData.seeker_id : threadData.host_id;
@@ -300,8 +306,8 @@ export default function MessageThreadPage() {
                 <div className="flex items-center gap-2">
                     {thread.listing && (
                         <Link href={`/rooms/${thread.listing.id}`} className="shrink-0 w-10 h-10 rounded overflow-hidden border border-gray-200">
-                            {thread.listing.images && thread.listing.images[0] ? (
-                                <img src={thread.listing.images[0]} className="w-full h-full object-cover" />
+                            {thumbnail ? (
+                                <img src={thumbnail} className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-400"><MdImage /></div>
                             )}
